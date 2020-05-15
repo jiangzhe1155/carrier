@@ -1,6 +1,10 @@
 spring:
   profiles:
     active: dev
-
+  servlet:
+    multipart:
+      max-file-size: 5GB
 server:
   port: 18080
+  compression:
+    enabled: true

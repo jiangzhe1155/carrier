@@ -17,14 +17,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
     public R serviceExceptionHandler(ServiceException e) {
-        log.error(e.getMessage());
+        e.printStackTrace();
         return R.failed(e.getMessage());
     }
 
 
     @ExceptionHandler({Exception.class})
-    public R exceptionHandler(Exception exception) {
-        log.error(exception.getMessage());
+    public R exceptionHandler(Exception e) {
+        e.printStackTrace();
         return R.failed("内部异常");
     }
 
