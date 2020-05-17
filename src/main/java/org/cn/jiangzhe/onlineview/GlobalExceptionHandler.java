@@ -15,17 +15,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({ServiceException.class})
-    public R serviceExceptionHandler(ServiceException e) {
+    @ExceptionHandler({ServiceException.class,Exception.class})
+    public R serviceExceptionHandler(Exception e) {
         e.printStackTrace();
         return R.failed(e.getMessage());
-    }
-
-
-    @ExceptionHandler({Exception.class})
-    public R exceptionHandler(Exception e) {
-        e.printStackTrace();
-        return R.failed("内部异常");
     }
 
 }
