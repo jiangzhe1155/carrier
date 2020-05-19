@@ -7,13 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.onlineview.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,15 +52,5 @@ public class FileController {
         List<String> strings = FileUtil.listFileNames(DEMO_DIR);
         return R.ok(strings);
     }
-
-    @GetMapping("previewFile")
-    public R previewFile(HttpServletResponse response, String url){
-        String path = StrUtil.join(File.separator, DEMO_DIR, url);
-        if (!FileUtil.exist(path)) {
-            return R.failed("抱歉找不到文件");
-        }
-        return R.ok(null);
-    }
-
 
 }
