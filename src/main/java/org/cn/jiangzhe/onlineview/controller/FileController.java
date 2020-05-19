@@ -7,13 +7,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.onlineview.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,14 +32,15 @@ public class FileController {
     @Autowired
     ObjectMapper objectMapper;
 
-    private String demoDir = "file";
+    public static String DEMO_DIR = StrUtil.join(File.separator, FileUtil.getUserHomePath(), "file");
+
 
     @PostMapping("upload")
     public R<Object> upload(@RequestBody MultipartFile multipartFile) {
         String filename = FileUtil.getName(multipartFile.getOriginalFilename());
         log.info("OriginalFilename:{}  Name:{} ", multipartFile.getOriginalFilename(), filename);
         try (InputStream in = multipartFile.getInputStream()) {
-            String filePath = StrUtil.join(File.separator, FileUtil.getUserHomePath(), demoDir, filename);
+            String filePath = StrUtil.join(File.separator, DEMO_DIR, filename);
             FileUtil.writeFromStream(in, filePath);
             return R.ok(filePath);
         } catch (IOException e) {
@@ -50,14 +51,16 @@ public class FileController {
     @PostMapping("listFiles")
     public R getFiles() {
         List list = new ArrayList<Map<String, String>>();
-        List<String> strings = FileUtil.listFileNames(
-                StrUtil.join(File.separator, FileUtil.getUserHomePath(), demoDir));
+        List<String> strings = FileUtil.listFileNames(DEMO_DIR);
         return R.ok(strings);
     }
 
-    @PostMapping("previewFile")
-    public R previewFile(HttpServletRequest req, @RequestBody @Nullable String url) {
-        
+    @GetMapping("previewFile")
+    public R previewFile(HttpServletResponse response, String url){
+        String path = StrUtil.join(File.separator, DEMO_DIR, url);
+        if (!FileUtil.exist(path)) {
+            return R.failed("抱歉找不到文件");
+        }
         return R.ok(null);
     }
 
