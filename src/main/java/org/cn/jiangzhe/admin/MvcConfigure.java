@@ -1,6 +1,6 @@
-package org.cn.jiangzhe.onlineview;
+package org.cn.jiangzhe.admin;
 
-import org.cn.jiangzhe.onlineview.controller.FileController;
+import org.cn.jiangzhe.admin.controller.FileController;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;

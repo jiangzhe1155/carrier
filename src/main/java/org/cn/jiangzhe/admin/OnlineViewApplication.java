@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.onlineview;
+package org.cn.jiangzhe.admin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.onlineview;
+package org.cn.jiangzhe.admin;
 
 /**
  *  定义service层异常，用于给Controller层捕获

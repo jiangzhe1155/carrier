@@ -4,7 +4,6 @@ spring:
   servlet:
     multipart:
       max-file-size: 5GB
+      max-request-size: 500MB
 server:
   port: 18080
-  compression:
-    enabled: true
