@@ -2,9 +2,9 @@ package org.cn.jiangzhe.admin.service;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.CommonFile;
 import org.cn.jiangzhe.admin.ServiceException;
-import org.cn.jiangzhe.admin.controller.FileController;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +18,7 @@ import java.util.List;
  * @author jz
  * @date 2020/06/11
  */
+@Slf4j
 @Service
 public class FileServiceImpl implements FileService {
 
@@ -38,12 +39,12 @@ public class FileServiceImpl implements FileService {
                     .build());
         }
 
-        String basePath = FileUtil.normalize(
-                StrUtil.join(File.separator, FileController.DEMO_DIR, StrUtil.nullToEmpty(relativePath)));
+        String basePath = "classpath:";
 
         for (CommonFile file : files) {
+            log.info("上传路径：{}", "classpath:" + StrUtil.join(File.separator, basePath, file.getFileName()));
             try (InputStream in = file.getIn()) {
-                FileUtil.writeFromStream(in, StrUtil.join(File.separator, basePath, file.getFileName()));
+                FileUtil.writeFromStream(in, basePath + file.getFileName());
             } catch (IOException e) {
                 throw new ServiceException("抱歉服务内部异常");
             }
@@ -53,7 +54,8 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void listFiles(String relativePath) {
-
+    public Object listFiles(String relativePath) {
+        return FileUtil.listFileNames(relativePath);
     }
+
 }

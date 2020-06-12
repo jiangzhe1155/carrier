@@ -16,5 +16,5 @@ public interface FileService {
 
     List<CommonFile> uploadFiles(String relativePath, MultipartFile... multipartFile) throws IOException;
 
-    void listFiles(String relativePath);
+    Object listFiles(String relativePath);
 }

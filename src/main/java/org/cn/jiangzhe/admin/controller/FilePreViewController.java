@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.onlineview.controller;
+package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 
-import static org.cn.jiangzhe.onlineview.controller.FileController.DEMO_DIR;
+import static org.cn.jiangzhe.admin.controller.FileController.DEMO_DIR;
 
 /**
  * @author jz
  * @date 2020/05/19
  */
 @RestController
+@Deprecated
 public class FilePreViewController {
 
     @Autowired
