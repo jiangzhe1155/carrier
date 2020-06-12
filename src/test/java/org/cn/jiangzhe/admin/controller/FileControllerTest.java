@@ -26,7 +26,6 @@ public class FileControllerTest {
 
     @Test
     public void uploadFile() {
-        System.out.println(FileUtil.normalize("classpath:/static/ops_data.csv"));
         FileUtil.writeFromStream(FileUtil.getInputStream(fileName1), FileUtil.normalize("classpath:ops_data.csv"));
 
 //        mockMvc.perform(MockMvcRequestBuilders
