@@ -18,4 +18,6 @@ public class CommonFile {
     private String path;
     @JsonIgnore
     private InputStream in;
+    private Boolean isDir;
+    private Long size;
 }
