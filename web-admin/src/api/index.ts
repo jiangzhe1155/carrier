@@ -1,7 +1,7 @@
 import Axios from 'axios'
 import {Message, Loading} from 'element-ui';
 
-let loading;        //定义loading变量
+let loading: any;        //定义loading变量
 
 function startLoading() {    //使用Element loading-start 方法
     loading = Loading.service({
@@ -47,7 +47,7 @@ Axios.interceptors.request.use(
                 'Content-Type': 'application/json;charset=UTF-8'
             }
         } else if (config.method === 'get') {
-            let newParams = {}
+            let newParams: any = {}
             for (let key in config.params) {
                 newParams[key] = encodeURIComponent(config.params[key])
             }
@@ -57,10 +57,6 @@ Axios.interceptors.request.use(
                 'Content-Type': 'application/json;charset=UTF-8'
             }
         }
-
-        //显示等待框
-        showFullScreenLoading()
-
         return config
     },
     error => {
@@ -71,10 +67,8 @@ Axios.interceptors.request.use(
 //http response 拦截器
 Axios.interceptors.response.use(
     response => {
-        let data = response.data
-
+        let data = response.data;
         //隐藏等待框
-        tryHideFullScreenLoading()
         if (data.code === 0) {
             return Promise.resolve(data)
         } else {
@@ -89,23 +83,23 @@ Axios.interceptors.response.use(
 /**
  * 封装get方法
  * @param url
- * @param data
+ * @param params
+ * @param showLoading
  * @returns {Promise}
  */
 
-const get = function get(url, params = {}) {
+const get = function get(url: string, params = {}, showLoading = true) {
     return new Promise((resolve, reject) => {
-        params.showLoading && showFullScreenLoading() //显示等待框
-
+        showLoading && showFullScreenLoading() //显示等待框
         Axios.get(url, {
             params: params
         })
             .then(response => {
-                params.showLoading && tryHideFullScreenLoading() //隐藏等待框
+                showLoading && tryHideFullScreenLoading() //隐藏等待框
                 resolve(response);
             })
             .catch(err => {
-                params.showLoading && tryHideFullScreenLoading() //隐藏等待框
+                showLoading && tryHideFullScreenLoading() //隐藏等待框
                 reject(err)
             })
     })
@@ -116,20 +110,21 @@ const get = function get(url, params = {}) {
  * 封装post请求
  * @param url
  * @param params
+ * @param showLoading
  * @returns {Promise}
  */
 
-const post = function post(url, params = {}) {
+const post = function post(url: string, params = {}, showLoading = true) {
     return new Promise((resolve, reject) => {
-        params.showLoading && showFullScreenLoading() //显示等待框
+        showLoading && showFullScreenLoading() //显示等待框
 
         Axios.post(url, params)
             .then(response => {
-                params.showLoading && tryHideFullScreenLoading() //隐藏等待框
+                showLoading && tryHideFullScreenLoading() //隐藏等待框
 
                 resolve(response);
             }, err => {
-                params.showLoading && tryHideFullScreenLoading() //隐藏等待框
+                showLoading && tryHideFullScreenLoading() //隐藏等待框
 
                 reject(err)
             })
