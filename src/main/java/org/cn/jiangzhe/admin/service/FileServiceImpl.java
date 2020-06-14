@@ -25,6 +25,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<CommonFile> uploadFile(MultipartFile file, String relativePath) throws IOException {
+        if (file ==null || StrUtil.isBlank(file.getOriginalFilename())){
+            throw new ServiceException("文件为空");
+        }
         return uploadFiles(relativePath, file);
     }
 
