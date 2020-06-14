@@ -42,7 +42,7 @@ public class FileController {
 
 
     @PostMapping("uploadFile")
-    public R uploadFile(@RequestBody  MultipartFile multipartFile,
+    public R uploadFile(@RequestBody MultipartFile multipartFile,
                         Params params) throws IOException {
         fileService.uploadFile(multipartFile, params.getRelativePath());
         return R.ok(null);
