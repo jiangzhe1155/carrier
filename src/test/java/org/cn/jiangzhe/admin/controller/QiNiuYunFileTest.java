@@ -15,9 +15,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 
 @SpringBootTest
-public class FileControllerTest {
-
-    private String basePath = "/";
+public class QiNiuYunFileTest {
 
     private String fileName1 = "C:\\Users\\jiangzhe\\Desktop\\ops_data.csv";
     private String fileName2 = "C:\\Users\\jiangzhe\\Desktop\\v2.0-JavaGuide2.pdf";
@@ -31,7 +29,6 @@ public class FileControllerTest {
 
     @Test
     public void uploadFile() throws Exception {
-        System.out.println(FileUtil.normalize("classpath:" + "static/asdasd.csv"));
         mockMvc.perform(MockMvcRequestBuilders
                 .multipart("/uploadFiles")
                 .file(new MockMultipartFile("multipartFiles", "ops_data.csv", null, FileUtil.readBytes(fileName1)))
@@ -41,8 +38,6 @@ public class FileControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(MockMvcResultHandlers.print());
     }
-
-
 
 
     @Test

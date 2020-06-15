@@ -30,7 +30,7 @@ public class FileController {
     @Autowired
     FileService fileService;
 
-    public static String DEMO_DIR = "/";
+    public static String DEMO_DIR = "public/";
 
     @PostMapping("uploadFile")
     public R uploadFile(@RequestBody MultipartFile multipartFile, String relativePath) throws IOException {

@@ -7,3 +7,9 @@ spring:
       max-request-size: 500MB
 server:
   port: 18080
+
+
+file:
+  qiniu:
+    AccessKey: 5nem0zWsGig_lE-SOmIAJz84cQz9vEB8vQJGJvHy
+    SK: RFleqgTYUZULFzhzViB_GRJFcnmUMDdxJtEM2V2V

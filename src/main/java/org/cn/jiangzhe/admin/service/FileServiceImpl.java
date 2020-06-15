@@ -5,10 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.CommonFile;
 import org.cn.jiangzhe.admin.ServiceException;
+import org.cn.jiangzhe.admin.controller.FileController;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -39,12 +39,10 @@ public class FileServiceImpl implements FileService {
                     .build());
         }
 
-        String basePath = "classpath:";
-
         for (CommonFile file : files) {
-            log.info("上传路径：{}", "classpath:" + StrUtil.join(File.separator, basePath, file.getFileName()));
+            log.info("上传路径：{}", FileUtil.normalize(FileController.DEMO_DIR + file.getFileName()));
             try (InputStream in = file.getIn()) {
-                FileUtil.writeFromStream(in, basePath + file.getFileName());
+                FileUtil.writeFromStream(in, FileController.DEMO_DIR + file.getFileName());
             } catch (IOException e) {
                 throw new ServiceException("抱歉服务内部异常");
             }
