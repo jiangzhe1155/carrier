@@ -36,5 +36,6 @@ declare global {
         fileType: string;
         isDir: boolean;
         size: string;
+        lastModifyTime: string;
     }
 }

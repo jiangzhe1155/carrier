@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.io.InputStream;
+import java.util.Date;
 
 /**
  * @author jz
@@ -22,4 +23,5 @@ public class CommonFile {
     private InputStream in;
     private Boolean isDir;
     private String size;
+    private Date lastModifyTime;
 }

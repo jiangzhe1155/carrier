@@ -14,17 +14,27 @@
         <div>{{msg}}</div>
         <template>
             <el-table :data="fileList" stripe style="width: 100%">
-                <el-table-column prop="fileName" label="名称" width="180"></el-table-column>
-                <el-table-column prop="fileType" label="类型" width="180"></el-table-column>
+                <el-table-column label="名称">
+                    <template slot-scope="scope">
+                        <el-link
+                                :icon="getIcon(scope.row.isDir)"
+                                @click="onClickFileName(scope.row)">
+                            {{scope.row.fileName}}
+                        </el-link>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="fileType" label="类型"></el-table-column>
                 <el-table-column prop="size" label="大小"></el-table-column>
+                <el-table-column prop="lastModifyTime" label="最后修改时间"></el-table-column>
             </el-table>
         </template>
     </div>
 </template>
 
 <script lang="ts">
-    import {Component, Vue} from 'vue-property-decorator';
 
+    import {Component, Vue} from 'vue-property-decorator';
+    import qs from 'qs';
 
     @Component
     export default class About extends Vue {
@@ -37,15 +47,24 @@
             super();
             this.fileData = {relativePath: ''};
             this.fileList = [];
+            this.getFileList();
+        }
+
+        getFileList() {
+            this.http.post("listFile", qs.stringify(this.fileData)).then((data: R<CommonFile[]>) => {
+                this.fileList = data.data;
+            });
         }
 
 
-        beforeCreate(): void {
-            this.http.post("listFile", {
-                relativePath: ''
-            }).then((data: R<CommonFile[]>) => {
-                this.fileList = data.data;
-            });
+        getIcon(isDir) {
+            return isDir ? 'el-icon-folder' : 'el-icon-document';
+        }
+
+        onClickFileName(file: CommonFile) {
+            if (file.isDir) {
+                this.getFileList();
+            }
         }
     }
 
