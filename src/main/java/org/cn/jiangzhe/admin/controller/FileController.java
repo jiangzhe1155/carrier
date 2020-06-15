@@ -1,5 +1,6 @@
 package org.cn.jiangzhe.admin.controller;
 
+import ch.qos.logback.core.util.FileSize;
 import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -58,11 +59,15 @@ public class FileController {
 
     @PostMapping("listFile")
     public R getFiles(@RequestBody Params params) {
+        if (!FileUtil.exist(FileController.DEMO_DIR + params.getRelativePath())) {
+            return R.failed("抱歉文件夹不存在");
+        }
+
         File[] files = FileUtil.ls(FileController.DEMO_DIR + params.getRelativePath());
         List<CommonFile> collect = Arrays.stream(files).map(file -> CommonFile.builder()
                 .fileName(file.getName())
                 .isDir(file.isDirectory())
-                .size(FileUtil.size(file))
+                .size(new FileSize(FileUtil.size(file)).toString())
                 .fileType(file.isDirectory() ? null : FileServiceImpl.getFileType(file.getName()))
                 .build()).collect(Collectors.toList());
         return R.ok(collect);

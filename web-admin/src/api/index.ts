@@ -18,7 +18,7 @@ function endLoading() {    //使用Element loading-close 方法
 //那么 showFullScreenLoading() tryHideFullScreenLoading() 要干的事儿就是将同一时刻的请求合并。
 //声明一个变量 needLoadingRequestCount，每次调用showFullScreenLoading方法 needLoadingRequestCount + 1。
 //调用tryHideFullScreenLoading()方法，needLoadingRequestCount - 1。needLoadingRequestCount为 0 时，结束 loading。
-let needLoadingRequestCount = 0
+let needLoadingRequestCount = 0;
 
 export function showFullScreenLoading() {
     if (needLoadingRequestCount === 0) {
@@ -47,11 +47,11 @@ Axios.interceptors.request.use(
                 'Content-Type': 'application/json;charset=UTF-8'
             }
         } else if (config.method === 'get') {
-            let newParams: any = {}
+            let newParams: any = {};
             for (let key in config.params) {
                 newParams[key] = encodeURIComponent(config.params[key])
             }
-            config.params = newParams
+            config.params = newParams;
 
             config.headers = {
                 'Content-Type': 'application/json;charset=UTF-8'
@@ -62,7 +62,7 @@ Axios.interceptors.request.use(
     error => {
         return Promise.reject(error)
     }
-)
+);
 
 //http response 拦截器
 Axios.interceptors.response.use(
@@ -72,13 +72,14 @@ Axios.interceptors.response.use(
         if (data.code === 0) {
             return Promise.resolve(data)
         } else {
+            Message.warning(data.msg);
             return Promise.reject(data)
         }
     },
     error => {
         return Promise.reject(error)
     }
-)
+);
 
 /**
  * 封装get方法
@@ -90,20 +91,20 @@ Axios.interceptors.response.use(
 
 const get = function get(url: string, params = {}, showLoading = true) {
     return new Promise((resolve, reject) => {
-        showLoading && showFullScreenLoading() //显示等待框
+        showLoading && showFullScreenLoading();//显示等待框
         Axios.get(url, {
             params: params
         })
             .then(response => {
-                showLoading && tryHideFullScreenLoading() //隐藏等待框
+                showLoading && tryHideFullScreenLoading(); //隐藏等待框
                 resolve(response);
             })
             .catch(err => {
-                showLoading && tryHideFullScreenLoading() //隐藏等待框
+                showLoading && tryHideFullScreenLoading(); //隐藏等待框
                 reject(err)
             })
     })
-}
+};
 
 
 /**
@@ -114,25 +115,23 @@ const get = function get(url: string, params = {}, showLoading = true) {
  * @returns {Promise}
  */
 
-const post = function post(url: string, params = {}, showLoading = true) {
-    return new Promise((resolve, reject) => {
-        showLoading && showFullScreenLoading() //显示等待框
+const post = function post<T>(url: string, params = {}, showLoading = true) {
+    return new Promise<T>((resolve, reject) => {
+        showLoading && showFullScreenLoading(); //显示等待框
 
-        Axios.post(url, params)
-            .then(response => {
-                showLoading && tryHideFullScreenLoading() //隐藏等待框
-
+        Axios.post<T>(url, params)
+            .then((response: any) => {
+                showLoading && tryHideFullScreenLoading();//隐藏等待框
                 resolve(response);
             }, err => {
-                showLoading && tryHideFullScreenLoading() //隐藏等待框
-
+                showLoading && tryHideFullScreenLoading();//隐藏等待框
                 reject(err)
             })
     })
-}
+};
 
 
 export default {
     post,
-    get
+    get,
 }

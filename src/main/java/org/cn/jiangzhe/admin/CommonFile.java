@@ -1,6 +1,7 @@
 package org.cn.jiangzhe.admin;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ import java.io.InputStream;
  */
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CommonFile {
     private String fileName;
     private String fileType;
@@ -19,5 +21,5 @@ public class CommonFile {
     @JsonIgnore
     private InputStream in;
     private Boolean isDir;
-    private Long size;
+    private String size;
 }
