@@ -25,32 +25,25 @@
 <script lang="ts">
     import {Component, Vue} from 'vue-property-decorator';
 
-    export interface Response<T> {
-        data: T;
-        code: number;
-        msg: string;
-    }
-
-    export interface CommonFile {
-        fileName: string;
-        fileType: string;
-        isDir: boolean;
-        size: string;
-    }
 
     @Component
     export default class About extends Vue {
         msg: string = 'helloWorld';
         url: string = 'http://127.0.0.1:18080/uploadFile';
-        fileList: CommonFile[] = [];
-        fileData: object = {
-            relativePath: "相对路径"
-        };
+        fileList: CommonFile[];
+        fileData: object;
+
+        constructor() {
+            super();
+            this.fileData = {relativePath: ''};
+            this.fileList = [];
+        }
+
 
         beforeCreate(): void {
             this.http.post("listFile", {
-                relativePath: ""
-            }).then((data: Response<CommonFile[]>) => {
+                relativePath: ''
+            }).then((data: R<CommonFile[]>) => {
                 this.fileList = data.data;
             });
         }

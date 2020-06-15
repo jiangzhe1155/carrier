@@ -19,6 +19,22 @@ new Vue({
 
 declare module 'vue/types/vue' {
     interface Vue {
-        http: any
+        http: any,
+    }
+}
+
+declare global {
+
+    class R<T> {
+        data: T;
+        code: number;
+        msg: string;
+    }
+
+    class CommonFile {
+        fileName: string;
+        fileType: string;
+        isDir: boolean;
+        size: string;
     }
 }
