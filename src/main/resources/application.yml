@@ -5,11 +5,18 @@ spring:
     multipart:
       max-file-size: 5GB
       max-request-size: 500MB
+      location: classpath:tmp/
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_jyb_test?Unicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&zeroDateTimeBehavior=convertToNull&useAffectedRows=true
+    username: root
+    password: root
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+
 server:
   port: 18080
 
-
-file:
-  qiniu:
-    AccessKey: 5nem0zWsGig_lE-SOmIAJz84cQz9vEB8vQJGJvHy
-    SK: RFleqgTYUZULFzhzViB_GRJFcnmUMDdxJtEM2V2V
+mybatis-plus:
+  mapper-locations: classpath*:mybatis/mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

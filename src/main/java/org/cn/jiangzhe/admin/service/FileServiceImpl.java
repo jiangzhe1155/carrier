@@ -9,6 +9,7 @@ import org.cn.jiangzhe.admin.controller.FileController;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<CommonFile> uploadFile(MultipartFile file, String relativePath) throws IOException {
+        if (file ==null || StrUtil.isBlank(file.getOriginalFilename())){
+            throw new ServiceException("文件为空");
+        }
         return uploadFiles(relativePath, file);
     }
 
@@ -34,21 +38,31 @@ public class FileServiceImpl implements FileService {
             String fileName = multipartFile.getOriginalFilename();
             files.add(CommonFile.builder()
                     .fileName(fileName)
-                    .fileType(StrUtil.subAfter(fileName, '.', true))
+                    .fileType(getFileType(fileName))
                     .in(multipartFile.getInputStream())
                     .build());
         }
 
         for (CommonFile file : files) {
-            log.info("上传路径：{}", FileUtil.normalize(FileController.DEMO_DIR + file.getFileName()));
+            String absPath = getAbsPath(relativePath, file.getFileName());
+            log.info("上传路径：{}", absPath);
             try (InputStream in = file.getIn()) {
-                FileUtil.writeFromStream(in, FileController.DEMO_DIR + file.getFileName());
+                FileUtil.writeFromStream(in, absPath);
             } catch (IOException e) {
                 throw new ServiceException("抱歉服务内部异常");
             }
         }
 
         return files;
+    }
+
+    public static String getFileType(String fileName) {
+        return StrUtil.subAfter(fileName, '.', true);
+    }
+
+    public static String getAbsPath(String relativePath, String fileName) {
+        return FileUtil.getAbsolutePath(StrUtil.join(File.separator, FileController.DEMO_DIR,
+                StrUtil.nullToEmpty(relativePath), fileName));
     }
 
     @Override
