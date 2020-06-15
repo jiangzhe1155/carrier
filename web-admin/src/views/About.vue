@@ -24,7 +24,6 @@
 
 <script lang="ts">
     import {Component, Vue} from 'vue-property-decorator';
-    import http from '@/api'
 
     export interface Response<T> {
         data: T;
@@ -49,9 +48,9 @@
         };
 
         beforeCreate(): void {
-            http.post<Response<CommonFile[]>>("listFile", {
+            this.http.post("listFile", {
                 relativePath: ""
-            }).then(data => {
+            }).then((data: Response<CommonFile[]>) => {
                 this.fileList = data.data;
             });
         }

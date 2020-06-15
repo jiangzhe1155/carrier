@@ -5,13 +5,20 @@ import router from './router'
 import store from './store'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
-import Http from './api'
+import http from '@/api/http'
 
 Vue.config.productionTip = false;
-Vue.use(ElementUI,Http);
+Vue.use(ElementUI);
+Vue.prototype.http = http;
 
 new Vue({
     router,
     store,
     render: h => h(App)
 }).$mount('#app');
+
+declare module 'vue/types/vue' {
+    interface Vue {
+        http: any
+    }
+}
