@@ -88,8 +88,8 @@ Axios.interceptors.response.use(
  * @param showLoading
  * @returns {Promise}
  */
-
-const get = function get(url: string, params = {}, showLoading = true) {
+let fileData = {relativePath: ""}
+const get = function get(url: string, params = fileData, showLoading = true) {
     return new Promise((resolve, reject) => {
         showLoading && showFullScreenLoading();//显示等待框
         Axios.get(url, {

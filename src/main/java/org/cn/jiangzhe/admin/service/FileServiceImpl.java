@@ -1,19 +1,20 @@
 package org.cn.jiangzhe.admin.service;
 
+import ch.qos.logback.core.util.FileSize;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.cn.jiangzhe.admin.CommonFile;
-import org.cn.jiangzhe.admin.ServiceException;
-import org.cn.jiangzhe.admin.controller.FileController;
+import org.cn.jiangzhe.admin.aspect.ServiceException;
+import org.cn.jiangzhe.admin.dto.CommonFile;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author jz
@@ -23,51 +24,60 @@ import java.util.List;
 @Service
 public class FileServiceImpl implements FileService {
 
-    @Override
-    public List<CommonFile> uploadFile(MultipartFile file, String relativePath) throws IOException {
-        if (file ==null || StrUtil.isBlank(file.getOriginalFilename())){
-            throw new ServiceException("文件为空");
-        }
-        return uploadFiles(relativePath, file);
-    }
+    @Autowired
+    FileUtilService fileUtilService;
 
     @Override
-    public List<CommonFile> uploadFiles(String relativePath, MultipartFile... multipartFiles) throws IOException {
-        List<CommonFile> files = new ArrayList<>();
-        for (MultipartFile multipartFile : multipartFiles) {
-            String fileName = multipartFile.getOriginalFilename();
-            files.add(CommonFile.builder()
-                    .fileName(fileName)
-                    .fileType(getFileType(fileName))
-                    .in(multipartFile.getInputStream())
-                    .build());
+    public Boolean uploadFile(MultipartFile multipartFile, String relativePath) {
+        String absPath = fileUtilService.absPath(relativePath, multipartFile.getOriginalFilename());
+        log.info("上传路径：{}", absPath);
+        File file = FileUtil.file(absPath);
+        if (FileUtil.exist(file)) {
+            throw new ServiceException("存在同名文件(夹)");
         }
 
-        for (CommonFile file : files) {
-            String absPath = getAbsPath(relativePath, file.getFileName());
-            log.info("上传路径：{}", absPath);
-            try (InputStream in = file.getIn()) {
-                FileUtil.writeFromStream(in, absPath);
-            } catch (IOException e) {
-                throw new ServiceException("抱歉服务内部异常");
-            }
+        try (InputStream in = multipartFile.getInputStream()) {
+            FileUtil.writeFromStream(in, file);
+        } catch (IOException e) {
+            throw new ServiceException("抱歉上传文件失败");
         }
-
-        return files;
+        return true;
     }
 
-    public static String getFileType(String fileName) {
-        return StrUtil.subAfter(fileName, '.', true);
+    public Boolean deleteFile(String relativePath, String fileName) {
+        String absPath = fileUtilService.absPath(relativePath, fileName);
+        File file = FileUtil.file(absPath);
+        if (!FileUtil.del(file)) {
+            throw new ServiceException("抱歉文件不存在");
+        }
+        return true;
     }
 
-    public static String getAbsPath(String relativePath, String fileName) {
-        return FileUtil.getAbsolutePath(StrUtil.join(File.separator, FileController.DEMO_DIR,
-                StrUtil.nullToEmpty(relativePath), fileName));
+    public List<CommonFile> listFile(String relativePath) {
+        String dir = fileUtilService.absPath(relativePath, null);
+        if (!FileUtil.exist(dir)) {
+            throw new ServiceException("抱歉文件不存在");
+        }
+        File[] files = FileUtil.ls(dir);
+        List<CommonFile> commonFiles = Arrays.stream(files).map(file -> CommonFile.builder()
+                .fileName(file.getName())
+                .isDir(file.isDirectory())
+                .lastModifyTime(FileUtil.lastModifiedTime(file))
+                .size(new FileSize(FileUtil.size(file)).toString())
+                .fileType(file.isDirectory() ? null : fileUtilService.fileType(file.getName()))
+                .build()).collect(Collectors.toList());
+        return commonFiles;
     }
 
-    @Override
-    public Object listFiles(String relativePath) {
-        return FileUtil.listFileNames(relativePath);
+    public Boolean createDir(String relativePath, String fileName) {
+        String absPath = fileUtilService.absPath(relativePath, fileName);
+        File file = FileUtil.file(absPath);
+        if (FileUtil.exist(file)) {
+            throw new ServiceException("存在同名文件(夹)");
+        }
+        File mkdir = FileUtil.mkdir(absPath);
+        return true;
     }
+
 
 }

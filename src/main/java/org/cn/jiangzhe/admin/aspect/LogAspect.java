@@ -1,5 +1,6 @@
 package org.cn.jiangzhe.admin.aspect;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ReflectUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -37,16 +38,12 @@ public class LogAspect {
 
         Object[] args = joinPoint.getArgs();
         for (Object arg : args) {
-            try {
+            if (arg!=null && BeanUtil.isBean(arg.getClass())) {
                 log.info("传入参数: {}", mapper.writeValueAsString(arg));
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-                log.info("传入参数 解析对象失败: {}", arg.getClass().getTypeName());
             }
         }
-
         Object res = joinPoint.proceed();
-        log.info("结果: {}", mapper.writeValueAsString(res));
+        log.info("返回结果: {}", mapper.writeValueAsString(res));
         return res;
     }
 }

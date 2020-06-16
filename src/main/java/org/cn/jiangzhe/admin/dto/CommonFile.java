@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin;
+package org.cn.jiangzhe.admin.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

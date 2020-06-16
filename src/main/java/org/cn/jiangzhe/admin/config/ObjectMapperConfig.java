@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin;
+package org.cn.jiangzhe.admin.config;
 
 import cn.hutool.core.io.FileUtil;
 import org.cn.jiangzhe.admin.controller.FileController;
@@ -14,6 +14,8 @@ import javax.servlet.MultipartConfigElement;
  */
 @Configuration
 public class ObjectMapperConfig {
+
+
 
     @Bean
     MultipartConfigElement multipartConfigElement() {

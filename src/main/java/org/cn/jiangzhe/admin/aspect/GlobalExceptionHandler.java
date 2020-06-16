@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin;
+package org.cn.jiangzhe.admin.aspect;
 
 import com.baomidou.mybatisplus.extension.api.R;
 import lombok.extern.slf4j.Slf4j;

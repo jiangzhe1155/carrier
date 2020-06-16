@@ -36,33 +36,31 @@
     import {Component, Vue} from 'vue-property-decorator';
     import qs from 'qs';
 
+
     @Component
     export default class About extends Vue {
         msg: string = 'helloWorld';
         url: string = 'http://127.0.0.1:18080/uploadFile';
-        fileList: CommonFile[];
-        fileData: object;
+        fileList: CommonFile[] = [];
+        fileData: any = {relativePath: ""};
 
-        constructor() {
-            super();
-            this.fileData = {relativePath: ''};
-            this.fileList = [];
+        created() {
             this.getFileList();
         }
 
         getFileList() {
-            this.http.post("listFile", qs.stringify(this.fileData)).then((data: R<CommonFile[]>) => {
+            this.http.post("listFile", this.fileData).then((data: R<CommonFile[]>) => {
                 this.fileList = data.data;
             });
         }
 
-
-        getIcon(isDir) {
+        getIcon(isDir: boolean) {
             return isDir ? 'el-icon-folder' : 'el-icon-document';
         }
 
         onClickFileName(file: CommonFile) {
             if (file.isDir) {
+                this.fileData.relativePath += file.fileName;
                 this.getFileList();
             }
         }

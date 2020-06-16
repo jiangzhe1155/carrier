@@ -1,6 +1,7 @@
-package org.cn.jiangzhe.admin;
+package org.cn.jiangzhe.admin.aspect;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -9,7 +10,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author jz
  * @date 2020/05/19
  */
-@Deprecated
 @Configuration
 public class MvcConfigure implements WebMvcConfigurer {
 
@@ -21,6 +21,6 @@ public class MvcConfigure implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("*"); // 允许跨域请求
+        registry.addMapping("/**").allowedOrigins(CorsConfiguration.ALL); // 允许跨域请求
     }
 }
