@@ -35,7 +35,6 @@ public class FileServiceImpl implements FileService {
         if (FileUtil.exist(file)) {
             throw new ServiceException("存在同名文件(夹)");
         }
-
         try (InputStream in = multipartFile.getInputStream()) {
             FileUtil.writeFromStream(in, file);
         } catch (IOException e) {

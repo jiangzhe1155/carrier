@@ -17,6 +17,5 @@ server:
   port: 18080
 
 mybatis-plus:
-  mapper-locations: classpath*:mybatis/mapper/*.xml
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
