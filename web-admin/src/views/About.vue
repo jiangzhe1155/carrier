@@ -33,8 +33,7 @@
 
 <script lang="ts">
 
-    import {Component, Vue} from 'vue-property-decorator';
-    import qs from 'qs';
+    import {Component, Vue, Watch} from 'vue-property-decorator';
 
 
     @Component
@@ -42,9 +41,11 @@
         msg: string = 'helloWorld';
         url: string = 'http://127.0.0.1:18080/uploadFile';
         fileList: CommonFile[] = [];
-        fileData: any = {relativePath: ""};
+        fileData: any = {};
 
         created() {
+            this.fileData = {relativePath: this.$route.query.relativePath};
+            console.log(this.fileData);
             this.getFileList();
         }
 
@@ -60,9 +61,17 @@
 
         onClickFileName(file: CommonFile) {
             if (file.isDir) {
-                this.fileData.relativePath += file.fileName;
-                this.getFileList();
+                this.$router.push({
+                    name: "About",
+                    query: {"relativePath": this.fileData.relativePath + '/' + file.fileName}
+                })
             }
+        }
+
+        @Watch('$route.query')
+        onRouterChange(newVal, oldVal) {
+            this.fileData.relativePath = newVal.relativePath;
+            this.getFileList()
         }
     }
 

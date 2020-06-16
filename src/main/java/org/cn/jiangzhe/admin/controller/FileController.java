@@ -1,11 +1,11 @@
 package org.cn.jiangzhe.admin.controller;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.io.FileUtil;
+import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
-import org.cn.jiangzhe.admin.aspect.ServiceException;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +36,8 @@ public class FileController {
 
     @PostMapping("uploadFile")
     public Object uploadFile(@RequestBody MultipartFile multipartFile, Params params) {
-        if (multipartFile == null || StrUtil.isBlank(multipartFile.getOriginalFilename())) {
-            throw new ServiceException("文件为空");
+        if (multipartFile == null || FileUtil.containsInvalid(multipartFile.getOriginalFilename())) {
+            return R.failed("文件名为空或包含非法字符 \\ / : * ? \" < > |");
         }
         return fileService.uploadFile(multipartFile, params.getRelativePath());
     }
@@ -63,11 +63,10 @@ public class FileController {
 
     @PostMapping("createDir")
     public Object createDir(@RequestBody Params params) {
-        if (StrUtil.isBlank(params.getFileName())) {
-            throw new ServiceException("文件(夹)名字不能为空");
+        if (FileUtil.containsInvalid(params.getFileName())) {
+            return R.failed("文件名为空或包含非法字符 \\ / : * ? \" < > |");
         }
         return fileService.createDir(params.getRelativePath(), params.getFileName());
     }
-
 
 }
