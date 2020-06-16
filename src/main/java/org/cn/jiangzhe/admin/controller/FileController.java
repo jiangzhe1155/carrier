@@ -1,27 +1,20 @@
 package org.cn.jiangzhe.admin.controller;
 
-import ch.qos.logback.core.util.FileSize;
-import cn.hutool.core.io.FileUtil;
-import com.baomidou.mybatisplus.extension.api.R;
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.cn.jiangzhe.admin.CommonFile;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
-import org.cn.jiangzhe.admin.dao.TFileEngineMapper;
-import org.cn.jiangzhe.admin.service.FileService;
+import org.cn.jiangzhe.admin.aspect.ServiceException;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
+import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author jz
@@ -33,20 +26,20 @@ import java.util.stream.Collectors;
 public class FileController {
 
     @Autowired
-    FileService fileService;
+    FileServiceImpl fileService;
+
+    @Autowired
+    FileUtilService fileUtilService;
 
     public static String DEMO_DIR = "public/";
     public static String TMP_DIR = "tmp";
 
-    @Autowired
-    TFileEngineMapper engineMapper;
-
-
     @PostMapping("uploadFile")
-    public R uploadFile(@RequestBody MultipartFile multipartFile,
-                        Params params) throws IOException {
-        fileService.uploadFile(multipartFile, params.getRelativePath());
-        return R.ok(null);
+    public Object uploadFile(@RequestBody MultipartFile multipartFile, Params params) {
+        if (multipartFile == null || StrUtil.isBlank(multipartFile.getOriginalFilename())) {
+            throw new ServiceException("文件为空");
+        }
+        return fileService.uploadFile(multipartFile, params.getRelativePath());
     }
 
     @Data
@@ -55,29 +48,26 @@ public class FileController {
         private String relativePath;
         private Integer channel;
         private String fileName;
+        private List<String> relativePaths;
     }
 
     @PostMapping("listFile")
-    public R getFiles(Params params) {
-        if (!FileUtil.exist(FileController.DEMO_DIR + params.getRelativePath())) {
-            return R.failed("抱歉文件夹不存在");
-        }
-        File[] files = FileUtil.ls(FileController.DEMO_DIR + params.getRelativePath());
-        List<CommonFile> collect = Arrays.stream(files).map(file -> CommonFile.builder()
-                .fileName(file.getName())
-                .isDir(file.isDirectory())
-                .lastModifyTime(FileUtil.lastModifiedTime(file))
-                .size(new FileSize(FileUtil.size(file)).toString())
-                .fileType(file.isDirectory() ? null : FileServiceImpl.getFileType(file.getName()))
-                .build()).collect(Collectors.toList());
-        return R.ok(collect);
+    public Object listFile(@RequestBody Params params) {
+        return fileService.listFile(params.getRelativePath());
     }
 
     @PostMapping("deleteFile")
-    public R uploadFile(@RequestBody Params params) throws IOException {
-        String absPath = FileServiceImpl.getAbsPath(params.getRelativePath(), params.fileName);
-        boolean del = FileUtil.del(absPath);
-        return R.ok(del);
+    public Object deleteFile(@RequestBody Params params) {
+        return fileService.deleteFile(params.getRelativePath(), params.getFileName());
     }
+
+    @PostMapping("createDir")
+    public Object createDir(@RequestBody Params params) {
+        if (StrUtil.isBlank(params.getFileName())) {
+            throw new ServiceException("文件(夹)名字不能为空");
+        }
+        return fileService.createDir(params.getRelativePath(), params.getFileName());
+    }
+
 
 }
