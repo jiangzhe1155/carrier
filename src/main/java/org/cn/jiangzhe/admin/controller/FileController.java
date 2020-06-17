@@ -49,6 +49,8 @@ public class FileController {
         private Integer channel;
         private String fileName;
         private List<String> relativePaths;
+        private String originName;
+        private String targetName;
     }
 
     @PostMapping("listFile")
@@ -61,12 +63,22 @@ public class FileController {
         return fileService.deleteFile(params.getRelativePath(), params.getFileName());
     }
 
-    @PostMapping("createDir")
-    public Object createDir(@RequestBody Params params) {
-        if (FileUtil.containsInvalid(params.getFileName())) {
+    @PostMapping("makeDir")
+    public Object makeDir(@RequestBody Params params) {
+        String fileName = fileUtilService.formatFileName(params.getFileName());
+        if (FileUtil.containsInvalid(fileName)) {
             return R.failed("文件名为空或包含非法字符 \\ / : * ? \" < > |");
         }
-        return fileService.createDir(params.getRelativePath(), params.getFileName());
+        return fileService.makeDir(params.getRelativePath(), fileName);
+    }
+
+    @PostMapping("rename")
+    public Object rename(@RequestBody Params params) {
+        if (params.getOriginName().equals(params.getTargetName())) {
+            return R.failed("文件(夹)重名");
+        }
+
+        return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
     }
 
 }

@@ -20,7 +20,6 @@ public class MyResponseBodyAdvice implements ResponseBodyAdvice {
     @Override
     public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
                                   Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
-        //匹配ResponseResult
         if (body instanceof R) {
             return body;
         }

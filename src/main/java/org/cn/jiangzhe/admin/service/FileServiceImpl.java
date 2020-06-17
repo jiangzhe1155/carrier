@@ -1,8 +1,8 @@
 package org.cn.jiangzhe.admin.service;
 
-import ch.qos.logback.core.util.FileSize;
 import cn.hutool.core.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.cn.jiangzhe.admin.aspect.CommonLog;
 import org.cn.jiangzhe.admin.aspect.ServiceException;
 import org.cn.jiangzhe.admin.dto.CommonFile;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@CommonLog
 public class FileServiceImpl implements FileService {
 
     @Autowired
@@ -62,13 +63,14 @@ public class FileServiceImpl implements FileService {
                 .fileName(file.getName())
                 .isDir(file.isDirectory())
                 .lastModifyTime(FileUtil.lastModifiedTime(file))
-                .size(new FileSize(FileUtil.size(file)).toString())
-                .fileType(file.isDirectory() ? null : fileUtilService.fileType(file.getName()))
+                .size(FileUtil.readableFileSize(file))
+                .fileType(file.isDirectory() ? null : FileUtil.extName(file.getName()))
                 .build()).collect(Collectors.toList());
+
         return commonFiles;
     }
 
-    public Boolean createDir(String relativePath, String fileName) {
+    public Boolean makeDir(String relativePath, String fileName) {
         String absPath = fileUtilService.absPath(relativePath, fileName);
         File file = FileUtil.file(absPath);
         if (FileUtil.exist(file)) {
@@ -79,4 +81,16 @@ public class FileServiceImpl implements FileService {
     }
 
 
+    public Boolean rename(String relativePath, String originName, String targetName) {
+        File originFile = FileUtil.file(fileUtilService.absPath(relativePath, originName));
+        File targetFile = FileUtil.file(fileUtilService.absPath(relativePath, targetName));
+        if (!FileUtil.exist(originFile)) {
+            throw new ServiceException("抱歉文件不存在");
+        }
+        if (FileUtil.exist(targetFile)) {
+            throw new ServiceException("存在重名文件(夹)");
+        }
+        FileUtil.rename(originFile, targetName, false, false);
+        return true;
+    }
 }
