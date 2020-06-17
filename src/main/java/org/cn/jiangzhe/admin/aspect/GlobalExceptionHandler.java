@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
         StackTraceElement[] stackTrace = e.getStackTrace();
         if (ArrayUtil.isNotEmpty(stackTrace)) {
             StackTraceElement stackTraceElement = stackTrace[0];
-            log.error("服务异常\t【类名】:{}\t【方法名】:{}\t【行号】:{}\t【消息】:{}",
+            log.error("业务服务异常\t【类名】{}\t【方法名】{}\t【行号】{}\t【消息】{}",
                     stackTraceElement.getClassName(), stackTraceElement.getMethodName(),
                     stackTraceElement.getLineNumber(), e.getMessage());
         }

@@ -46,12 +46,12 @@ public class LogAspect {
                 builder.put(arg.getClass().getName(), arg);
             }
         }
-        log.info("日志打印\t【捕获对象类】:{}\t【方法名】:{}\t【参数】:{}",
+        log.info("日志打印\t【捕获对象类】{}\t【方法名】{}\t【参数】{}",
                 joinPoint.getTarget().getClass().getName(),
                 joinPoint.getSignature().getName(),
                 mapper.writeValueAsString(builder.build()));
         Object res = joinPoint.proceed();
-        log.info("日志打印\t【返回对象】:{}", mapper.writeValueAsString(res));
+        log.info("日志打印\t【返回对象】{}", mapper.writeValueAsString(res));
         return res;
     }
 }
