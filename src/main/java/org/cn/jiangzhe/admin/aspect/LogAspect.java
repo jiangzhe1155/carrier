@@ -40,6 +40,9 @@ public class LogAspect {
         Object[] args = joinPoint.getArgs();
         MapBuilder<String, Object> builder = MapUtil.builder();
         for (Object arg : args) {
+            if (arg == null) {
+                continue;
+            }
             if (ObjectUtil.isBasicType(arg) || arg instanceof String) {
                 builder.put(arg.getClass().getSimpleName(), arg.toString());
             } else if (BeanUtil.isBean(arg.getClass())) {

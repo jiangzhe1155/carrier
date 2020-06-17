@@ -1,6 +1,7 @@
 package org.cn.jiangzhe.admin.service;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
 import org.cn.jiangzhe.admin.aspect.ServiceException;
@@ -34,12 +35,12 @@ public class FileServiceImpl implements FileService {
         log.info("上传路径：{}", absPath);
         File file = FileUtil.file(absPath);
         if (FileUtil.exist(file)) {
-            throw new ServiceException("存在同名文件(夹)");
+            throw new ServiceException(StrUtil.format("存在同名文件 {}", file.getName()));
         }
         try (InputStream in = multipartFile.getInputStream()) {
             FileUtil.writeFromStream(in, file);
         } catch (IOException e) {
-            throw new ServiceException("抱歉上传文件失败");
+            throw new ServiceException(StrUtil.format("抱歉上传文件 {} 失败", file.getName()));
         }
         return true;
     }

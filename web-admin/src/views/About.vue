@@ -4,24 +4,30 @@
                 class="upload-demo"
                 drag
                 name="multipartFile"
-                :data="fileData"
-                :action="url"
+                action=""
+                :http-request="uploadFile"
+                :on-change="fileChange"
                 multiple>
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <!--            <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过500kb</div>-->
         </el-upload>
         <div>{{fileData.relativePath}}</div>
 
-
-        <el-dialog :visible.sync="dialogVisible" width="30%">
-            <el-input v-model="makeDirInput" placeholder="文件夹名称" style="padding-bottom: 10px"></el-input>
-            <div style="text-align: right; margin: 0">
-                <el-button @click="dialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="makeDir">确 定</el-button>
-            </div>
-        </el-dialog>
-        <el-button @click="dialogVisible = true">新建文件夹</el-button>
+        <el-popover
+                placement="bottom"
+                width="30%"
+                trigger="click"
+                @hide="dialogVisible = false;makeDirInput=''">
+            <el-form inline>
+                <el-form-item>
+                    <el-input v-model="makeDirInput" placeholder="文件夹名称"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="makeDir">确定</el-button>
+                </el-form-item>
+            </el-form>
+            <el-button slot="reference">新建文件夹</el-button>
+        </el-popover>
 
         <template>
             <el-table :data="fileList" stripe style="width: 100%">
@@ -37,10 +43,31 @@
                 <el-table-column prop="fileType" label="类型"></el-table-column>
                 <el-table-column prop="size" label="大小"></el-table-column>
                 <el-table-column prop="lastModifyTime" label="最后修改时间"></el-table-column>
+
+                <el-table-column label="操作">
+                    <template slot-scope="scope">
+                        <el-popover
+                                trigger="click"
+                                @hide="renameVisible = false;renameInput=''">
+                            <el-form inline>
+                                <el-form-item>
+                                    <el-input v-model="renameInput" placeholder="文件(夹)名称"></el-input>
+                                </el-form-item>
+                                <el-form-item>
+                                    <el-button type="primary" @click="rename(scope.$index, scope.row)">确定</el-button>
+                                </el-form-item>
+                            </el-form>
+                            <el-button slot="reference" size="mini">重命名</el-button>
+                        </el-popover>
+                        <el-button
+                                size="mini"
+                                type="danger"
+                                @click="deleteFile(scope.$index, scope.row)">删除
+                        </el-button>
+                    </template>
+                </el-table-column>
             </el-table>
         </template>
-
-
     </div>
 </template>
 
@@ -56,6 +83,50 @@
         fileData: any = {};
         makeDirInput = '';
         dialogVisible = false;
+        renameInput = '';
+        renameVisible = false;
+
+        fileChange(){
+            console.log("ad")
+        }
+        uploadFile(param) {
+            let data = new FormData();
+            data.append("multipartFile", param.file);
+            data.append("relativePath", this.fileData.relativePath);
+            this.http.post("uploadFile", data).then((data: R<CommonFile[]>) => {
+                Message.success("成功");
+                param.onSuccess();
+                this.init();
+            }).catch(c => {
+                param.onError();
+            });
+        }
+
+        deleteFile(index, row) {
+            this.http.post("deleteFile", {
+                relativePath: this.fileData.relativePath,
+                fileName: row.fileName
+            }).then((data: R<CommonFile[]>) => {
+                Message.success("成功");
+                this.renameVisible = false;
+                this.init();
+            }).catch(c => {
+            });
+        }
+
+        rename(index, row) {
+            this.http.post("rename", {
+                relativePath: this.fileData.relativePath,
+                originName: row.fileName,
+                targetName: this.renameInput
+            }).then((data: R<CommonFile[]>) => {
+                Message.success("成功");
+                this.renameVisible = false;
+                this.init();
+            }).catch(c => {
+            });
+        }
+
 
         created() {
             this.init();
@@ -84,8 +155,7 @@
                 Message.success("成功");
                 this.dialogVisible = false;
                 this.init();
-            }).catch((data: R<CommonFile[]>) => {
-
+            }).catch(c => {
             });
         }
 
