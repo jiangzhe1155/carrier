@@ -1,6 +1,7 @@
 package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -32,7 +35,7 @@ public class FileController {
     FileUtilService fileUtilService;
 
     public static String DEMO_DIR = "public/";
-    public static String TMP_DIR = "tmp";
+    public static String TMP_DIR = "tmp/";
 
     @PostMapping("uploadFile")
     public Object uploadFile(@RequestBody MultipartFile multipartFile, Params params) {
@@ -87,9 +90,23 @@ public class FileController {
 
 
     @PostMapping("chunkUploadFile")
-    public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) {
-
-
+    public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) throws IOException {
+        String tmpFileName = StrUtil.join("_", params.getId(), params.getChunk());
+        File tmpChunkFile = FileUtil.touch(TMP_DIR + File.separator + params.getId() + File.separator + tmpFileName);
+        multipartFile.transferTo(tmpChunkFile);
         return R.ok(null);
     }
+
+
+    @PostMapping("mergeChunkFile")
+    public Object mergeChunkFile(Params params) {
+        File[] ls = FileUtil.ls(StrUtil.join(File.separator, TMP_DIR, params.getId()));
+        if (ls.length == params.chunks) {
+            // 开始合并
+
+        }
+        return null;
+    }
+
+
 }
