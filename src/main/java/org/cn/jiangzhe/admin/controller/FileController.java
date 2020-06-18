@@ -1,7 +1,6 @@
 package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -17,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 /**
@@ -91,22 +91,18 @@ public class FileController {
 
     @PostMapping("chunkUploadFile")
     public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) throws IOException {
-        String tmpFileName = StrUtil.join("_", params.getId(), params.getChunk());
-        File tmpChunkFile = FileUtil.touch(TMP_DIR + File.separator + params.getId() + File.separator + tmpFileName);
-        multipartFile.transferTo(tmpChunkFile);
+        if (params.chunk == 2 || params.chunk == 3) {
+            log.info("文件大小 ：{}", multipartFile.getSize());
+            return 1;
+        }
+        File file = FileUtil.file(fileUtilService.absPath(params.getRelativePath(), params.getFileName()));
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");) {
+            randomAccessFile.seek(params.getChunk() * params.getEachSize());
+            randomAccessFile.write(multipartFile.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        }
         return R.ok(null);
     }
-
-
-    @PostMapping("mergeChunkFile")
-    public Object mergeChunkFile(Params params) {
-        File[] ls = FileUtil.ls(StrUtil.join(File.separator, TMP_DIR, params.getId()));
-        if (ls.length == params.chunks) {
-            // 开始合并
-
-        }
-        return null;
-    }
-
-
 }
