@@ -1,4 +1,4 @@
-import Axios from 'axios'
+import Axios, {AxiosRequestConfig} from 'axios'
 import {Message, Loading} from 'element-ui';
 
 let loading: any;        //定义loading变量
@@ -112,14 +112,15 @@ const get = function get(url: string, params = fileData, showLoading = true) {
  * @param url
  * @param params
  * @param showLoading
+ * @param config
  * @returns {Promise}
  */
 
-const post = function post(url: string, params = {}, showLoading = true) {
+const post = function post(url: string, params = {}, showLoading = true, config: AxiosRequestConfig = {}) {
     return new Promise((resolve, reject) => {
         showLoading && showFullScreenLoading(); //显示等待框
 
-        Axios.post(url, params)
+        Axios.post(url, params, config)
             .then((response: any) => {
                 showLoading && tryHideFullScreenLoading();//隐藏等待框
                 resolve(response);

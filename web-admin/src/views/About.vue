@@ -3,16 +3,19 @@
         <el-upload
                 class="upload-demo"
                 drag
+                :show-file-list="true"
                 name="multipartFile"
+                :auto-upload="true"
                 action=""
                 :http-request="uploadFile"
-                :on-change="fileChange"
-                multiple>
+                multiple
+                :file-list="uploadFileList"
+        >
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         </el-upload>
-        <div>{{fileData.relativePath}}</div>
 
+        <div>{{fileData.relativePath}}</div>
         <el-popover
                 placement="bottom"
                 width="30%"
@@ -47,8 +50,9 @@
                 <el-table-column label="操作">
                     <template slot-scope="scope">
                         <el-popover
+                                ref="ref"
                                 trigger="click"
-                                @hide="renameVisible = false;renameInput=''">
+                                @hide="renameInput=''">
                             <el-form inline>
                                 <el-form-item>
                                     <el-input v-model="renameInput" placeholder="文件(夹)名称"></el-input>
@@ -86,20 +90,77 @@
         renameInput = '';
         renameVisible = false;
 
-        fileChange(){
-            console.log("ad")
-        }
-        uploadFile(param) {
+        maxSize = 5 * 1024 * 1024 * 1024;
+        multiUploadSize = 5 * 1024 * 1024;
+        eachSize = 5 * 1024 * 1024;
+        uploadFileList: any[] = [];
+
+        singleUploadFile(param) {
+            const {file, onProgress, onSuccess, onError} = param;
             let data = new FormData();
-            data.append("multipartFile", param.file);
+            data.append("multipartFile", file);
             data.append("relativePath", this.fileData.relativePath);
-            this.http.post("uploadFile", data).then((data: R<CommonFile[]>) => {
+            this.http.post("uploadFile", data, false, {
+                onUploadProgress: (progressEvent: any) => {
+                    let percent = (progressEvent.loaded / progressEvent.total * 100) | 0;
+                    onProgress({percent: percent})
+                }
+            }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
-                param.onSuccess();
+                onSuccess();
                 this.init();
-            }).catch(c => {
-                param.onError();
+            }).catch(() => {
+                onError()
             });
+        }
+
+        chunkUploadFile(param) {
+            const {file, onProgress} = param;
+            const {eachSize} = this;
+
+            let chunks = Math.ceil(file.size / this.eachSize);
+            let fileChunks = this.splitFile(file, this.eachSize, chunks);
+            console.log('文件', file, fileChunks);
+            let currentChunk = 0;
+            let tasks = [];
+            for (let i = 0; i < fileChunks.length; i++) {
+                // 每块上传完后则返回需要提交的下一块的index
+                let params = {
+                    chunk: i,
+                    chunks,
+                    eachSize,
+                    fileName: file.name,
+                    fullSize: file.size,
+                    id: file.uid,
+                    multipartFile: new window.File([fileChunks[i]], file.name, {type: file.type})
+                };
+                let data = new FormData();
+                for (let p in params) {
+                    data.append(p, params[p]);
+                }
+
+                tasks.push(this.http.post("chunkUploadFile", data, false, onProgress));
+            }
+            let promise = Promise.all(tasks);
+            console.log('最终结果', promise)
+        }
+
+        // 文件分块,利用Array.prototype.slice方法
+        splitFile(file, eachSize, chunks) {
+            let fileChunk = [];
+            for (let chunk = 0; chunks > 0; chunks--) {
+                fileChunk.push(file.slice(chunk, chunk + eachSize));
+                chunk += eachSize
+            }
+            return fileChunk;
+        }
+
+        uploadFile(param) {
+            console.log(param);
+            const {file, onProgress, onSuccess, onError} = param;
+            this.uploadFileList.push(file);
+            const uploadFunc = file.size < 5 * 1024 * 1024 ? this.singleUploadFile : this.chunkUploadFile;
+            uploadFunc(param)
         }
 
         deleteFile(index, row) {
@@ -108,9 +169,8 @@
                 fileName: row.fileName
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
-                this.renameVisible = false;
                 this.init();
-            }).catch(c => {
+            }).catch(() => {
             });
         }
 
@@ -121,9 +181,9 @@
                 targetName: this.renameInput
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
-                this.renameVisible = false;
                 this.init();
-            }).catch(c => {
+                this.renameVisible = false;
+            }).catch(() => {
             });
         }
 
@@ -155,7 +215,7 @@
                 Message.success("成功");
                 this.dialogVisible = false;
                 this.init();
-            }).catch(c => {
+            }).catch(() => {
             });
         }
 

@@ -3,7 +3,6 @@ package org.cn.jiangzhe.admin.service;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.cn.jiangzhe.admin.aspect.CommonLog;
 import org.cn.jiangzhe.admin.aspect.ServiceException;
 import org.cn.jiangzhe.admin.dto.CommonFile;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@CommonLog
 public class FileServiceImpl implements FileService {
 
     @Autowired

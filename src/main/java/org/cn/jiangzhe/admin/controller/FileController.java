@@ -51,6 +51,11 @@ public class FileController {
         private List<String> relativePaths;
         private String originName;
         private String targetName;
+        private String id;
+        private Integer chunks;
+        private Integer chunk;
+        private Integer eachSize;
+        private Integer fullSize;
     }
 
     @PostMapping("listFile")
@@ -77,8 +82,14 @@ public class FileController {
         if (params.getOriginName().equals(params.getTargetName())) {
             return R.failed("文件(夹)重名");
         }
-
         return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
     }
 
+
+    @PostMapping("chunkUploadFile")
+    public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) {
+
+
+        return R.ok(null);
+    }
 }
