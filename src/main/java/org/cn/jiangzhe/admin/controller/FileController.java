@@ -17,7 +17,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * @author jz
@@ -27,6 +31,8 @@ import java.util.List;
 @CommonLog
 @RestController
 public class FileController {
+
+    private Map<String, PriorityBlockingQueue<Params>> map = new HashMap<>();
 
     @Autowired
     FileServiceImpl fileService;
@@ -59,6 +65,7 @@ public class FileController {
         private Integer chunk;
         private Integer eachSize;
         private Integer fullSize;
+        private String md5;
     }
 
     @PostMapping("listFile")
@@ -93,8 +100,11 @@ public class FileController {
     public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) throws IOException {
         if (params.chunk == 2 || params.chunk == 3) {
             log.info("文件大小 ：{}", multipartFile.getSize());
-            return 1;
+            return R.failed("抱歉出错了");
         }
+        PriorityBlockingQueue<Params> priorityBlockingQueue = map.getOrDefault(params.id,
+                new PriorityBlockingQueue<>(params.chunks, Comparator.comparing(Params::getChunk)));
+        priorityBlockingQueue.add(params);
         File file = FileUtil.file(fileUtilService.absPath(params.getRelativePath(), params.getFileName()));
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");) {
             randomAccessFile.seek(params.getChunk() * params.getEachSize());
@@ -105,4 +115,17 @@ public class FileController {
         }
         return R.ok(null);
     }
+
+    @PostMapping("mergeUploadFile")
+    public Object mergeUploadFile(Params params) {
+        PriorityBlockingQueue<Params> priorityBlockingQueue = map.getOrDefault(params.id,
+                new PriorityBlockingQueue<>(params.chunks, Comparator.comparing(Params::getChunk)));
+        System.out.println("校验  " + priorityBlockingQueue);
+        if (priorityBlockingQueue.size() != params.chunks) {
+            return R.failed("校验失败");
+        }
+        return R.ok(null);
+    }
+
+
 }

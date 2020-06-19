@@ -72,7 +72,6 @@ Axios.interceptors.response.use(
         if (data.code === 0) {
             return Promise.resolve(data)
         } else {
-            Message.warning(data.msg);
             return Promise.reject(data)
         }
     },
