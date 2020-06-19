@@ -79,6 +79,7 @@
 
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
+    import SparkMD5 from 'spark-md5';
 
     @Component
     export default class About extends Vue {
@@ -114,46 +115,65 @@
             });
         }
 
-        chunkUploadFile(param) {
+        async chunkUploadFile(param) {
             const {file, onProgress} = param;
-            const {eachSize} = this;
-
+            const {eachSize, http} = this;
+            let self = this;
             let chunks = Math.ceil(file.size / this.eachSize);
-            let fileChunks = this.splitFile(file, this.eachSize, chunks);
-            console.log('文件', file, fileChunks);
-            let currentChunk = 0;
-            let tasks = [];
-            for (let i = 0; i < fileChunks.length; i++) {
-                // 每块上传完后则返回需要提交的下一块的index
-                let params = {
-                    chunk: i,
-                    chunks,
-                    eachSize,
-                    fileName: file.name,
-                    fullSize: file.size,
-                    id: file.uid,
-                    multipartFile: new window.File([fileChunks[i]], file.name, {type: file.type})
-                };
-                let data = new FormData();
-                for (let p in params) {
-                    data.append(p, params[p]);
+
+            const httpTasks: any[] = [];
+            const fileReaderTask = [];
+            for (let i = 0; i < chunks; i++) {
+                fileReaderTask.push(new Promise(function (resolve, reject) {
+                    let chunkFile = file.slice(i * eachSize, (i + 1) * eachSize);
+                    let fileReader = new FileReader();
+                    fileReader.readAsArrayBuffer(chunkFile);
+                    fileReader.onload = function (e: any) {
+                        resolve(e.target.result)
+                    };
+                }).then(result => {
+                    let params = {
+                        chunk: i,
+                        chunks,
+                        eachSize,
+                        fileName: file.name,
+                        fullSize: file.size,
+                        id: file.uid,
+                        relativePath: this.fileData.relativePath,
+                        multipartFile:
+                            new window.File([result], file.name, {type: file.type})
+                    };
+                    let data = new FormData();
+                    for (let p in params) {
+                        data.append(p, params[p]);
+                    }
+                    httpTasks.push(http.post("chunkUploadFile", data, false, onProgress));
+                }));
+            }
+            Promise.all(fileReaderTask).then(
+                () => {
+                    Promise.all(httpTasks).then(tt => {
+                        http.post("mergeUploadFile", {
+                            relativePath: this.fileData.relativePath,
+                            fileName: file.name,
+                            id: file.uid,
+                            chunks,
+                        }, false).then(data => {
+                            console.log(data);
+                            Message.success("校验成功")
+                        })
+
+                    }).catch(err => {
+                        Message.error("文件上传失败")
+                    });
                 }
+            ).catch(() => {
+                Message.error("文件解析异常")
+            })
 
-                tasks.push(this.http.post("chunkUploadFile", data, false, onProgress));
-            }
-            let promise = Promise.all(tasks);
-            console.log('最终结果', promise)
+
         }
 
-        // 文件分块,利用Array.prototype.slice方法
-        splitFile(file, eachSize, chunks) {
-            let fileChunk = [];
-            for (let chunk = 0; chunks > 0; chunks--) {
-                fileChunk.push(file.slice(chunk, chunk + eachSize));
-                chunk += eachSize
-            }
-            return fileChunk;
-        }
 
         uploadFile(param) {
             console.log(param);

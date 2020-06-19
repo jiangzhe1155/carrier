@@ -1,6 +1,7 @@
 package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.RuntimeUtil;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -21,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 
 /**
@@ -32,7 +34,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 @RestController
 public class FileController {
 
-    private Map<String, PriorityBlockingQueue<Params>> map = new HashMap<>();
+    Map<String, PriorityBlockingQueue<Params>> map = new ConcurrentHashMap<>();
 
     @Autowired
     FileServiceImpl fileService;
@@ -70,6 +72,7 @@ public class FileController {
 
     @PostMapping("listFile")
     public Object listFile(@RequestBody Params params) {
+        FileUtil.mkdir(DEMO_DIR);
         return fileService.listFile(params.getRelativePath());
     }
 
@@ -95,20 +98,22 @@ public class FileController {
         return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
     }
 
-
     @PostMapping("chunkUploadFile")
     public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) throws IOException {
-        if (params.chunk == 2 || params.chunk == 3) {
-            log.info("文件大小 ：{}", multipartFile.getSize());
-            return R.failed("抱歉出错了");
-        }
-        PriorityBlockingQueue<Params> priorityBlockingQueue = map.getOrDefault(params.id,
-                new PriorityBlockingQueue<>(params.chunks, Comparator.comparing(Params::getChunk)));
-        priorityBlockingQueue.add(params);
+        //todo 校验是否已经上传了对应的 chunk
         File file = FileUtil.file(fileUtilService.absPath(params.getRelativePath(), params.getFileName()));
+        if (!file.isHidden()) {
+            String sets = "attrib +H \"" + file.getAbsolutePath() + "\"";
+            RuntimeUtil.exec(sets);
+        }
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");) {
             randomAccessFile.seek(params.getChunk() * params.getEachSize());
             randomAccessFile.write(multipartFile.getBytes());
+
+            map.putIfAbsent(params.getId(), new PriorityBlockingQueue<>(params.chunks,
+                    Comparator.comparing(Params::getChunk)));
+            PriorityBlockingQueue<Params> priorityBlockingQueue = map.get(params.getId());
+            priorityBlockingQueue.add(params);
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -117,15 +122,17 @@ public class FileController {
     }
 
     @PostMapping("mergeUploadFile")
-    public Object mergeUploadFile(Params params) {
-        PriorityBlockingQueue<Params> priorityBlockingQueue = map.getOrDefault(params.id,
-                new PriorityBlockingQueue<>(params.chunks, Comparator.comparing(Params::getChunk)));
+    public Object mergeUploadFile(@RequestBody Params params) {
+        PriorityBlockingQueue<Params> priorityBlockingQueue = map.get(params.id);
         System.out.println("校验  " + priorityBlockingQueue);
-        if (priorityBlockingQueue.size() != params.chunks) {
+        String absPath = fileUtilService.absPath(params.getRelativePath(), params.getFileName());
+        if (priorityBlockingQueue == null || priorityBlockingQueue.size() != params.chunks) {
+            FileUtil.del(absPath);
             return R.failed("校验失败");
         }
+        String sets = "attrib -H \"" + absPath + "\"";
+        RuntimeUtil.exec(sets);
         return R.ok(null);
     }
-
 
 }

@@ -58,14 +58,14 @@ public class FileServiceImpl implements FileService {
             throw new ServiceException("抱歉文件不存在");
         }
         File[] files = FileUtil.ls(dir);
-        List<CommonFile> commonFiles = Arrays.stream(files).map(file -> CommonFile.builder()
+        List<CommonFile> commonFiles =
+                Arrays.stream(files).filter(file -> !file.isHidden()).map(file -> CommonFile.builder()
                 .fileName(file.getName())
                 .isDir(file.isDirectory())
                 .lastModifyTime(FileUtil.lastModifiedTime(file))
                 .size(FileUtil.readableFileSize(file))
                 .fileType(file.isDirectory() ? null : FileUtil.extName(file.getName()))
                 .build()).collect(Collectors.toList());
-
         return commonFiles;
     }
 
