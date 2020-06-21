@@ -7,10 +7,7 @@
             @file-added="onFileAdded"
             @file-success="onFileSuccess"
             @file-progress="onFileProgress"
-            @file-error="onFileError"
-            @upload-start="onUploadStart"
-    >
-        <uploader-unsupport></uploader-unsupport>
+            @file-error="onFileError">
         <uploader-drop>
             <p>Drop files here to upload or</p>
             <uploader-btn>选择文件</uploader-btn>
@@ -29,14 +26,13 @@
         @Prop() relativePath: string;
         fileList = [];
         eachSize = 4 * 1024 * 1024;
-        options = {};
+        options = {
+            target:'http://127.0.0.1:18080/uploadFile',
+            testChunks:false
+        };
 
         onFileSuccess(rootFile, file, response, chunk) {
             console.log("onFileSuccess ", rootFile, file, response, chunk);
-        }
-
-        onUploadStart(rootFile) {
-            console.log('onUploadStart', this.$refs.upload);
         }
 
         onFileProgress(rootFile, file, chunk) {
