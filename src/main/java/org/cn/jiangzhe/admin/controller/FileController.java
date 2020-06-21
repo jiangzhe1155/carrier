@@ -1,12 +1,15 @@
 package org.cn.jiangzhe.admin.controller;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.RuntimeUtil;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
+import org.cn.jiangzhe.admin.dao.FileMapper;
+import org.cn.jiangzhe.admin.entity.TFile;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +21,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
 
 /**
+ * 作为一个文件大致有三种状态：生成、完成、删除
+ *
  * @author jz
  * @date 2020/05/14
  */
@@ -34,7 +36,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 @RestController
 public class FileController {
 
-    Map<String, PriorityBlockingQueue<Params>> map = new ConcurrentHashMap<>();
+    Map<String, Boolean[]> map = new ConcurrentHashMap<>();
 
     @Autowired
     FileServiceImpl fileService;
@@ -46,11 +48,11 @@ public class FileController {
     public static String TMP_DIR = "tmp/";
 
     @PostMapping("uploadFile")
-    public Object uploadFile(@RequestBody MultipartFile multipartFile, Params params) {
-        if (multipartFile == null || FileUtil.containsInvalid(multipartFile.getOriginalFilename())) {
+    public Object uploadFile(@RequestBody MultipartFile file, Params params) {
+        if (file == null || FileUtil.containsInvalid(file.getOriginalFilename())) {
             return R.failed("文件名为空或包含非法字符 \\ / : * ? \" < > |");
         }
-        return fileService.uploadFile(multipartFile, params.getRelativePath());
+        return fileService.uploadFile(file, params.getRelativePath());
     }
 
     @Data
@@ -98,22 +100,28 @@ public class FileController {
         return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
     }
 
+    /**
+     * 1.根据上传的文件生成一个唯一id
+     * 2.服务端生成这个分片的md5
+     * 3.判断临时文件表（或者缓存）中是否存在这分片的MD5，存在直接返回
+     * 3.不存在的情况下直接拷贝片到指定路径文件，成功后添加分片缓存
+     *
+     * @param file
+     * @param params
+     * @return
+     * @throws IOException
+     */
     @PostMapping("chunkUploadFile")
-    public Object chunkUploadFile(@RequestBody MultipartFile multipartFile, Params params) throws IOException {
-        //todo 校验是否已经上传了对应的 chunk
-        File file = FileUtil.file(fileUtilService.absPath(params.getRelativePath(), params.getFileName()));
-        if (!file.isHidden()) {
-            String sets = "attrib +H \"" + file.getAbsolutePath() + "\"";
-            RuntimeUtil.exec(sets);
-        }
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");) {
-            randomAccessFile.seek(params.getChunk() * params.getEachSize());
-            randomAccessFile.write(multipartFile.getBytes());
+    public Object chunkUploadFile(@RequestBody MultipartFile file, Params params) throws IOException {
 
-            map.putIfAbsent(params.getId(), new PriorityBlockingQueue<>(params.chunks,
-                    Comparator.comparing(Params::getChunk)));
-            PriorityBlockingQueue<Params> priorityBlockingQueue = map.get(params.getId());
-            priorityBlockingQueue.add(params);
+        File chunkFile = FileUtil.touch(fileUtilService.absPath(params.getRelativePath(), params.getFileName()));
+        log.info("上传路径：{}\t文件名:{}", chunkFile.getAbsolutePath(), file.getName());
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw");) {
+            randomAccessFile.seek(params.getChunk() * params.getEachSize());
+            randomAccessFile.write(file.getBytes());
+            map.putIfAbsent(params.getId(), new Boolean[params.getChunks()]);
+            Boolean[] bitMap = map.get(params.getId());
+            bitMap[params.getChunk()] = true;
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -121,17 +129,22 @@ public class FileController {
         return R.ok(null);
     }
 
+    @Autowired
+    FileMapper fileMapper;
+
     @PostMapping("mergeUploadFile")
     public Object mergeUploadFile(@RequestBody Params params) {
-        PriorityBlockingQueue<Params> priorityBlockingQueue = map.get(params.id);
-        System.out.println("校验  " + priorityBlockingQueue);
-        String absPath = fileUtilService.absPath(params.getRelativePath(), params.getFileName());
-        if (priorityBlockingQueue == null || priorityBlockingQueue.size() != params.chunks) {
-            FileUtil.del(absPath);
-            return R.failed("校验失败");
+        Boolean[] checkChunks = map.get(params.id);
+        for (Boolean c : checkChunks) {
+            if (!c) {
+                return R.failed("校验失败");
+            }
         }
-        String sets = "attrib -H \"" + absPath + "\"";
-        RuntimeUtil.exec(sets);
+
+        DateTime now = DateUtil.parseTime(params.id);
+        TFile file = new TFile();
+        file.setCreateTime(now);
+        file.setUpdateTime(now);
         return R.ok(null);
     }
 

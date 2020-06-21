@@ -1,21 +1,16 @@
 <template>
     <div>
-        <el-upload
-                class="upload-demo"
-                drag
-                :show-file-list="true"
-                name="multipartFile"
-                :auto-upload="true"
-                action=""
-                :http-request="uploadFile"
-                multiple
-                :file-list="uploadFileList"
-        >
-            <i class="el-icon-upload"></i>
-            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-        </el-upload>
+<!--        <el-button @click="dialogVisible = true">上传</el-button>-->
 
-        <div>{{fileData.relativePath}}</div>
+<!--        <el-dialog-->
+        <!--                title="提示"-->
+        <!--                :visible.sync="dialogVisible"-->
+        <!--                :before-close="handleClose">-->
+        <!--            <FileUpload :relativePath="relativePath"></FileUpload>-->
+        <!--        </el-dialog>-->
+
+        <FileUpload :relativePath="relativePath"></FileUpload>
+        <div>{{relativePath}}</div>
         <el-popover
                 placement="bottom"
                 width="30%"
@@ -76,116 +71,30 @@
 </template>
 
 <script lang="ts">
-
+    import FileUpload from '@/components/FileUpload.vue'
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
     import SparkMD5 from 'spark-md5';
 
-    @Component
+    @Component({
+        components: {FileUpload}
+    })
     export default class About extends Vue {
         url: string = 'http://127.0.0.1:18080/uploadFile';
         fileList: CommonFile[] = [];
-        fileData: any = {};
         makeDirInput = '';
         dialogVisible = false;
         renameInput = '';
         renameVisible = false;
+        relativePath = '';
 
-        maxSize = 5 * 1024 * 1024 * 1024;
-        multiUploadSize = 5 * 1024 * 1024;
-        eachSize = 5 * 1024 * 1024;
-        uploadFileList: any[] = [];
-
-        singleUploadFile(param) {
-            const {file, onProgress, onSuccess, onError} = param;
-            let data = new FormData();
-            data.append("multipartFile", file);
-            data.append("relativePath", this.fileData.relativePath);
-            this.http.post("uploadFile", data, false, {
-                onUploadProgress: (progressEvent: any) => {
-                    let percent = (progressEvent.loaded / progressEvent.total * 100) | 0;
-                    onProgress({percent: percent})
-                }
-            }).then((data: R<CommonFile[]>) => {
-                Message.success("成功");
-                onSuccess();
-                this.init();
-            }).catch(() => {
-                onError()
-            });
-        }
-
-        async chunkUploadFile(param) {
-            const {file, onProgress} = param;
-            const {eachSize, http} = this;
-            let self = this;
-            let chunks = Math.ceil(file.size / this.eachSize);
-
-            const httpTasks: any[] = [];
-            const fileReaderTask = [];
-            for (let i = 0; i < chunks; i++) {
-                fileReaderTask.push(new Promise(function (resolve, reject) {
-                    let chunkFile = file.slice(i * eachSize, (i + 1) * eachSize);
-                    let fileReader = new FileReader();
-                    fileReader.readAsArrayBuffer(chunkFile);
-                    fileReader.onload = function (e: any) {
-                        resolve(e.target.result)
-                    };
-                }).then(result => {
-                    let params = {
-                        chunk: i,
-                        chunks,
-                        eachSize,
-                        fileName: file.name,
-                        fullSize: file.size,
-                        id: file.uid,
-                        relativePath: this.fileData.relativePath,
-                        multipartFile:
-                            new window.File([result], file.name, {type: file.type})
-                    };
-                    let data = new FormData();
-                    for (let p in params) {
-                        data.append(p, params[p]);
-                    }
-                    httpTasks.push(http.post("chunkUploadFile", data, false, onProgress));
-                }));
-            }
-            Promise.all(fileReaderTask).then(
-                () => {
-                    Promise.all(httpTasks).then(tt => {
-                        http.post("mergeUploadFile", {
-                            relativePath: this.fileData.relativePath,
-                            fileName: file.name,
-                            id: file.uid,
-                            chunks,
-                        }, false).then(data => {
-                            console.log(data);
-                            Message.success("校验成功")
-                        })
-
-                    }).catch(err => {
-                        Message.error("文件上传失败")
-                    });
-                }
-            ).catch(() => {
-                Message.error("文件解析异常")
-            })
-
-
-        }
-
-
-        uploadFile(param) {
-            console.log(param);
-            const {file, onProgress, onSuccess, onError} = param;
-            this.uploadFileList.push(file);
-            const uploadFunc = file.size < 5 * 1024 * 1024 ? this.singleUploadFile : this.chunkUploadFile;
-            uploadFunc(param)
+        handleClose(done){
+            done()
         }
 
         deleteFile(index, row) {
             this.http.post("deleteFile", {
-                relativePath: this.fileData.relativePath,
+                relativePath: this.relativePath,
                 fileName: row.fileName
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
@@ -196,7 +105,7 @@
 
         rename(index, row) {
             this.http.post("rename", {
-                relativePath: this.fileData.relativePath,
+                relativePath: this.relativePath,
                 originName: row.fileName,
                 targetName: this.renameInput
             }).then((data: R<CommonFile[]>) => {
@@ -213,12 +122,12 @@
         }
 
         init() {
-            this.fileData = {relativePath: this.$route.query.relativePath};
+            this.relativePath = this.$route.query.relativePath;
             this.getFileList();
         }
 
         getFileList() {
-            this.http.post("listFile", this.fileData).then((data: R<CommonFile[]>) => {
+            this.http.post("listFile", {relativePath: this.relativePath}).then((data: R<CommonFile[]>) => {
                 this.fileList = data.data;
             });
         }
@@ -229,7 +138,7 @@
 
         makeDir() {
             this.http.post("makeDir", {
-                relativePath: this.fileData.relativePath,
+                relativePath: this.relativePath,
                 fileName: this.makeDirInput
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
@@ -243,14 +152,14 @@
             if (file.isDir) {
                 this.$router.push({
                     name: "About",
-                    query: {"relativePath": this.fileData.relativePath + '/' + file.fileName}
+                    query: {"relativePath": this.relativePath + '/' + file.fileName}
                 })
             }
         }
 
         @Watch('$route.query')
         onRouterChange(newVal: any, oldVal: any) {
-            this.fileData.relativePath = newVal.relativePath;
+            this.relativePath = newVal.relativePath;
             this.getFileList()
         }
     }

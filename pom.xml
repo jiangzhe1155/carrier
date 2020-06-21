@@ -63,6 +63,11 @@
             <artifactId>hutool-core</artifactId>
             <version>4.1.21</version>
         </dependency>
+       <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-system</artifactId>
+            <version>4.1.21</version>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>

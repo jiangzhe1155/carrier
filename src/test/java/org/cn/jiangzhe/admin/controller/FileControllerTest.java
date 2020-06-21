@@ -1,12 +1,9 @@
 package org.cn.jiangzhe.admin.controller;
 
-import org.cn.jiangzhe.admin.dao.TFileEngineMapper;
-import org.cn.jiangzhe.admin.entity.TFileEngine;
+import org.cn.jiangzhe.admin.dao.FileMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.List;
 
 
 @SpringBootTest
@@ -18,7 +15,7 @@ public class FileControllerTest {
     private String fileName2 = "C:\\Users\\jiangzhe\\Desktop\\v2.0-JavaGuide2.pdf";
 
     @Autowired
-    TFileEngineMapper fileEngineMapper;
+    FileMapper fileEngineMapper;
 
     @Test
     public void uploadFile() {
