@@ -1,16 +1,17 @@
 package org.cn.jiangzhe.admin.controller;
 
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
 import org.cn.jiangzhe.admin.dao.FileMapper;
+import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
 import org.cn.jiangzhe.admin.entity.TFile;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
@@ -157,19 +158,33 @@ public class FileController {
 
         List<String> dirs = StrUtil.split(dir, File.separatorChar, true, true);
 
-        Long id = fileMapper.selectOne(new QueryWrapper<TFile>().lambda()
-                .select(TFile::getId).eq(TFile::getType, FileTypeEnum.DIR)
-                .eq(TFile::getRelativePath, params.getRelativePath())).getId();
+        TFile parentDir = fileMapper.selectOne(new QueryWrapper<TFile>().lambda()
+                .select(TFile::getId, TFile::getOriginalFileName).eq(TFile::getType, FileTypeEnum.DIR)
+                .eq(TFile::getRelativePath, params.getRelativePath()));
+
+        Date now = new Date();
         for (String d : dirs) {
             TFile file = new TFile();
+            file.setUpdateTime(now);
+            file.setCreateTime(now);
+            file.setFolderName(parentDir.getOriginalFileName());
+            file.setFolderId(parentDir.getFolderId());
+            file.setStatus(FileStatusEnum.CREATED);
+            file.setRelativePath(params.getRelativePath());
+            file.setUniqueFileName(d);
+            file.setOriginalFileName(d);
 
+            LambdaQueryWrapper<TFile> eq = new LambdaQueryWrapper<TFile>().select(TFile::getId).eq(TFile::getType,
+                    FileTypeEnum.DIR)
+                    .eq(TFile::getOriginalFileName, d);
 
+            fileMapper.insertNotExist(file, Wrappers.lambdaQuery().notExists(eq.getSqlSelect()));
         }
 
         return R.ok(null);
     }
 
-    private void resolvePath(String relativePath) {
+    private void rsolvePath(String relativePath) {
 
     }
 

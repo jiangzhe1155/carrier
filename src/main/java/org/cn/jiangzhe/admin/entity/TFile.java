@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.lang.reflect.Modifier;
 import java.util.Date;
 
 /**
@@ -24,7 +23,6 @@ public class TFile extends Model<TFile> {
 
     //id
     @TableId(type = IdType.AUTO)
-    @TableField("`id`")
     private Long id;
 
     //原始文件名
@@ -41,7 +39,7 @@ public class TFile extends Model<TFile> {
 
     //状态
     @TableField("`status`")
-    private Integer status;
+    private FileStatusEnum status;
 
     //文件属性
     @TableField("`properties`")
