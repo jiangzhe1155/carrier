@@ -4,8 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+import java.lang.reflect.Modifier;
 import java.util.Date;
 
 /**
@@ -14,9 +17,10 @@ import java.util.Date;
  * @author jz
  * @since 2020-06-21
  */
+@EqualsAndHashCode(callSuper = false)
 @Data
 @TableName("t_file")
-public class TFile {
+public class TFile extends Model<TFile> {
 
     //id
     @TableId(type = IdType.AUTO)

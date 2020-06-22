@@ -4,12 +4,14 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
 import org.cn.jiangzhe.admin.dao.FileMapper;
+import org.cn.jiangzhe.admin.entity.FileTypeEnum;
 import org.cn.jiangzhe.admin.entity.TFile;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
@@ -153,7 +155,16 @@ public class FileController {
             dir = StrUtil.removeSuffix(dir, params.getFilename());
         }
 
-        
+        List<String> dirs = StrUtil.split(dir, File.separatorChar, true, true);
+
+        Long id = fileMapper.selectOne(new QueryWrapper<TFile>().lambda()
+                .select(TFile::getId).eq(TFile::getType, FileTypeEnum.DIR)
+                .eq(TFile::getRelativePath, params.getRelativePath())).getId();
+        for (String d : dirs) {
+            TFile file = new TFile();
+
+
+        }
 
         return R.ok(null);
     }
