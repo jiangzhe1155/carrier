@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.cn.jiangzhe.admin.dao.FileMapper">
+
+    <resultMap type="org.cn.jiangzhe.admin.entity.TFile" id="TFile">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="originalFileName" column="original_file_name" jdbcType="VARCHAR"/>
+        <result property="ext" column="ext" jdbcType="VARCHAR"/>
+        <result property="type" column="type" jdbcType="INTEGER"/>
+        <result property="status" column="status" jdbcType="INTEGER"/>
+        <result property="properties" column="properties" jdbcType="INTEGER"/>
+        <result property="uniqueFileName" column="unique_file_name" jdbcType="VARCHAR"/>
+        <result property="folderId" column="folder_id" jdbcType="INTEGER"/>
+        <result property="folderName" column="folderName" jdbcType="VARCHAR"/>
+        <result property="relativePath" column="relative_path" jdbcType="VARCHAR"/>
+        <result property="md5" column="md5" jdbcType="VARCHAR"/>
+        <result property="channel" column="channel" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <insert id="insertNotExist">
+        insert into t_file
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="file.id !=null">
+                id,
+            </if>
+            <if test="file.originalFileName !=null">
+                originalFileName,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="file.id !=null">
+                #{file.id},
+            </if>
+            <if test="file.originalFileName !=null">
+                #{file.originalFileName},
+            </if>
+        </trim>
+    </insert>
+
+
+</mapper>
