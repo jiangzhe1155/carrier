@@ -1,8 +1,8 @@
 <template>
     <div>
-<!--        <el-button @click="dialogVisible = true">上传</el-button>-->
+        <!--        <el-button @click="dialogVisible = true">上传</el-button>-->
 
-<!--        <el-dialog-->
+        <!--        <el-dialog-->
         <!--                title="提示"-->
         <!--                :visible.sync="dialogVisible"-->
         <!--                :before-close="handleClose">-->
@@ -74,7 +74,6 @@
     import FileUpload from '@/components/FileUpload.vue'
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
-    import SparkMD5 from 'spark-md5';
 
     @Component({
         components: {FileUpload}
@@ -86,16 +85,16 @@
         dialogVisible = false;
         renameInput = '';
         renameVisible = false;
-        relativePath = '';
+        relativePath: any = '';
 
-        handleClose(done){
+        handleClose(done) {
             done()
         }
 
         deleteFile(index, row) {
             this.http.post("deleteFile", {
                 relativePath: this.relativePath,
-                fileName: row.fileName
+                filename: row.fileName
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
                 this.init();
@@ -139,7 +138,7 @@
         makeDir() {
             this.http.post("makeDir", {
                 relativePath: this.relativePath,
-                fileName: this.makeDirInput
+                filename: this.makeDirInput
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
                 this.dialogVisible = false;

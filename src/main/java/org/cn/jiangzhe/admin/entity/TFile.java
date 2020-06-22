@@ -59,8 +59,8 @@ public class TFile {
     @TableField("`relative_path`")
     private String relativePath;
 
-    //md5
-    @TableField("`md5`")
+    //uniqueIdentifier
+    @TableField("`uniqueIdentifier`")
     private String md5;
 
     //渠道来源
