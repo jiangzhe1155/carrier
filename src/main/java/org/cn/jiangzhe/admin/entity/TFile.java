@@ -16,10 +16,10 @@ import java.util.Date;
  * @author jz
  * @since 2020-06-21
  */
-@EqualsAndHashCode(callSuper = false)
+
 @Data
 @TableName("t_file")
-public class TFile extends Model<TFile> {
+public class TFile {
 
     //id
     @TableId(type = IdType.AUTO)
@@ -35,7 +35,7 @@ public class TFile extends Model<TFile> {
 
     //数据类型
     @TableField("`type`")
-    private Integer type;
+    private FileTypeEnum type;
 
     //状态
     @TableField("`status`")
@@ -51,18 +51,18 @@ public class TFile extends Model<TFile> {
 
     //父文件夹id
     @TableField("`folder_id`")
-    private Integer folderId;
+    private Long folderId;
 
     //父文件夹名称
-    @TableField("`folderName`")
+    @TableField("`folder_name`")
     private String folderName;
 
     //相对路径
     @TableField("`relative_path`")
     private String relativePath;
 
-    //uniqueIdentifier
-    @TableField("`uniqueIdentifier`")
+    //identifier
+    @TableField("`md5`")
     private String md5;
 
     //渠道来源

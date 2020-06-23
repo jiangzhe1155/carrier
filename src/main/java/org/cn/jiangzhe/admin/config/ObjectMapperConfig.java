@@ -29,4 +29,6 @@ public class ObjectMapperConfig {
     public Jackson2ObjectMapperBuilderCustomizer customizer() {
         return builder -> builder.featuresToEnable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
     }
+
+
 }

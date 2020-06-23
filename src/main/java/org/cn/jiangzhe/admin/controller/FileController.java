@@ -1,16 +1,16 @@
 package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
-import org.cn.jiangzhe.admin.dao.FileMapper;
+import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
 import org.cn.jiangzhe.admin.entity.TFile;
@@ -49,6 +49,9 @@ public class FileController {
     @Autowired
     FileUtilService fileUtilService;
 
+    @Autowired
+    FileMapper fileMapper;
+
     public static String DEMO_DIR = "public/";
     public static String TMP_DIR = "tmp/";
 
@@ -69,7 +72,7 @@ public class FileController {
         private Integer chunkSize;
         private Integer currentChunkSize;
         private Integer totalSize;
-        private String uniqueIdentifier;
+        private String identifier;
         private Integer totalChunks;
         private List<String> relativePaths;
         private String originName;
@@ -121,7 +124,7 @@ public class FileController {
     public Object chunkUploadFile(@RequestBody MultipartFile file, Params params) throws IOException {
 
         // 直接在根目录下创建一个文件
-        String filePath = DEMO_DIR + params.getUniqueIdentifier();
+        String filePath = DEMO_DIR + params.getIdentifier();
         File chunkFile = FileUtil.touch(filePath);
 
         log.info("上传路径：{}\t文件名:{}", chunkFile.getAbsolutePath(), file.getName());
@@ -129,8 +132,8 @@ public class FileController {
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw")) {
             randomAccessFile.seek((params.getChunkNumber() - 1) * params.getChunkSize());
             randomAccessFile.write(file.getBytes());
-            map.putIfAbsent(params.getUniqueIdentifier(), new Boolean[params.getTotalChunks()]);
-            Boolean[] bitMap = map.get(params.getUniqueIdentifier());
+            map.putIfAbsent(params.getIdentifier(), new Boolean[params.getTotalChunks()]);
+            Boolean[] bitMap = map.get(params.getIdentifier());
             bitMap[params.getChunkNumber() - 1] = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -139,49 +142,60 @@ public class FileController {
         return R.ok(null);
     }
 
-    @Autowired
-    FileMapper fileMapper;
 
     @PostMapping("create")
     public Object create(@RequestBody Params params) {
-        Boolean[] checkChunks = map.get(params.getUniqueIdentifier());
-        for (Boolean c : checkChunks) {
-            if (!c) {
-                return R.failed("校验失败");
-            }
-        }
 
-        String dir = StrUtil.removePrefix(params.getRelativePath(), params.getTargetPath());
+        String relativeDir = StrUtil.removePrefix(params.getRelativePath(), params.getTargetPath());
         if (!params.getIsDir()) {
-            dir = StrUtil.removeSuffix(dir, params.getFilename());
+            relativeDir = StrUtil.removeSuffix(relativeDir, params.getFilename());
         }
 
-        List<String> dirs = StrUtil.split(dir, File.separatorChar, true, true);
+        List<String> dirNames = StrUtil.split(FileUtil.normalize(relativeDir), CharUtil.SLASH, true, true);
 
         TFile parentDir = fileMapper.selectOne(new QueryWrapper<TFile>().lambda()
                 .select(TFile::getId, TFile::getOriginalFileName).eq(TFile::getType, FileTypeEnum.DIR)
                 .eq(TFile::getRelativePath, params.getRelativePath()));
 
         Date now = new Date();
-        for (String d : dirs) {
-            TFile file = new TFile();
-            file.setUpdateTime(now);
-            file.setCreateTime(now);
-            file.setFolderName(parentDir.getOriginalFileName());
-            file.setFolderId(parentDir.getFolderId());
-            file.setStatus(FileStatusEnum.CREATED);
-            file.setRelativePath(params.getRelativePath());
-            file.setUniqueFileName(d);
-            file.setOriginalFileName(d);
+        String relativePath = params.getTargetPath();
+        for (String dirName : dirNames) {
+            TFile dir = new TFile();
+            dir.setUpdateTime(now);
+            dir.setCreateTime(now);
+            dir.setFolderName(parentDir == null ? StrUtil.EMPTY : parentDir.getOriginalFileName());
+            dir.setFolderId(parentDir == null ? 0 : parentDir.getId());
+            dir.setStatus(FileStatusEnum.CREATED);
+            dir.setType(FileTypeEnum.DIR);
+            dir.setRelativePath(relativePath);
+            dir.setUniqueFileName(dirName);
+            dir.setOriginalFileName(dirName);
 
-            LambdaQueryWrapper<TFile> eq = new LambdaQueryWrapper<TFile>().select(TFile::getId).eq(TFile::getType,
-                    FileTypeEnum.DIR)
-                    .eq(TFile::getOriginalFileName, d);
+            boolean exist = fileMapper.selectCount(new LambdaQueryWrapper<TFile>()
+                    .eq(TFile::getType, FileTypeEnum.DIR)
+                    .eq(TFile::getOriginalFileName, dirName)) > 0;
+            if (exist) {
+                break;
+            }
 
-            fileMapper.insertNotExist(file, Wrappers.lambdaQuery().notExists(eq.getSqlSelect()));
+            if (fileMapper.insert(dir) > 0) {
+                parentDir = dir;
+            }
         }
 
-        return R.ok(null);
+        TFile file = new TFile();
+        file.setUpdateTime(now);
+        file.setCreateTime(now);
+        file.setFolderName(parentDir == null ? StrUtil.EMPTY : parentDir.getOriginalFileName());
+        file.setFolderId(parentDir == null ? 0 : parentDir.getFolderId());
+        file.setType(FileTypeEnum.OTHER);
+        file.setStatus(FileStatusEnum.CREATED);
+        file.setRelativePath(relativePath);
+        file.setUniqueFileName(params.getIdentifier());
+        file.setOriginalFileName(params.getFilename());
+        file.setRelativePath(params.getRelativePath());
+        fileMapper.insert(file);
+        return R.ok(file);
     }
 
     private void rsolvePath(String relativePath) {

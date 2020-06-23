@@ -47,7 +47,8 @@
 
         onFileSuccess(rootFile, file, message, chunk) {
 
-            this.http.post("makeDir", {
+            this.http.post("create", {
+                identifier: file.uniqueIdentifier,
                 targetPath: this.relativePath,
                 filename: file.name,
                 relativePath: file.relativePath,
