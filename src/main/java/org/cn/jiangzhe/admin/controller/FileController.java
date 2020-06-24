@@ -131,10 +131,8 @@ public class FileController {
         String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
         String fileName = params.getFilename();
         if (params.getChunkNumber() == 1) {
-            create(fileName, params.getRelativePath(), false, false);
+            TFile file = create(fileName, params.getRelativePath(), false, false);
         }
-
-
         File chunkFile = FileUtil.touch(realFilePath);
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw")) {
@@ -196,5 +194,11 @@ public class FileController {
     public Object create(@RequestBody Params params) {
         return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
     }
+
+    @PostMapping("merge")
+    public Object merge(@RequestBody Params params) {
+        return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
+    }
+
 
 }
