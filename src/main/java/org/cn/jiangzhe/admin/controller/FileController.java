@@ -194,61 +194,7 @@ public class FileController {
 
     @PostMapping("create")
     public Object create(@RequestBody Params params) {
-        return R.ok(null);
-//        String relativeDir = StrUtil.removePrefix(params.getRelativePath(), params.getTargetPath());
-//        if (!params.getIsDir()) {
-//            relativeDir = StrUtil.removeSuffix(relativeDir, params.getFilename());
-//        }
-//
-//        List<String> dirNames = StrUtil.split(FileUtil.normalize(relativeDir), CharUtil.SLASH, true, true);
-//
-//        TFile parentDir = fileMapper.selectOne(new QueryWrapper<TFile>().lambda()
-//                .select(TFile::getId, TFile::getOriginalFileName).eq(TFile::getType, FileTypeEnum.DIR)
-//                .eq(TFile::getRelativePath, params.getRelativePath()));
-//
-//        Date now = new Date();
-//        String relativePath = params.getTargetPath();
-//        for (String dirName : dirNames) {
-//            TFile dir = new TFile();
-//            dir.setUpdateTime(now);
-//            dir.setCreateTime(now);
-//            dir.setFolderName(parentDir == null ? StrUtil.EMPTY : parentDir.getOriginalFileName());
-//            dir.setFolderId(parentDir == null ? 0 : parentDir.getId());
-//            dir.setStatus(FileStatusEnum.CREATED);
-//            dir.setType(FileTypeEnum.DIR);
-//            dir.setRelativePath(relativePath);
-//            dir.setUniqueFileName(dirName);
-//            dir.setOriginalFileName(dirName);
-//
-//            boolean exist = fileMapper.selectCount(new LambdaQueryWrapper<TFile>()
-//                    .eq(TFile::getType, FileTypeEnum.DIR)
-//                    .eq(TFile::getOriginalFileName, dirName)) > 0;
-//            if (exist) {
-//                break;
-//            }
-//
-//            if (fileMapper.insert(dir) > 0) {
-//                parentDir = dir;
-//            }
-//        }
-//
-//        TFile file = new TFile();
-//        file.setUpdateTime(now);
-//        file.setCreateTime(now);
-//        file.setFolderName(parentDir == null ? StrUtil.EMPTY : parentDir.getOriginalFileName());
-//        file.setFolderId(parentDir == null ? 0 : parentDir.getFolderId());
-//        file.setType(FileTypeEnum.OTHER);
-//        file.setStatus(FileStatusEnum.CREATED);
-//        file.setRelativePath(relativePath);
-//        file.setUniqueFileName(params.getIdentifier());
-//        file.setOriginalFileName(params.getFilename());
-//        file.setRelativePath(params.getRelativePath());
-//        fileMapper.insert(file);
-//        return R.ok(file);
-    }
-
-    private void rsolvePath(String relativePath) {
-
+        return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
     }
 
 }
