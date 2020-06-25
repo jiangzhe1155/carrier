@@ -1,7 +1,6 @@
 package org.cn.jiangzhe.admin.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.cn.jiangzhe.admin.dao.FileMapper;
 import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
@@ -42,7 +41,6 @@ public class FileControllerTest {
         Date now = new Date();
         file.setUpdateTime(now);
         file.setCreateTime(now);
-        file.setFolderName("wahha");
         file.setFolderId(123);
         file.setStatus(FileStatusEnum.CREATED);
         file.setRelativePath("/dsfsf");
@@ -53,7 +51,6 @@ public class FileControllerTest {
                 FileTypeEnum.DIR)
                 .eq(TFile::getOriginalFileName, "sxxxx");
 
-        fileMapper.insertNotExist(file,Wrappers.lambdaQuery().notExists(eq.getSqlSelect()));
     }
 
 }

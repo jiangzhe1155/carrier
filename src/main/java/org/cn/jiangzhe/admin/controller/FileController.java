@@ -4,7 +4,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -68,7 +67,7 @@ public class FileController {
         private Integer chunkNumber;
         private Integer chunkSize;
         private Integer currentChunkSize;
-        private Integer totalSize;
+        private Long totalSize;
         private String uniqueIdentifier;
         private Integer totalChunks;
         private List<String> relativePaths;
@@ -77,6 +76,8 @@ public class FileController {
         private String md5;
         private String targetPath;
         private Boolean isDir;
+
+        private transient MultipartFile file;
     }
 
     @PostMapping("listFile")
@@ -106,7 +107,6 @@ public class FileController {
         }
         return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
     }
-
     /**
      * 1.根据上传的文件生成一个唯一id
      * 2.服务端生成这个分片的md5
@@ -118,17 +118,30 @@ public class FileController {
      * @throws IOException
      */
     @PostMapping("chunkUploadFile")
-    public Object chunkUploadFile(@RequestBody MultipartFile file, Params params) throws IOException {
+    public Object chunkUploadFile(Params params) throws IOException {
 
+        String fileName = params.getFilename();
+        if (params.chunkNumber == 1) {
+            Date now = new Date();
+            TFile file = new TFile()
+                    .setOriginalFileName(fileName)
+                    .setUniqueFileName(params.getUniqueIdentifier())
+                    .setCreateTime(now)
+                    .setUpdateTime(now)
+                    .setStatus(FileStatusEnum.CREATING)
+                    .setExt(FileUtil.extName(fileName))
+                    .setSize(params.getTotalSize())
+                    .setRelativePath(FileUtil.normalize(params.getRelativePath()));
+        }
         // 直接在根目录下创建一个文件
         String filePath = DEMO_DIR + params.getUniqueIdentifier();
         File chunkFile = FileUtil.touch(filePath);
 
-        log.info("上传路径：{}\t文件名:{}", chunkFile.getAbsolutePath(), file.getName());
+        log.info("上传路径：{}\t文件名:{}", chunkFile.getAbsolutePath(), params.getFile().getName());
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw")) {
             randomAccessFile.seek((params.getChunkNumber() - 1) * params.getChunkSize());
-            randomAccessFile.write(file.getBytes());
+            randomAccessFile.write(params.getFile().getBytes());
             map.putIfAbsent(params.getUniqueIdentifier(), new Boolean[params.getTotalChunks()]);
             Boolean[] bitMap = map.get(params.getUniqueIdentifier());
             bitMap[params.getChunkNumber() - 1] = true;
@@ -167,7 +180,6 @@ public class FileController {
             TFile file = new TFile();
             file.setUpdateTime(now);
             file.setCreateTime(now);
-            file.setFolderName(parentDir.getOriginalFileName());
             file.setFolderId(parentDir.getFolderId());
             file.setStatus(FileStatusEnum.CREATED);
             file.setRelativePath(params.getRelativePath());
@@ -178,7 +190,6 @@ public class FileController {
                     FileTypeEnum.DIR)
                     .eq(TFile::getOriginalFileName, d);
 
-            fileMapper.insertNotExist(file, Wrappers.lambdaQuery().notExists(eq.getSqlSelect()));
         }
 
         return R.ok(null);

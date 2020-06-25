@@ -4,9 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 
@@ -16,10 +15,10 @@ import java.util.Date;
  * @author jz
  * @since 2020-06-21
  */
-@EqualsAndHashCode(callSuper = false)
 @Data
+@Accessors(chain = true)
 @TableName("t_file")
-public class TFile extends Model<TFile> {
+public class TFile {
 
     //id
     @TableId(type = IdType.AUTO)
@@ -37,6 +36,10 @@ public class TFile extends Model<TFile> {
     @TableField("`type`")
     private Integer type;
 
+    //大小
+    @TableField("`size`")
+    private Long size;
+
     //状态
     @TableField("`status`")
     private FileStatusEnum status;
@@ -53,9 +56,9 @@ public class TFile extends Model<TFile> {
     @TableField("`folder_id`")
     private Integer folderId;
 
-    //父文件夹名称
-    @TableField("`folderName`")
-    private String folderName;
+    //真实路径
+    @TableField("`real_path`")
+    private String realPath;
 
     //相对路径
     @TableField("`relative_path`")
