@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
@@ -15,6 +17,7 @@ import java.util.Date;
  * @author jz
  * @since 2020-06-21
  */
+
 @Data
 @Accessors(chain = true)
 @TableName("t_file")
@@ -34,11 +37,7 @@ public class TFile {
 
     //数据类型
     @TableField("`type`")
-    private Integer type;
-
-    //大小
-    @TableField("`size`")
-    private Long size;
+    private FileTypeEnum type;
 
     //状态
     @TableField("`status`")
@@ -54,18 +53,18 @@ public class TFile {
 
     //父文件夹id
     @TableField("`folder_id`")
-    private Integer folderId;
+    private Long folderId;
 
-    //真实路径
-    @TableField("`real_path`")
-    private String realPath;
+    //父文件夹名称
+    @TableField("`folder_name`")
+    private String folderName;
 
     //相对路径
     @TableField("`relative_path`")
     private String relativePath;
 
-    //uniqueIdentifier
-    @TableField("`uniqueIdentifier`")
+    //identifier
+    @TableField("`md5`")
     private String md5;
 
     //渠道来源

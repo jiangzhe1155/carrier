@@ -41,13 +41,13 @@
         }
 
         onFileAdded(file) {
-            file.relativePath = this.relativePath + '/' + file.relativePath;
+            file.relativePath = this.relativePath + file.relativePath;
             file.uniqueIdentifier = Date.now() + '-' + file.uniqueIdentifier;
         }
 
         onFileSuccess(rootFile, file, message, chunk) {
-
-            this.http.post("makeDir", {
+            this.http.post("create", {
+                identifier: file.uniqueIdentifier,
                 targetPath: this.relativePath,
                 filename: file.name,
                 relativePath: file.relativePath,

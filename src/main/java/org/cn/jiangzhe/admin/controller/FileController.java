@@ -1,15 +1,19 @@
 package org.cn.jiangzhe.admin.controller;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.math.MathUtil;
+import cn.hutool.core.util.CharUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
-import org.cn.jiangzhe.admin.dao.FileMapper;
+import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
 import org.cn.jiangzhe.admin.entity.TFile;
@@ -48,6 +52,9 @@ public class FileController {
     @Autowired
     FileUtilService fileUtilService;
 
+    @Autowired
+    FileMapper fileMapper;
+
     public static String DEMO_DIR = "public/";
     public static String TMP_DIR = "tmp/";
 
@@ -67,8 +74,8 @@ public class FileController {
         private Integer chunkNumber;
         private Integer chunkSize;
         private Integer currentChunkSize;
-        private Long totalSize;
-        private String uniqueIdentifier;
+        private Integer totalSize;
+        private String identifier;
         private Integer totalChunks;
         private List<String> relativePaths;
         private String originName;
@@ -76,8 +83,8 @@ public class FileController {
         private String md5;
         private String targetPath;
         private Boolean isDir;
-
-        private transient MultipartFile file;
+        @JsonIgnore
+        private MultipartFile file;
     }
 
     @PostMapping("listFile")
@@ -107,6 +114,7 @@ public class FileController {
         }
         return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
     }
+
     /**
      * 1.根据上传的文件生成一个唯一id
      * 2.服务端生成这个分片的md5
@@ -120,30 +128,18 @@ public class FileController {
     @PostMapping("chunkUploadFile")
     public Object chunkUploadFile(Params params) throws IOException {
 
+        String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
         String fileName = params.getFilename();
-        if (params.chunkNumber == 1) {
-            Date now = new Date();
-            TFile file = new TFile()
-                    .setOriginalFileName(fileName)
-                    .setUniqueFileName(params.getUniqueIdentifier())
-                    .setCreateTime(now)
-                    .setUpdateTime(now)
-                    .setStatus(FileStatusEnum.CREATING)
-                    .setExt(FileUtil.extName(fileName))
-                    .setSize(params.getTotalSize())
-                    .setRelativePath(FileUtil.normalize(params.getRelativePath()));
+        if (params.getChunkNumber() == 1) {
+            TFile file = create(fileName, params.getRelativePath(), false, false);
         }
-        // 直接在根目录下创建一个文件
-        String filePath = DEMO_DIR + params.getUniqueIdentifier();
-        File chunkFile = FileUtil.touch(filePath);
-
-        log.info("上传路径：{}\t文件名:{}", chunkFile.getAbsolutePath(), params.getFile().getName());
+        File chunkFile = FileUtil.touch(realFilePath);
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw")) {
             randomAccessFile.seek((params.getChunkNumber() - 1) * params.getChunkSize());
             randomAccessFile.write(params.getFile().getBytes());
-            map.putIfAbsent(params.getUniqueIdentifier(), new Boolean[params.getTotalChunks()]);
-            Boolean[] bitMap = map.get(params.getUniqueIdentifier());
+            map.putIfAbsent(params.getIdentifier(), new Boolean[params.getTotalChunks()]);
+            Boolean[] bitMap = map.get(params.getIdentifier());
             bitMap[params.getChunkNumber() - 1] = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -152,51 +148,57 @@ public class FileController {
         return R.ok(null);
     }
 
-    @Autowired
-    FileMapper fileMapper;
+    private TFile create(String fileName, String relativePath, Boolean isDir, Boolean touch) {
+
+        if (StrUtil.isBlank(fileName)) {
+            return new TFile().setId(0L);
+        }
+
+        // 判断是否有重名文件
+        TFile sameNameFile = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                .eq(TFile::getRelativePath, relativePath)
+                .ne(TFile::getStatus, FileStatusEnum.DELETED));
+        if (sameNameFile != null && touch) {
+            return sameNameFile;
+        }
+
+        fileName = sameNameFile == null ? fileName : newFileName(fileName);
+        String parentDirPath = StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
+        String parentDirName = FileUtil.getName(parentDirPath);
+
+        Long folderId = create(parentDirPath, parentDirName, true, true).getId();
+
+        // 开始创建文件
+        Date date = new Date();
+        TFile file = new TFile()
+                .setCreateTime(date)
+                .setUpdateTime(date)
+                .setStatus(FileStatusEnum.NEW)
+                .setType(isDir ? FileTypeEnum.DIR : FileTypeEnum.OTHER)
+                .setFolderId(folderId)
+                .setRelativePath(relativePath)
+                .setOriginalFileName(fileName);
+        fileMapper.insert(file);
+        return file;
+    }
+
+
+    private String newFileName(String fileName) {
+        String ext = FileUtil.extName(fileName);
+        String mainName = FileUtil.mainName(fileName);
+        return mainName + DateUtil.format(new Date(), "yyyyMMdd_HHmmss") + StrUtil.DOT + ext;
+    }
+
 
     @PostMapping("create")
     public Object create(@RequestBody Params params) {
-        Boolean[] checkChunks = map.get(params.getUniqueIdentifier());
-        for (Boolean c : checkChunks) {
-            if (!c) {
-                return R.failed("校验失败");
-            }
-        }
-
-        String dir = StrUtil.removePrefix(params.getRelativePath(), params.getTargetPath());
-        if (!params.getIsDir()) {
-            dir = StrUtil.removeSuffix(dir, params.getFilename());
-        }
-
-        List<String> dirs = StrUtil.split(dir, File.separatorChar, true, true);
-
-        TFile parentDir = fileMapper.selectOne(new QueryWrapper<TFile>().lambda()
-                .select(TFile::getId, TFile::getOriginalFileName).eq(TFile::getType, FileTypeEnum.DIR)
-                .eq(TFile::getRelativePath, params.getRelativePath()));
-
-        Date now = new Date();
-        for (String d : dirs) {
-            TFile file = new TFile();
-            file.setUpdateTime(now);
-            file.setCreateTime(now);
-            file.setFolderId(parentDir.getFolderId());
-            file.setStatus(FileStatusEnum.CREATED);
-            file.setRelativePath(params.getRelativePath());
-            file.setUniqueFileName(d);
-            file.setOriginalFileName(d);
-
-            LambdaQueryWrapper<TFile> eq = new LambdaQueryWrapper<TFile>().select(TFile::getId).eq(TFile::getType,
-                    FileTypeEnum.DIR)
-                    .eq(TFile::getOriginalFileName, d);
-
-        }
-
-        return R.ok(null);
+        return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
     }
 
-    private void rsolvePath(String relativePath) {
-
+    @PostMapping("merge")
+    public Object merge(@RequestBody Params params) {
+        return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
     }
+
 
 }

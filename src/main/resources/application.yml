@@ -6,9 +6,9 @@ spring:
       max-file-size: 5GB
       max-request-size: 500MB
   datasource:
-    url: jdbc:mysql://localhost:3306/db_jyb_test?Unicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&zeroDateTimeBehavior=convertToNull&useAffectedRows=true
-    username: root
-    password: root
+    url: jdbc:mysql://172.16.1.13:3306/db_jyb_test?Unicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&zeroDateTimeBehavior=convertToNull&useAffectedRows=true
+    username: jiayoubao
+    password: root1234
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
 
@@ -19,4 +19,4 @@ mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   type-enums-package: org.cn.jiangzhe.*
-  mapper-locations: classpath:/mapper.**.xml
+

@@ -1,5 +1,5 @@
-package org.cn.jiangzhe.admin.dao;
 
+package org.cn.jiangzhe.admin.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.cn.jiangzhe.admin.entity.TFile;
@@ -12,5 +12,6 @@ import org.cn.jiangzhe.admin.entity.TFile;
  */
 @Mapper
 public interface FileMapper extends BaseMapper<TFile> {
+
 
 }
