@@ -38,9 +38,9 @@
                         </el-link>
                     </template>
                 </el-table-column>
-                <el-table-column prop="fileType" label="类型"></el-table-column>
+                <el-table-column prop="type" label="类型"></el-table-column>
                 <el-table-column prop="size" label="大小"></el-table-column>
-                <el-table-column prop="lastModifyTime" label="最后修改时间"></el-table-column>
+                <el-table-column prop="updateTime" label="最后修改时间"></el-table-column>
 
                 <el-table-column label="操作">
                     <template slot-scope="scope">
@@ -80,12 +80,12 @@
     })
     export default class About extends Vue {
         url: string = 'http://127.0.0.1:18080/uploadFile';
-        fileList: CommonFile[] = [];
+        fileList = [];
         makeDirInput = '';
         dialogVisible = false;
         renameInput = '';
         renameVisible = false;
-        relativePath: any = '';
+        relativePath = '';
 
         handleClose(done) {
             done()
@@ -93,8 +93,7 @@
 
         deleteFile(index, row) {
             this.http.post("deleteFile", {
-                relativePath: this.relativePath,
-                filename: row.fileName
+                relativePath: this.relativePath+"/"+row.fileName
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
                 this.init();
@@ -104,8 +103,7 @@
 
         rename(index, row) {
             this.http.post("rename", {
-                relativePath: this.relativePath,
-                originName: row.fileName,
+                relativePath: this.relativePath + "/" + row.fileName,
                 targetName: this.renameInput
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
@@ -137,8 +135,7 @@
 
         makeDir() {
             this.http.post("makeDir", {
-                relativePath: this.relativePath,
-                filename: this.makeDirInput
+                relativePath: this.relativePath + "/" + this.makeDirInput,
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
                 this.dialogVisible = false;
@@ -147,11 +144,11 @@
             });
         }
 
-        onClickFileName(file: CommonFile) {
-            if (file.isDir) {
+        onClickFileName(file) {
+            if (file.type === 0) {
                 this.$router.push({
                     name: "About",
-                    query: {"relativePath": this.relativePath + '/' + file.fileName}
+                    query: {"relativePath": this.relativePath + "/" + file.fileName}
                 })
             }
         }

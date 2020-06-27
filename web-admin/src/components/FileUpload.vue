@@ -19,7 +19,8 @@
 
     @Component
     export default class FileUpload extends Vue {
-        @Prop() relativePath ?: string;
+        @Prop() relativePath: string;
+
         options = {
             target: 'http://127.0.0.1:18080/chunkUploadFile',
             chunkSize: 4 * 1024 * 1024,
@@ -41,13 +42,22 @@
         }
 
         onFileAdded(file) {
-            file.relativePath = this.relativePath + file.relativePath;
-            file.uniqueIdentifier = Date.now() + '-' + file.uniqueIdentifier;
+            file.relativePath = this.relativePath + "/" + file.relativePath;
+            file.pause();
+            this.http.post("preCreate", {
+                "identifier": file.uniqueIdentifier,
+                "totalSize": file.size
+            }).then(data => {
+                file.storageId = data.data.id;
+                file.resume()
+            })
         }
 
         onFileSuccess(rootFile, file, message, chunk) {
-            this.http.post("create", {
+            this.http.post("merge", {
+                totalSize: file.size,
                 identifier: file.uniqueIdentifier,
+                storageId: file.storageId,
                 targetPath: this.relativePath,
                 filename: file.name,
                 relativePath: file.relativePath,

@@ -2,21 +2,22 @@ package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.math.MathUtil;
 import cn.hutool.core.util.CharUtil;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.CommonLog;
-import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
+import org.cn.jiangzhe.admin.entity.TFieStorage;
 import org.cn.jiangzhe.admin.entity.TFile;
+import org.cn.jiangzhe.admin.mapper.FieStorageMapper;
+import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,16 +56,13 @@ public class FileController {
     @Autowired
     FileMapper fileMapper;
 
+    @Autowired
+    FieStorageMapper fileStoreMapper;
+
+
     public static String DEMO_DIR = "public/";
     public static String TMP_DIR = "tmp/";
 
-    @PostMapping("uploadFile")
-    public Object uploadFile(@RequestBody MultipartFile file, Params params) {
-        if (file == null || FileUtil.containsInvalid(file.getOriginalFilename())) {
-            return R.failed("文件名为空或包含非法字符 \\ / : * ? \" < > |");
-        }
-        return fileService.uploadFile(file, params.getRelativePath());
-    }
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -74,7 +72,8 @@ public class FileController {
         private Integer chunkNumber;
         private Integer chunkSize;
         private Integer currentChunkSize;
-        private Integer totalSize;
+        private Long totalSize;
+        private Long storageId;
         private String identifier;
         private Integer totalChunks;
         private List<String> relativePaths;
@@ -88,59 +87,80 @@ public class FileController {
     }
 
     @PostMapping("listFile")
-    public Object listFile(@RequestBody Params params) {
-        FileUtil.mkdir(DEMO_DIR);
-        return fileService.listFile(params.getRelativePath());
+    public Object listFile(@RequestBody TFile params) {
+        Long folderID = StrUtil.isBlank(params.getRelativePath()) ? 0L : null;
+
+        if (folderID == null) {
+            TFile folder = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                    .select(TFile::getId)
+                    .ne(TFile::getStatus, FileStatusEnum.DELETED)
+                    .eq(TFile::getRelativePath, params.getRelativePath())
+                    .eq(params.getType() != null, TFile::getType, params.getType())
+            );
+            if (folder != null) {
+                folderID = folder.getId();
+            }
+        }
+
+
+        List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
+                .select(TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
+                .ne(TFile::getStatus, FileStatusEnum.DELETED)
+                .eq(TFile::getFolderId, folderID)
+        );
+
+        return files;
     }
 
     @PostMapping("deleteFile")
     public Object deleteFile(@RequestBody Params params) {
-        return fileService.deleteFile(params.getRelativePath(), params.getFilename());
+        fileMapper.update(null, new LambdaUpdateWrapper<TFile>()
+                .set(TFile::getStatus, FileStatusEnum.DELETED)
+                .likeRight(TFile::getRelativePath, params.getRelativePath())
+        );
+        return R.ok(null);
     }
 
     @PostMapping("makeDir")
     public Object makeDir(@RequestBody Params params) {
-        String fileName = fileUtilService.formatFileName(params.getFilename());
-        if (FileUtil.containsInvalid(fileName)) {
-            return R.failed("文件名为空或包含非法字符 \\ / : * ? \" < > |");
-        }
-        return fileService.makeDir(params.getRelativePath(), fileName);
+        String folderName = StrUtil.subAfter(params.getRelativePath(), StrUtil.SLASH, true);
+        TFile file = create(folderName, params.getRelativePath(), true, false);
+        return file;
     }
 
     @PostMapping("rename")
     public Object rename(@RequestBody Params params) {
-        if (params.getOriginName().equals(params.getTargetName())) {
-            return R.failed("文件(夹)重名");
+
+        List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
+                .likeRight(TFile::getRelativePath, params.getRelativePath())
+                .ne(TFile::getStatus, FileStatusEnum.DELETED)
+        );
+
+        String name = FileUtil.getName(params.getRelativePath());
+        for (TFile file : files) {
+            String suf = StrUtil.removePrefix(file.getRelativePath(), params.getRelativePath());
+            if (StrUtil.isEmpty(suf)) {
+                file.setOriginalFileName(params.getTargetName());
+            }
+            String newPre = StrUtil.removeSuffix(params.getRelativePath(), name) + params.getTargetName();
+            file.setRelativePath(newPre + suf);
         }
-        return fileService.rename(params.getRelativePath(), params.getOriginName(), params.getTargetName());
+
+        fileService.updateBatchById(files);
+
+        return R.ok(null);
     }
 
-    /**
-     * 1.根据上传的文件生成一个唯一id
-     * 2.服务端生成这个分片的md5
-     * 3.判断临时文件表（或者缓存）中是否存在这分片的MD5，存在直接返回
-     * 3.不存在的情况下直接拷贝片到指定路径文件，成功后添加分片缓存
-     *
-     * @param params
-     * @return
-     * @throws IOException
-     */
+
     @PostMapping("chunkUploadFile")
     public Object chunkUploadFile(Params params) throws IOException {
-
-        String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
+        String realFilePath = fileUtilService.absPath(null, DateUtil.now() + params.getIdentifier());
         String fileName = params.getFilename();
-        if (params.getChunkNumber() == 1) {
-            TFile file = create(fileName, params.getRelativePath(), false, false);
-        }
-        File chunkFile = FileUtil.touch(realFilePath);
 
+        File chunkFile = FileUtil.touch(realFilePath);
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw")) {
             randomAccessFile.seek((params.getChunkNumber() - 1) * params.getChunkSize());
             randomAccessFile.write(params.getFile().getBytes());
-            map.putIfAbsent(params.getIdentifier(), new Boolean[params.getTotalChunks()]);
-            Boolean[] bitMap = map.get(params.getIdentifier());
-            bitMap[params.getChunkNumber() - 1] = true;
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -162,22 +182,21 @@ public class FileController {
             return sameNameFile;
         }
 
-        fileName = sameNameFile == null ? fileName : newFileName(fileName);
+        String newFileName = sameNameFile == null ? fileName : newFileName(fileName);
         String parentDirPath = StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
         String parentDirName = FileUtil.getName(parentDirPath);
 
-        Long folderId = create(parentDirPath, parentDirName, true, true).getId();
+        Long folderId = create(parentDirName, parentDirPath, true, true).getId();
 
         // 开始创建文件
         Date date = new Date();
         TFile file = new TFile()
-                .setCreateTime(date)
                 .setUpdateTime(date)
-                .setStatus(FileStatusEnum.NEW)
+                .setStatus(FileStatusEnum.CREATED)
                 .setType(isDir ? FileTypeEnum.DIR : FileTypeEnum.OTHER)
                 .setFolderId(folderId)
-                .setRelativePath(relativePath)
-                .setOriginalFileName(fileName);
+                .setRelativePath(StrUtil.removeSuffix(relativePath, fileName) + newFileName)
+                .setOriginalFileName(newFileName);
         fileMapper.insert(file);
         return file;
     }
@@ -186,18 +205,52 @@ public class FileController {
     private String newFileName(String fileName) {
         String ext = FileUtil.extName(fileName);
         String mainName = FileUtil.mainName(fileName);
-        return mainName + DateUtil.format(new Date(), "yyyyMMdd_HHmmss") + StrUtil.DOT + ext;
+        if (StrUtil.isBlank(ext)) {
+            return mainName + DateUtil.format(new Date(), "yyyyMMdd_HHmmss");
+        } else {
+            return mainName + DateUtil.format(new Date(), "yyyyMMdd_HHmmss") + StrUtil.DOT + ext;
+        }
     }
 
-
-    @PostMapping("create")
-    public Object create(@RequestBody Params params) {
-        return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
+    @PostMapping("preCreate")
+    public Object preCreate(@RequestBody Params params) {
+        String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
+        TFieStorage fieStorage = new TFieStorage()
+                .setIdentifier(params.getIdentifier())
+                .setPath(realFilePath)
+                .setStatus(FileStatusEnum.NEW);
+        fileStoreMapper.insert(fieStorage);
+        return R.ok(fieStorage);
     }
 
     @PostMapping("merge")
-    public Object merge(@RequestBody Params params) {
-        return create(params.getFilename(), params.getRelativePath(), params.getIsDir(), true);
+    public synchronized Object merge(@RequestBody Params params) {
+        String filename = params.getFilename();
+        String relativePath = FileUtil.normalize(params.getRelativePath());
+
+        // 判断是否有重名文件
+        TFile sameNameFile = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                .eq(TFile::getRelativePath, relativePath)
+                .ne(TFile::getStatus, FileStatusEnum.DELETED));
+
+        if (sameNameFile != null) {
+            filename = newFileName(filename);
+        }
+
+        String parentDirPath = StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
+        String parentDirName = FileUtil.getName(parentDirPath);
+
+        TFile parentDir = create(parentDirName, parentDirPath, true, true);
+        TFile file = new TFile()
+                .setStatus(FileStatusEnum.CREATED)
+                .setType(FileTypeEnum.OTHER)
+                .setStorageId(params.getStorageId())
+                .setSize(params.getTotalSize())
+                .setRelativePath(parentDirPath + StrUtil.SLASH + filename)
+                .setOriginalFileName(filename)
+                .setFolderId(parentDir == null ? 0L : parentDir.getId());
+        fileMapper.insert(file);
+        return R.ok(file);
     }
 
 

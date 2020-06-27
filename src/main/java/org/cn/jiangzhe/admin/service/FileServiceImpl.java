@@ -2,9 +2,12 @@ package org.cn.jiangzhe.admin.service;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.cn.jiangzhe.admin.aspect.ServiceException;
 import org.cn.jiangzhe.admin.dto.CommonFile;
+import org.cn.jiangzhe.admin.entity.TFile;
+import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +25,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class FileServiceImpl implements FileService {
+public class FileServiceImpl extends ServiceImpl<FileMapper, TFile> implements FileService {
 
     @Autowired
     FileUtilService fileUtilService;
@@ -60,12 +63,12 @@ public class FileServiceImpl implements FileService {
         File[] files = FileUtil.ls(dir);
         List<CommonFile> commonFiles =
                 Arrays.stream(files).filter(file -> !file.isHidden()).map(file -> CommonFile.builder()
-                .fileName(file.getName())
-                .isDir(file.isDirectory())
-                .lastModifyTime(FileUtil.lastModifiedTime(file))
-                .size(FileUtil.readableFileSize(file))
-                .fileType(file.isDirectory() ? null : FileUtil.extName(file.getName()))
-                .build()).collect(Collectors.toList());
+                        .fileName(file.getName())
+                        .isDir(file.isDirectory())
+                        .lastModifyTime(FileUtil.lastModifiedTime(file))
+                        .size(FileUtil.readableFileSize(file))
+                        .fileType(file.isDirectory() ? null : FileUtil.extName(file.getName()))
+                        .build()).collect(Collectors.toList());
         return commonFiles;
     }
 
