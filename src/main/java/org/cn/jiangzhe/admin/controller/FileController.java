@@ -173,7 +173,7 @@ public class FileController {
         TFile file = new TFile()
                 .setCreateTime(date)
                 .setUpdateTime(date)
-                .setStatus(FileStatusEnum.NEW)
+                .setStatus(isDir ? FileStatusEnum.CREATED : FileStatusEnum.NEW)
                 .setType(isDir ? FileTypeEnum.DIR : FileTypeEnum.OTHER)
                 .setFolderId(folderId)
                 .setRelativePath(relativePath)
