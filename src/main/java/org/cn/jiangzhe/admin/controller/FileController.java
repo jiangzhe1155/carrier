@@ -2,13 +2,11 @@ package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -30,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.sql.rowset.serial.SerialException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -271,32 +268,6 @@ public class FileController {
         } else {
             return mainName + DateUtil.format(new Date(), "yyyyMMdd_HHmmss") + StrUtil.DOT + ext;
         }
-    }
-
-    @PostMapping("preCreate")
-    public Object preCreate(@RequestBody Params params) {
-
-
-        Boolean find = false;
-
-        TFieStorage target = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFieStorage>()
-                .select(TFieStorage::getId)
-                .ne(TFieStorage::getStatus, FileStatusEnum.DELETED)
-                .eq(TFieStorage::getMd5, params.getMd5())
-        );
-
-        if (target != null) {
-            find = true;
-        } else {
-            String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
-            target = new TFieStorage()
-                    .setIdentifier(params.getIdentifier())
-                    .setPath(realFilePath)
-                    .setMd5(params.getMd5())
-                    .setStatus(FileStatusEnum.NEW);
-            fileStoreMapper.insert(target);
-        }
-        return R.ok(MapUtil.builder().put("find", find).put("id", target.getId()).build());
     }
 
     @PostMapping("merge")

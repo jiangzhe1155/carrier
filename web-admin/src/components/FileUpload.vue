@@ -12,38 +12,36 @@
             </uploader-drop>
 
             <uploader-files>
-                <div slot-scope="props">
-                    <uploader-file v-for="file in props.files" :key="file.id" :file="file" :list="true"></uploader-file>
+                <template slot-scope="props">
+                    <ul>
+                        <li v-for="file in props.files" :key="file.id" class="liItem">
+                            <uploader-file :file="file" :list="true" ref="uploaderFile">
+                                <template slot-scope="props">
+                                    {{props.paused}}
+                                    {{props.status}}
+                                    {{props.isComplete}}
+                                    {{props.formatedTimeRemaining}}
+                                    {{file.name}}
+                                    {{file.paused}}
+                                    {{(props.progress*100).toFixed(2)}}
+                                    {{props.formatedAverageSpeed}}
 
-                    <el-table :data="files" stripe style="width: 100%">
-                        <el-table-column prop="name" label="类型">
-                        </el-table-column>
-                        <el-table-column label="大小">
-                            <template slot-scope="scope">
-                                {{scope.row.getFormatSize()}}
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="进度">
-                            <template slot-scope="scope" v-model="scope.row"></template>
-                        </el-table-column>
-                    </el-table>
-                </div>
-
-
-                <!--                <div slot-scope="props">-->
-                <el-table :data="props.files" stripe style="width: 100%">
-                    <el-table-column prop="name" label="类型">
-                    </el-table-column>
-                    <el-table-column label="大小">
-                        <template slot-scope="scope">
-                            {{scope.row.getFormatSize()}}
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="进度">
-                        <template slot-scope="scope" v-model="scope.row"></template>
-                    </el-table-column>
-                </el-table>
-                <!--                </div>-->
+                                    <el-button type="primary"  v-show="file.paused" @click="file.resume()">启动</el-button>
+                                    <el-button type="primary"  v-show="!file.paused" @click="file.pause()">暂停</el-button>
+                                    <!--                                    <p class="fileInfoBox">-->
+                                    <!--                                        <span class="fileInfoItem">速度：{{pauseFlag? 0: props.formatedAverageSpeed}}</span>-->
+                                    <!--                                        <span-->
+                                    <!--                                                class="fileInfoItem"-->
+                                    <!--                                        >已上传：{{(parseFloat(props.formatedSize)*props.progress).toFixed(1)}}/{{props.formatedSize}}</span>-->
+                                    <!--                                        <span-->
+                                    <!--                                                class="fileInfoItem"-->
+                                    <!--                                        >剩余时间：{{pauseFlag? 0: props.formatedTimeRemaining}}</span>-->
+                                    <!--                                    </p>-->
+                                </template>
+                            </uploader-file>
+                        </li>
+                    </ul>
+                </template>
             </uploader-files>
         </uploader>
     </div>
