@@ -3,10 +3,9 @@ package org.cn.jiangzhe.admin.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
@@ -15,12 +14,11 @@ import java.util.Date;
  * (TFile)
  *
  * @author jz
- * @since 2020-06-21
+ * @since 2020-06-26
  */
-
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Accessors(chain = true)
-@TableName("t_file")
 public class TFile {
 
     //id
@@ -28,12 +26,13 @@ public class TFile {
     private Long id;
 
     //原始文件名
+    @JsonProperty("fileName")
     @TableField("`original_file_name`")
     private String originalFileName;
 
-    //拓展名
-    @TableField("`ext`")
-    private String ext;
+    //大小
+    @TableField("`size`")
+    private Long size;
 
     //数据类型
     @TableField("`type`")
@@ -55,21 +54,9 @@ public class TFile {
     @TableField("`folder_id`")
     private Long folderId;
 
-    //父文件夹名称
-    @TableField("`folder_name`")
-    private String folderName;
-
     //相对路径
     @TableField("`relative_path`")
     private String relativePath;
-
-    //identifier
-    @TableField("`md5`")
-    private String md5;
-
-    //渠道来源
-    @TableField("`channel`")
-    private Integer channel;
 
     //创建时间
     @TableField("`create_time`")
@@ -79,4 +66,7 @@ public class TFile {
     @TableField("`update_time`")
     private Date updateTime;
 
+        //更新时间
+    @TableField("`storage_id`")
+    private Long storageId;
 }

@@ -18,12 +18,12 @@ import javax.servlet.MultipartConfigElement;
 public class ObjectMapperConfig {
 
 
-    @Bean
-    MultipartConfigElement multipartConfigElement() {
-        MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setLocation(FileUtil.getAbsolutePath(FileController.TMP_DIR));
-        return factory.createMultipartConfig();
-    }
+//    @Bean
+//    MultipartConfigElement multipartConfigElement() {
+//        MultipartConfigFactory factory = new MultipartConfigFactory();
+//        factory.setLocation(FileUtil.getAbsolutePath(FileController.TMP_DIR));
+//        return factory.createMultipartConfig();
+//    }
 
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer customizer() {

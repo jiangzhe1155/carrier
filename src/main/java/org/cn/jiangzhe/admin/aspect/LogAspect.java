@@ -54,7 +54,7 @@ public class LogAspect {
                 joinPoint.getTarget().getClass().getName(),
                 mapper.writeValueAsString(builder.build()));
         Object res = joinPoint.proceed();
-        log.info("日志打印\t【返回对象】{}", mapper.writeValueAsString(res));
+        log.info("日志打印\t【方法名】{}【返回对象】{}", joinPoint.getSignature().getName(), mapper.writeValueAsString(res));
         return res;
     }
 }
