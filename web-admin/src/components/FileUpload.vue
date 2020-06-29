@@ -4,6 +4,7 @@
                   :autoStart="true"
                   @file-added="onFileAdded"
                   @file-success="onFileSuccess"
+                  @file-complete="onFileComplete"
                   @file-progress="onFileProgress">
             <uploader-unsupport></uploader-unsupport>
             <uploader-drop>
@@ -15,19 +16,21 @@
                 <template slot-scope="props">
                     <ul>
                         <li v-for="file in props.files" :key="file.id" class="liItem">
-                            <uploader-file :file="file" :list="true" ref="uploaderFile">
+                            <uploader-file :file="file" :list="false" ref="uploaderFile" :statusText="statusText">
                                 <template slot-scope="props">
                                     {{props.paused}}
+                                    {{statusText[props.file.status]}}
                                     {{props.status}}
                                     {{props.isComplete}}
+                                    {{props.fileCategory}}
                                     {{props.formatedTimeRemaining}}
                                     {{file.name}}
                                     {{file.paused}}
                                     {{(props.progress*100).toFixed(2)}}
                                     {{props.formatedAverageSpeed}}
 
-                                    <el-button type="primary"  v-show="file.paused" @click="file.resume()">启动</el-button>
-                                    <el-button type="primary"  v-show="!file.paused" @click="file.pause()">暂停</el-button>
+                                    <el-button type="primary" v-show="file.paused" @click="file.resume()">启动</el-button>
+                                    <el-button type="primary" v-show="!file.paused" @click="pause">暂停</el-button>
                                     <!--                                    <p class="fileInfoBox">-->
                                     <!--                                        <span class="fileInfoItem">速度：{{pauseFlag? 0: props.formatedAverageSpeed}}</span>-->
                                     <!--                                        <span-->
@@ -70,8 +73,8 @@
                 let objMessage = JSON.parse(data);
                 const {skipUpload, uploaded, id} = objMessage.data;
                 chunk.file.storageId = id;
-                chunk.file.skipUpload = skipUpload;
                 if (skipUpload) {
+                    chunk.file.skipUpload = true;
                     return true;
                 }
                 return (uploaded || []).indexOf(chunk.offset + 1) >= 0
@@ -86,6 +89,10 @@
             }
         };
 
+        pause() {
+            console.log(this.$refs.uploaderFile);
+            this.$refs.uploaderFile[0].pause();
+        }
 
         statusText = {
             success: '成功了',
@@ -102,6 +109,12 @@
 
         get uploader() {
             return this.$refs.uploader.uploader;
+        }
+
+        onFileComplete(file) {
+            if (file.skipUpload) {
+                file.status = 'skipUpload';
+            }
         }
 
         onFileProgress(rootFile, file, chunk) {
@@ -166,9 +179,7 @@
                 relativePath: file.relativePath,
                 isDir: false
             }).then((data: R<any>) => {
-                if (file.skipUpload) {
-                    file.status = 'skipUpload';
-                }
+
             })
         }
 
