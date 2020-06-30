@@ -10,37 +10,40 @@
             <uploader-drop>
                 <uploader-btn>上传文件</uploader-btn>
                 <uploader-btn :directory="true">上传文件夹</uploader-btn>
+                ```
             </uploader-drop>
 
             <uploader-files>
                 <template slot-scope="props">
                     <ul>
                         <li v-for="file in props.files" :key="file.id" class="liItem">
-                            <uploader-file :file="file" :list="false" ref="uploaderFile" :statusText="statusText">
+                            <uploader-file :file="file" :list="true" ref="uploaderFile">
                                 <template slot-scope="props">
-                                    {{props.paused}}
-                                    {{statusText[props.file.status]}}
-                                    {{props.status}}
                                     {{props.isComplete}}
-                                    {{props.fileCategory}}
+                                    {{props.paused}}
+                                    {{props.status}}
+                                    {{props.file.skipUpload}}
+                                    <!--                                    {{status(props.file}}-->
+                                    <!--                                    {{statusText[props.status]}}-->
+                                    <!--                                    {{props.fileCategory}}-->
                                     {{props.formatedTimeRemaining}}
-                                    {{file.name}}
-                                    {{file.paused}}
+                                    {{props.file.name}}
                                     {{(props.progress*100).toFixed(2)}}
                                     {{props.formatedAverageSpeed}}
 
-                                    <el-button type="primary" v-show="file.paused" @click="file.resume()">启动</el-button>
-                                    <el-button type="primary" v-show="!file.paused" @click="pause">暂停</el-button>
-                                    <!--                                    <p class="fileInfoBox">-->
-                                    <!--                                        <span class="fileInfoItem">速度：{{pauseFlag? 0: props.formatedAverageSpeed}}</span>-->
-                                    <!--                                        <span-->
-                                    <!--                                                class="fileInfoItem"-->
-                                    <!--                                        >已上传：{{(parseFloat(props.formatedSize)*props.progress).toFixed(1)}}/{{props.formatedSize}}</span>-->
-                                    <!--                                        <span-->
-                                    <!--                                                class="fileInfoItem"-->
-                                    <!--                                        >剩余时间：{{pauseFlag? 0: props.formatedTimeRemaining}}</span>-->
-                                    <!--                                    </p>-->
+                                    <!--                                    <el-button-group v-show="!props.isComplete">-->
+                                    <el-button type="primary" v-show="props.paused"
+                                               @click="resume(props.file.id)">启动
+                                    </el-button>
+                                    <el-button type="primary" v-show="!props.paused"
+                                               @click="pause(props.file.id)">暂停
+                                    </el-button>
+                                    <el-button type="primary" @click="retry(props.file.id)">重试
+                                    </el-button>
+                                    <!--                                    </el-button-group>-->
+
                                 </template>
+
                             </uploader-file>
                         </li>
                     </ul>
@@ -61,6 +64,7 @@
     export default class FileUpload extends Vue {
         @Prop() relativePath: string;
 
+
         options = {
             target: 'http://127.0.0.1:18080/chunkUploadFile',
             chunkSize: 4 * 1024 * 1024,
@@ -69,7 +73,6 @@
             allowDuplicateUploads: true,
             simultaneousUploads: 1,
             checkChunkUploadedByResponse: function (chunk, data) {
-                console.log(chunk, data);
                 let objMessage = JSON.parse(data);
                 const {skipUpload, uploaded, id} = objMessage.data;
                 chunk.file.storageId = id;
@@ -89,9 +92,55 @@
             }
         };
 
-        pause() {
-            console.log(this.$refs.uploaderFile);
-            this.$refs.uploaderFile[0].pause();
+
+        getStatus(file) {
+            console.log(file)
+            let isUploading = file.isUploading
+            let isComplete = file.isComplete
+            let isError = file.error
+            let paused = file.paused
+            let skipUpload = file.skipUpload
+            if (skipUpload) {
+                return 'skipUpload'
+            } else if (isComplete) {
+                return 'success'
+            } else if (isError) {
+                return 'error'
+            } else if (isUploading) {
+                return 'uploading'
+            } else if (paused) {
+                return 'paused'
+            } else {
+                return 'waiting'
+            }
+        }
+
+        pause(id) {
+            let uploaderFile = this.$refs.uploaderFile;
+            for (let f of uploaderFile) {
+                if (f.file.id === id) {
+                    f.pause();
+                }
+            }
+        }
+
+        retry(id) {
+            let uploaderFile = this.$refs.uploaderFile;
+            console.log(uploaderFile)
+            for (let f of uploaderFile) {
+                if (f.file.id === id) {
+                    f.retry();
+                }
+            }
+        }
+
+        resume(id) {
+            let uploaderFile = this.$refs.uploaderFile;
+            for (let f of uploaderFile) {
+                if (f.file.id === id) {
+                    f.resume();
+                }
+            }
         }
 
         statusText = {
