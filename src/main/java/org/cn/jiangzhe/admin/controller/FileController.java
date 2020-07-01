@@ -59,9 +59,7 @@ public class FileController {
     @Autowired
     FieStorageMapper fileStoreMapper;
 
-
     public static String DEMO_DIR = "public/";
-
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -81,7 +79,6 @@ public class FileController {
         private String md5;
         private String targetPath;
         private Boolean isDir;
-
     }
 
     @PostMapping("listFile")
@@ -186,7 +183,6 @@ public class FileController {
         return R.ok(res);
     }
 
-
     @Data
     @Accessors(chain = true)
     public static class Res {
@@ -219,6 +215,7 @@ public class FileController {
             fileStoreMapper.update(new TFieStorage().setStatus(FileStatusEnum.CREATING).setId(params.getStorageId()),
                     null);
         }
+
         if (params.getChunkNumber().equals(params.getTotalChunks())) {
             fileStoreMapper.update(new TFieStorage().setStatus(FileStatusEnum.CREATED).setId(params.getStorageId()),
                     null);
@@ -227,7 +224,6 @@ public class FileController {
     }
 
     private TFile create(String fileName, String relativePath, Boolean isDir, Boolean touch) {
-
         if (StrUtil.isBlank(fileName)) {
             return new TFile().setId(0L);
         }
@@ -288,7 +284,6 @@ public class FileController {
         String parentDirName = FileUtil.getName(parentDirPath);
 
         TFile parentDir = create(parentDirName, parentDirPath, true, true);
-
 
         TFile file = new TFile()
                 .setStatus(FileStatusEnum.CREATED)

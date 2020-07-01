@@ -25,9 +25,6 @@ public class FileUtilService {
                 StrUtil.nullToEmpty(relativePath), StrUtil.nullToEmpty(fileName)));
     }
 
-
-
-
     public String formatFileName(String fileName) {
         fileName = StrUtil.trim(fileName);
         int i = fileName.length() - 1;
@@ -36,4 +33,5 @@ public class FileUtilService {
         }
         return StrUtil.sub(fileName, 0, i + 1);
     }
+
 }

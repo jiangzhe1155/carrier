@@ -2,8 +2,15 @@ package org.cn.jiangzhe.admin.controller;
 
 import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
+
+import java.util.*;
 
 
 @SpringBootTest
@@ -17,9 +24,21 @@ public class FileControllerTest {
     @Autowired
     FileMapper fileEngineMapper;
 
+    @Autowired
+    RedisTemplate redisTemplate;
+
     @Test
     public void uploadFile() {
-        fileEngineMapper.selectList(null);
+        Set<String> keys = (Set<String>) redisTemplate.execute((RedisCallback<Set<String>>) connection -> {
+            Set<String> keysTmp = new HashSet<>();
+            Cursor<byte[]> cursor =
+                    connection.scan(new ScanOptions.ScanOptionsBuilder().match("wa*").build());
+            while (cursor.hasNext()) {
+                keysTmp.add(new String(cursor.next()));
+            }
+            return keysTmp;
+        });
+        System.out.println(keys);
     }
 
     @Test
