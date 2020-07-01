@@ -10,6 +10,8 @@
         <!--        </el-dialog>-->
 
         <FileUpload :relativePath="relativePath"></FileUpload>
+
+
         <div>{{relativePath}}</div>
         <el-popover
                 placement="bottom"
@@ -75,9 +77,7 @@
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
 
-    @Component({
-        components: {FileUpload}
-    })
+    @Component({components: {FileUpload}})
     export default class About extends Vue {
         url: string = 'http://127.0.0.1:18080/uploadFile';
         fileList = [];
@@ -87,13 +87,9 @@
         renameVisible = false;
         relativePath = '';
 
-        handleClose(done) {
-            done()
-        }
-
         deleteFile(index, row) {
             this.http.post("deleteFile", {
-                relativePath: this.relativePath+"/"+row.fileName
+                relativePath: this.relativePath + "/" + row.fileName
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
                 this.init();

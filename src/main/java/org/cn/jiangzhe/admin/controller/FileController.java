@@ -1,7 +1,9 @@
 package org.cn.jiangzhe.admin.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -76,42 +78,44 @@ public class FileController {
         private List<String> relativePaths;
         private String originName;
         private String targetName;
-        private String md5;
         private String targetPath;
         private Boolean isDir;
     }
 
     @PostMapping("listFile")
     public Object listFile(@RequestBody TFile params) {
-        Long folderID = StrUtil.isBlank(params.getRelativePath()) ? 0L : null;
 
-        if (folderID == null) {
-            TFile folder = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
-                    .select(TFile::getId)
-                    .ne(TFile::getStatus, FileStatusEnum.DELETED)
-                    .eq(TFile::getRelativePath, params.getRelativePath())
-                    .eq(params.getType() != null, TFile::getType, params.getType())
-            );
-            if (folder != null) {
-                folderID = folder.getId();
-            }
+        Long folderId = null;
+
+        if (StrUtil.isBlank(params.getRelativePath())) {
+            folderId = 0L;
         }
 
-        List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .select(TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
-                .ne(TFile::getStatus, FileStatusEnum.DELETED)
-                .eq(TFile::getFolderId, folderID)
-        );
+        if (folderId == null) {
+            // 通过相对路径找到id
+            TFile folder = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                    .select(TFile::getId)
+                    .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                    .eq(TFile::getRelativePath, params.getRelativePath()));
+            if (folder == null) {
+                return Collections.emptyList();
+            }
+            folderId = folder.getId();
+        }
 
-        return files;
+        return fileMapper.selectList(new LambdaQueryWrapper<TFile>()
+                .select(TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                .eq(TFile::getFolderId, folderId)
+        );
     }
 
     @PostMapping("deleteFile")
     public Object deleteFile(@RequestBody Params params) {
-        fileMapper.update(null, new LambdaUpdateWrapper<TFile>()
+        int update = fileMapper.update(null, new LambdaUpdateWrapper<TFile>()
                 .set(TFile::getStatus, FileStatusEnum.DELETED)
-                .likeRight(TFile::getRelativePath, params.getRelativePath())
-        );
+                .likeRight(TFile::getRelativePath, params.getRelativePath()));
+
         return R.ok(null);
     }
 
@@ -127,16 +131,17 @@ public class FileController {
 
         List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
                 .likeRight(TFile::getRelativePath, params.getRelativePath())
-                .ne(TFile::getStatus, FileStatusEnum.DELETED)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED)
         );
+        // 先判断有没有重复的文件
 
-        String name = FileUtil.getName(params.getRelativePath());
+        String fileName = FileUtil.getName(params.getRelativePath());
         for (TFile file : files) {
             String suf = StrUtil.removePrefix(file.getRelativePath(), params.getRelativePath());
             if (StrUtil.isEmpty(suf)) {
                 file.setOriginalFileName(params.getTargetName());
             }
-            String newPre = StrUtil.removeSuffix(params.getRelativePath(), name) + params.getTargetName();
+            String newPre = StrUtil.removeSuffix(params.getRelativePath(), fileName) + params.getTargetName();
             file.setRelativePath(newPre + suf);
         }
 
@@ -151,7 +156,7 @@ public class FileController {
             throw new ServiceException("文件名不合法");
         }
 
-        Res res = new Res();
+        Response response = new Response();
         TFieStorage target = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFieStorage>()
                 .select(TFieStorage::getId, TFieStorage::getStatus)
                 .ne(TFieStorage::getStatus, FileStatusEnum.DELETED)
@@ -160,32 +165,31 @@ public class FileController {
 
         if (target != null) {
             if (target.getStatus().equals(FileStatusEnum.CREATED)) {
-                res.setId(target.getId());
-                res.setSkipUpload(true);
+                response.setId(target.getId());
+                response.setSkipUpload(true);
             } else {
                 List<Integer> uploaded = new ArrayList<>(map.getOrDefault(params.getIdentifier(), new HashSet<>()));
                 System.out.println(uploaded);
-                res.setUploaded(uploaded);
-                res.setId(target.getId());
-                res.setSkipUpload(false);
+                response.setUploaded(uploaded);
+                response.setId(target.getId());
+                response.setSkipUpload(false);
             }
         } else {
             String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
             target = new TFieStorage()
                     .setIdentifier(params.getIdentifier())
                     .setPath(realFilePath)
-                    .setMd5(params.getMd5())
                     .setStatus(FileStatusEnum.NEW);
             fileStoreMapper.insert(target);
-            res.setSkipUpload(false);
-            res.setId(target.getId());
+            response.setSkipUpload(false);
+            response.setId(target.getId());
         }
-        return R.ok(res);
+        return R.ok(response);
     }
 
     @Data
     @Accessors(chain = true)
-    public static class Res {
+    public static class Response {
         private Boolean skipUpload;
         private Long id;
         private List<Integer> uploaded;

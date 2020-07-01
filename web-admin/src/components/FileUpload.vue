@@ -1,6 +1,6 @@
 <template>
     <div>
-        <uploader ref="uploader" :options="options" class="uploader-example" :autoStart="true"
+        <uploader ref="uploader" :options="options"
                   @file-added="onFileAdded"
                   @file-success="onFileSuccess"
                   @file-complete="onFileComplete"
@@ -194,8 +194,8 @@
         }
 
         onFileSuccess(rootFile, file, message, chunk) {
-            let res = JSON.parse(message);
-            if (res.code !== 0) {
+            let response = JSON.parse(message);
+            if (response.code !== 0) {
                 Message.error("抱歉失败");
                 file.error = true;
                 file.pause();
