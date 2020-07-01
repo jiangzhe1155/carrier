@@ -1,33 +1,25 @@
 <template>
     <div>
-        <!--        <el-button @click="dialogVisible = true">上传</el-button>-->
-
-        <!--        <el-dialog-->
-        <!--                title="提示"-->
-        <!--                :visible.sync="dialogVisible"-->
-        <!--                :before-close="handleClose">-->
-        <!--            <FileUpload :relativePath="relativePath"></FileUpload>-->
-        <!--        </el-dialog>-->
-
-        <FileUpload :relativePath="relativePath"></FileUpload>
+        <!--        <FileUpload :relativePath="relativePath"></FileUpload>-->
 
 
-        <div>{{relativePath}}</div>
-        <el-popover
-                placement="bottom"
-                width="30%"
-                trigger="click"
-                @hide="dialogVisible = false;makeDirInput=''">
-            <el-form inline>
-                <el-form-item>
-                    <el-input v-model="makeDirInput" placeholder="文件夹名称"></el-input>
-                </el-form-item>
-                <el-form-item>
-                    <el-button type="primary" @click="makeDir">确定</el-button>
-                </el-form-item>
-            </el-form>
-            <el-button slot="reference">新建文件夹</el-button>
-        </el-popover>
+        <template>
+
+            <el-dropdown>
+                <el-button size="medium" type="primary">
+                    <i class="el-icon-upload"></i><span>上传</span>
+                </el-button>
+                <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item>上传文件</el-dropdown-item>
+                    <el-dropdown-item>上传文件夹</el-dropdown-item>
+                </el-dropdown-menu>
+            </el-dropdown>
+
+            <el-button size="medium" type="primary" style="margin-left: 20px">
+                新建文件夹
+            </el-button>
+        </template>
+
 
         <template>
             <el-table :data="fileList" stripe style="width: 100%">
@@ -78,7 +70,7 @@
     import {Message} from 'element-ui';
 
     @Component({components: {FileUpload}})
-    export default class About extends Vue {
+    export default class FileManage extends Vue {
         url: string = 'http://127.0.0.1:18080/uploadFile';
         fileList = [];
         makeDirInput = '';
@@ -143,7 +135,7 @@
         onClickFileName(file) {
             if (file.type === 0) {
                 this.$router.push({
-                    name: "About",
+                    name: "FileManage",
                     query: {"relativePath": this.relativePath + "/" + file.fileName}
                 })
             }

@@ -12,10 +12,6 @@ spring:
     password: root
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
-  redis:
-    host: 172.16.1.16
-    port: 6379
-    database: 8
 
 
 server:

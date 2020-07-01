@@ -1,9 +1,7 @@
 package org.cn.jiangzhe.admin.controller;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -84,9 +82,7 @@ public class FileController {
 
     @PostMapping("listFile")
     public Object listFile(@RequestBody TFile params) {
-
         Long folderId = null;
-
         if (StrUtil.isBlank(params.getRelativePath())) {
             folderId = 0L;
         }
@@ -133,8 +129,6 @@ public class FileController {
                 .likeRight(TFile::getRelativePath, params.getRelativePath())
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
         );
-        // 先判断有没有重复的文件
-
         String fileName = FileUtil.getName(params.getRelativePath());
         for (TFile file : files) {
             String suf = StrUtil.removePrefix(file.getRelativePath(), params.getRelativePath());
