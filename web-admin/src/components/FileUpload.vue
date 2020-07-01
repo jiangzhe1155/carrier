@@ -1,7 +1,6 @@
 <template>
     <div>
-        <uploader ref="uploader" :options="options" class="uploader-example" :file-status-text="statusText"
-                  :autoStart="true"
+        <uploader ref="uploader" :options="options" class="uploader-example" :autoStart="true"
                   @file-added="onFileAdded"
                   @file-success="onFileSuccess"
                   @file-complete="onFileComplete"
@@ -14,35 +13,28 @@
 
             <uploader-files>
                 <template slot-scope="props">
-                    <ul>
-                        <li v-for="file in props.files" :key="file.id" class="liItem">
-                            <uploader-file :file="file" :list="true" ref="uploaderFile">
-                                <template slot-scope="props">
-                                    {{props.file.name}}
-                                    {{statusText[getStatus(props)]}}
-                                    {{props.formatedSize}}
-                                    {{props.formatedAverageSpeed}}
-                                    {{props.progress}}
-                                    <el-button type="primary">asdas</el-button>
-                                    <!--                                    <el-button-group v-show="!props.isComplete">-->
-                                    <el-button type="primary" v-show="getStatus(props)==='paused'"
-                                               @click="resume(props.file.id)">启动
-                                    </el-button>
-                                    <el-button type="primary" v-show="getStatus(props)==='uploading'"
-                                               @click="pause(props.file.id)">暂停
-                                    </el-button>
-                                    <el-button type="primary" v-show="getStatus(props)==='error'"
-                                               @click="retry(props.file.id)">重试
-                                    </el-button>
-                                    <el-button type="primary"
-                                               v-show="getRemoveStatus(getStatus(props))"
-                                               @click="retry(props.file.id)">移除
-                                    </el-button>
-                                    <!--                                    </el-button-group>-->
-                                </template>
-                            </uploader-file>
-                        </li>
-                    </ul>
+                    <uploader-file :file="file" v-for="file in props.files" ref="uploaderFile">
+                        <template slot-scope="props">
+                            <span>{{props.file.name}}</span>
+                            <span>{{props.formatedSize}}</span>
+                            {{statusText[getStatus(props)]}}
+                            {{props.formatedAverageSpeed}}
+                            {{props.progress}}
+                            <el-button type="primary" v-show="getStatus(props)==='paused'"
+                                       @click="resume(props.file.id)">启动
+                            </el-button>
+                            <el-button type="primary" v-show="getStatus(props)==='uploading'"
+                                       @click="pause(props.file.id)">暂停
+                            </el-button>
+                            <el-button type="primary" v-show="getStatus(props)==='error'"
+                                       @click="retry(props.file.id)">重试
+                            </el-button>
+                            <el-button type="primary"
+                                       v-show="getRemoveStatus(getStatus(props))"
+                                       @click="remove(props.file.id)">移除
+                            </el-button>
+                        </template>
+                    </uploader-file>
                 </template>
             </uploader-files>
         </uploader>
@@ -60,16 +52,6 @@
     export default class FileUpload extends Vue {
         @Prop() relativePath: string;
 
-
-        getInfo(props) {
-            console.log(JSON.stringify(props));
-            return props;
-        }
-
-        getRemoveStatus(status) {
-            return status !== 'skipUpload' && status !== 'success';
-        }
-
         options = {
             target: 'http://127.0.0.1:18080/chunkUploadFile',
             chunkSize: 4 * 1024 * 1024,
@@ -79,6 +61,11 @@
             simultaneousUploads: 1,
             checkChunkUploadedByResponse: function (chunk, data) {
                 let objMessage = JSON.parse(data);
+                if (objMessage.code != 0) {
+                    chunk.file.error = true;
+                    chunk.file.pause();
+                }
+
                 const {skipUpload, uploaded, id} = objMessage.data;
                 chunk.file.storageId = id;
                 if (skipUpload) {
@@ -86,17 +73,12 @@
                     return true;
                 }
                 return (uploaded || []).indexOf(chunk.offset + 1) >= 0
-            },
-            parseTimeRemaining: function (timeRemaining, parsedTimeRemaining) {
-                return parsedTimeRemaining
-                    .replace(/\syears?/, '年')
-                    .replace(/\days?/, '天')
-                    .replace(/\shours?/, '小时')
-                    .replace(/\sminutes?/, '分钟')
-                    .replace(/\sseconds?/, '秒')
             }
         };
-        activeNames = '1';
+
+        getRemoveStatus(status) {
+            return status !== 'skipUpload' && status !== 'success';
+        }
 
         getStatus(props) {
             let skipUpload = props.file.skipUpload;
@@ -109,30 +91,40 @@
             return props.status;
         }
 
+        remove(id) {
+            let file = this.find(id);
+            if (file != null) {
+                file.remove();
+
+            }
+        }
+
         pause(id) {
-            let uploaderFile = this.$refs.uploaderFile;
-            for (let f of uploaderFile) {
-                if (f.file.id === id) {
-                    f.pause();
-                }
+            let file = this.find(id);
+            if (file != null) {
+                file.pause();
             }
         }
 
         retry(id) {
-            let uploaderFile = this.$refs.uploaderFile;
-            console.log(uploaderFile)
-            for (let f of uploaderFile) {
-                if (f.file.id === id) {
-                    f.retry();
-                }
+            let file = this.find(id);
+            if (file != null) {
+                file.retry();
             }
         }
 
         resume(id) {
+            let file = this.find(id);
+            if (file != null) {
+                file.resume();
+            }
+        }
+
+        find(id) {
             let uploaderFile = this.$refs.uploaderFile;
-            for (let f of uploaderFile) {
-                if (f.file.id === id) {
-                    f.resume();
+            for (let uploader of uploaderFile) {
+                if (uploader.file.id === id) {
+                    return uploader;
                 }
             }
         }
@@ -146,10 +138,6 @@
             waiting: '等待中',
             skipUpload: '秒传'
         };
-
-        get fileList() {
-            return this.$refs.files;
-        }
 
         get uploader() {
             return this.$refs.uploader.uploader;
@@ -189,14 +177,13 @@
                     let md5 = spark.end();
                     file.uniqueIdentifier = md5;
                     console.log(`MD5计算完毕：${file.name} \nMD5：${md5} \n分片：${chunks} 大小:${file.size} 用时：${new Date().getTime() - time} ms`);
-                    file.resume();
                     file.md5 = false;
+                    file.resume();
                 }
             });
 
             fileReader.onerror = function () {
-                this.error(`文件${file.name}读取出错，请检查该文件`);
-                file.cancel();
+                file.error = true;
             };
 
             function loadNext() {
@@ -210,6 +197,8 @@
             let res = JSON.parse(message);
             if (res.code !== 0) {
                 Message.error("抱歉失败");
+                file.error = true;
+                file.pause();
             }
             this.http.post("merge", {
                 totalSize: file.size,
@@ -219,19 +208,15 @@
                 filename: file.name,
                 relativePath: file.relativePath,
                 isDir: false
-            }).then((data: R<any>) => {
-                if (file.skipUpload) {
-                    file.status = 'skipUpload';
-                }
+            }, false).then((data: R<any>) => {
+
             })
         }
 
         onFileError(rootFile, file, response, chunk) {
-            this.$message({
-                message: response,
-                type: 'error'
-            })
+
         }
+
     }
 </script>
 
