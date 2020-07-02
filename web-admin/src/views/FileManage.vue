@@ -1,35 +1,49 @@
 <template>
     <div>
-        <!--        <FileUpload :relativePath="relativePath"></FileUpload>-->
-
+        <FileUpload :relativePath="relativePath" ref="fileUpload"></FileUpload>
 
         <template>
-
-            <el-dropdown>
-                <el-button size="medium" type="primary">
-                    <i class="el-icon-upload"></i><span>上传</span>
+            <el-button-group>
+                <el-button size="mini" type="primary" @click="$refs.btnFile.click()">
+                    <i class="el-icon-upload"></i><span>上传文件</span>
+                    <label ref="btnFile"></label>
                 </el-button>
-                <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item>上传文件</el-dropdown-item>
-                    <el-dropdown-item>上传文件夹</el-dropdown-item>
-                </el-dropdown-menu>
-            </el-dropdown>
-
-            <el-button size="medium" type="primary" style="margin-left: 20px">
+                <el-button size="mini" type="primary" @click="$refs.btnDir.click();">
+                    <i class="el-icon-upload"></i><span>上传文件夹</span>
+                    <label ref="btnDir"></label>
+                </el-button>
+            </el-button-group>
+            <el-button size="mini" type="primary" style="margin-left: 20px" @click="onNewDir">
                 新建文件夹
             </el-button>
         </template>
 
-
+        {{multipleSelection}}
         <template>
-            <el-table :data="fileList" stripe style="width: 100%">
-                <el-table-column label="名称">
+            <el-table :data="fileList"
+                      stripe
+                      @selection-change="handleSelectionChange"
+            >
+                <el-table-column
+                        type="selection"
+                        width="55">
+                </el-table-column>
+                <el-table-column label="名称"
+                >
                     <template slot-scope="scope">
                         <el-link
                                 :icon="getIcon(scope.row.isDir)"
-                                @click="onClickFileName(scope.row)">
+                                @click="onClickFileName(scope.row)"
+                                v-if="!scope.row.editable">
                             {{scope.row.fileName}}
                         </el-link>
+
+                        <el-row v-else>
+                            <el-button icon="el-icon-check" circle></el-button>
+                            <el-input v-model="input">
+
+                            </el-input>
+                        </el-row>
                     </template>
                 </el-table-column>
                 <el-table-column prop="type" label="类型"></el-table-column>
@@ -38,20 +52,7 @@
 
                 <el-table-column label="操作">
                     <template slot-scope="scope">
-                        <el-popover
-                                ref="ref"
-                                trigger="click"
-                                @hide="renameInput=''">
-                            <el-form inline>
-                                <el-form-item>
-                                    <el-input v-model="renameInput" placeholder="文件(夹)名称"></el-input>
-                                </el-form-item>
-                                <el-form-item>
-                                    <el-button type="primary" @click="rename(scope.$index, scope.row)">确定</el-button>
-                                </el-form-item>
-                            </el-form>
-                            <el-button slot="reference" size="mini">重命名</el-button>
-                        </el-popover>
+                        <el-button size="mini" @click="rename(scope.$index, scope.row)">重命名</el-button>
                         <el-button
                                 size="mini"
                                 type="danger"
@@ -71,13 +72,31 @@
 
     @Component({components: {FileUpload}})
     export default class FileManage extends Vue {
-        url: string = 'http://127.0.0.1:18080/uploadFile';
         fileList = [];
         makeDirInput = '';
         dialogVisible = false;
         renameInput = '';
         renameVisible = false;
         relativePath = '';
+        multipleSelection = [];
+        input = '';
+
+        mounted() {
+            this.$nextTick(() => {
+                this.init();
+                this.$refs.fileUpload.$refs.uploader.uploader.assignBrowse(this.$refs.btnFile, false, false, {});
+                this.$refs.fileUpload.$refs.uploader.uploader.assignBrowse(this.$refs.btnDir, true, false, {});
+            })
+        }
+
+        onNewDir() {
+            let tmp = {fileName: "新建文件夹", editable: true};
+            this.fileList.unshift(tmp);
+        }
+
+        handleSelectionChange(val) {
+            this.multipleSelection = val;
+        }
 
         deleteFile(index, row) {
             this.http.post("deleteFile", {
@@ -99,11 +118,6 @@
                 this.renameVisible = false;
             }).catch(() => {
             });
-        }
-
-
-        created() {
-            this.init();
         }
 
         init() {
@@ -146,6 +160,7 @@
             this.relativePath = newVal.relativePath;
             this.getFileList()
         }
+
     }
 
 </script>

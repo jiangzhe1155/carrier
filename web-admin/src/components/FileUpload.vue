@@ -6,10 +6,9 @@
                   @file-complete="onFileComplete"
                   @file-progress="onFileProgress">
             <uploader-unsupport></uploader-unsupport>
-            <uploader-drop>
-                <uploader-btn>上传文件</uploader-btn>
-                <uploader-btn :directory="true">上传文件夹</uploader-btn>
-            </uploader-drop>
+
+            <uploader-btn v-show="false" ref="btn1">上传文件</uploader-btn>
+            <uploader-btn :directory="true" v-show="false">上传文件夹</uploader-btn>
 
             <uploader-files>
                 <template slot-scope="props">
@@ -39,7 +38,6 @@
             </uploader-files>
         </uploader>
     </div>
-
 
 
 </template>
