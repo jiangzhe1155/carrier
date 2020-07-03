@@ -99,7 +99,6 @@ const get = function get(url: string, params = {}, showLoading = true) {
                 resolve(response);
             })
             .catch(err => {
-
                 showLoading && tryHideFullScreenLoading(); //隐藏等待框
                 reject(err)
             })

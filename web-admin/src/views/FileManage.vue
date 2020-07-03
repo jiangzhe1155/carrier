@@ -48,7 +48,7 @@
                                 <el-button icon="el-icon-check" size="mini" style="padding: 7px"
                                            @click="onEditConfirm(scope.row)"></el-button>
                                 <el-button icon="el-icon-close" size="mini" style="padding: 7px"
-                                           @click="onInputBlur()"></el-button>
+                                           @click="onClickClose(scope.row)"></el-button>
                             </el-button-group>
                         </div>
                     </template>
@@ -101,6 +101,14 @@
             this.fileList.splice(0, 1);
         }
 
+        onClickClose(file) {
+            if (file.id) {
+                file.editable = false;
+            } else {
+                this.fileList.filter(f => f !== file);
+            }
+        }
+
         onEditConfirm(file) {
 
 
@@ -113,7 +121,6 @@
                     return;
                 }
             }
-
 
             let tmp = {fileName: "新建文件夹", editable: true};
             this.fileList.unshift(tmp);
@@ -137,16 +144,25 @@
             });
         }
 
-        rename(index, row) {
-            this.http.post("rename", {
-                relativePath: this.relativePath + "/" + row.fileName,
-                targetName: this.renameInput
-            }).then((data: R<CommonFile[]>) => {
-                Message.success("成功");
-                this.init();
-                this.renameVisible = false;
-            }).catch(() => {
-            });
+        rename(index, file) {
+            for (let file of this.fileList) {
+                if (file.editable) {
+                    this.$refs.editInput.select();
+                    return;
+                }
+            }
+
+            file.editable = true;
+
+            // this.http.post("rename", {
+            //     relativePath: this.relativePath + "/" + row.fileName,
+            //     targetName: this.renameInput
+            // }).then((data: R<CommonFile[]>) => {
+            //     Message.success("成功");
+            //     this.init();
+            //     this.renameVisible = false;
+            // }).catch(() => {
+            // });
         }
 
         init() {
@@ -155,7 +171,7 @@
         }
 
         getFileList() {
-            this.http.post("listFile", {relativePath: this.relativePath}).then((data: R<CommonFile[]>) => {
+            this.http.post("listFile", {relativePath: this.relativePath}).then(data => {
                 this.fileList = data.data;
             });
         }
