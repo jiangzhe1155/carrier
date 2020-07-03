@@ -29,7 +29,7 @@
                         width="55">
                 </el-table-column>
                 <el-table-column label="名称"
-                >
+                                 width="500px">
                     <template slot-scope="scope">
                         <el-link
                                 :icon="getIcon(scope.row.isDir)"
@@ -37,13 +37,20 @@
                                 v-if="!scope.row.editable">
                             {{scope.row.fileName}}
                         </el-link>
-
-                        <el-row v-else>
-                            <el-button icon="el-icon-check" circle></el-button>
-                            <el-input v-model="input">
-
+                        <div v-else>
+                            <el-input clearable
+                                      v-model="inputValue"
+                                      style="width: 200px"
+                                      ref="editInput"
+                                      size="mini">
                             </el-input>
-                        </el-row>
+                            <el-button-group>
+                                <el-button icon="el-icon-check" size="mini" style="padding: 7px"
+                                           @click="onEditConfirm(scope.row)"></el-button>
+                                <el-button icon="el-icon-close" size="mini" style="padding: 7px"
+                                           @click="onInputBlur()"></el-button>
+                            </el-button-group>
+                        </div>
                     </template>
                 </el-table-column>
                 <el-table-column prop="type" label="类型"></el-table-column>
@@ -79,7 +86,8 @@
         renameVisible = false;
         relativePath = '';
         multipleSelection = [];
-        input = '';
+        inputValue = '';
+
 
         mounted() {
             this.$nextTick(() => {
@@ -89,9 +97,30 @@
             })
         }
 
+        onInputBlur() {
+            this.fileList.splice(0, 1);
+        }
+
+        onEditConfirm(file) {
+
+
+        }
+
         onNewDir() {
+            for (let file of this.fileList) {
+                if (file.editable) {
+                    this.$refs.editInput.select();
+                    return;
+                }
+            }
+
+
             let tmp = {fileName: "新建文件夹", editable: true};
             this.fileList.unshift(tmp);
+            this.inputValue = '新建文件夹';
+            this.$nextTick(() => {
+                this.$refs.editInput.select();
+            })
         }
 
         handleSelectionChange(val) {

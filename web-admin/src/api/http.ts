@@ -76,6 +76,7 @@ Axios.interceptors.response.use(
         }
     },
     error => {
+        Message.error("系统异常");
         return Promise.reject(error)
     }
 );
@@ -87,8 +88,7 @@ Axios.interceptors.response.use(
  * @param showLoading
  * @returns {Promise}
  */
-let fileData = {relativePath: ""}
-const get = function get(url: string, params = fileData, showLoading = true) {
+const get = function get(url: string, params = {}, showLoading = true) {
     return new Promise((resolve, reject) => {
         showLoading && showFullScreenLoading();//显示等待框
         Axios.get(url, {
@@ -99,6 +99,7 @@ const get = function get(url: string, params = fileData, showLoading = true) {
                 resolve(response);
             })
             .catch(err => {
+
                 showLoading && tryHideFullScreenLoading(); //隐藏等待框
                 reject(err)
             })
