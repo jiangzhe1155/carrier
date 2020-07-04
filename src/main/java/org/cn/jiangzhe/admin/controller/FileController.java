@@ -92,7 +92,8 @@ public class FileController {
             TFile folder = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
                     .select(TFile::getId)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                    .eq(TFile::getRelativePath, params.getRelativePath()));
+                    .eq(TFile::getRelativePath, params.getRelativePath())
+                    .orderByDesc(TFile::getUpdateTime));
             if (folder == null) {
                 return Collections.emptyList();
             }
@@ -100,7 +101,7 @@ public class FileController {
         }
 
         return fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .select(TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
+                .select(TFile::getId, TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(TFile::getFolderId, folderId)
         );
@@ -108,10 +109,13 @@ public class FileController {
 
     @PostMapping("deleteFile")
     public Object deleteFile(@RequestBody Params params) {
+
+        String relativePath = params.getRelativePath();
         int update = fileMapper.update(null, new LambdaUpdateWrapper<TFile>()
                 .set(TFile::getStatus, FileStatusEnum.DELETED)
-                .likeRight(TFile::getRelativePath, params.getRelativePath()));
-
+                .eq(TFile::getRelativePath, relativePath)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                .or(wrapper -> wrapper.likeRight(TFile::getRelativePath, relativePath + File.separator)));
         return R.ok(null);
     }
 
@@ -119,15 +123,19 @@ public class FileController {
     public Object makeDir(@RequestBody Params params) {
         String folderName = StrUtil.subAfter(params.getRelativePath(), StrUtil.SLASH, true);
         TFile file = create(folderName, params.getRelativePath(), true, false);
+
         return file;
     }
 
     @PostMapping("rename")
     public Object rename(@RequestBody Params params) {
 
+        String relativePath = params.getRelativePath();
         List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .likeRight(TFile::getRelativePath, params.getRelativePath())
+                .select(TFile::getRelativePath, TFile::getOriginalFileName, TFile::getId)
+                .eq(TFile::getRelativePath, relativePath)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                .or(wrapper -> wrapper.likeRight(TFile::getRelativePath, relativePath + File.separator))
         );
         String fileName = FileUtil.getName(params.getRelativePath());
         for (TFile file : files) {
@@ -138,9 +146,7 @@ public class FileController {
             String newPre = StrUtil.removeSuffix(params.getRelativePath(), fileName) + params.getTargetName();
             file.setRelativePath(newPre + suf);
         }
-
         fileService.updateBatchById(files);
-
         return R.ok(null);
     }
 

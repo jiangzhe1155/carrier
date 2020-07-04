@@ -46,9 +46,9 @@
                             </el-input>
                             <el-button-group>
                                 <el-button icon="el-icon-check" size="mini" style="padding: 7px"
-                                           @click="onEditConfirm(scope.row)"></el-button>
+                                           @click="onEditConfirm(scope.row,scope.$index)"></el-button>
                                 <el-button icon="el-icon-close" size="mini" style="padding: 7px"
-                                           @click="onClickClose(scope.row)"></el-button>
+                                           @click="onClickClose(scope.row,scope.$index)"></el-button>
                             </el-button-group>
                         </div>
                     </template>
@@ -58,7 +58,7 @@
                 <el-table-column prop="updateTime" label="最后修改时间"></el-table-column>
 
                 <el-table-column label="操作">
-                    <template slot-scope="scope">
+                    <template slot-scope="scope" v-if="scope.row.id">
                         <el-button size="mini" @click="rename(scope.$index, scope.row)">重命名</el-button>
                         <el-button
                                 size="mini"
@@ -80,10 +80,6 @@
     @Component({components: {FileUpload}})
     export default class FileManage extends Vue {
         fileList = [];
-        makeDirInput = '';
-        dialogVisible = false;
-        renameInput = '';
-        renameVisible = false;
         relativePath = '';
         multipleSelection = [];
         inputValue = '';
@@ -97,20 +93,36 @@
             })
         }
 
-        onInputBlur() {
-            this.fileList.splice(0, 1);
-        }
 
-        onClickClose(file) {
+        onClickClose(file, idx) {
             if (file.id) {
                 file.editable = false;
+                Vue.set(this.fileList, idx, file);
             } else {
-                this.fileList.filter(f => f !== file);
+                this.fileList.splice(idx, 1);
             }
         }
 
-        onEditConfirm(file) {
+        onEditConfirm(file, idx) {
+            if (file.id) {
+                this.http.post("rename", {
+                    relativePath: this.relativePath + "/" + file.fileName,
+                    targetName: this.inputValue
+                }).then((data: R<CommonFile[]>) => {
+                    Message.success("成功");
+                    this.init();
+                }).catch(() => {
+                });
+            } else {
+                this.http.post("makeDir", {
+                    relativePath: this.relativePath + "/" + this.inputValue,
+                }).then((data: R<CommonFile[]>) => {
+                    Message.success("成功");
+                    this.init();
+                }).catch(() => {
 
+                });
+            }
 
         }
 
@@ -122,7 +134,7 @@
                 }
             }
 
-            let tmp = {fileName: "新建文件夹", editable: true};
+            let tmp = {editable: true};
             this.fileList.unshift(tmp);
             this.inputValue = '新建文件夹';
             this.$nextTick(() => {
@@ -145,24 +157,22 @@
         }
 
         rename(index, file) {
+            console.log(index, file);
             for (let file of this.fileList) {
-                if (file.editable) {
+                if (file.editable === true) {
                     this.$refs.editInput.select();
                     return;
                 }
             }
-
             file.editable = true;
+            Vue.set(this.fileList, index, file);
 
-            // this.http.post("rename", {
-            //     relativePath: this.relativePath + "/" + row.fileName,
-            //     targetName: this.renameInput
-            // }).then((data: R<CommonFile[]>) => {
-            //     Message.success("成功");
-            //     this.init();
-            //     this.renameVisible = false;
-            // }).catch(() => {
-            // });
+            this.inputValue = file.fileName;
+            this.$nextTick(() => {
+                this.$refs.editInput.select();
+            });
+
+
         }
 
         init() {
@@ -181,14 +191,7 @@
         }
 
         makeDir() {
-            this.http.post("makeDir", {
-                relativePath: this.relativePath + "/" + this.makeDirInput,
-            }).then((data: R<CommonFile[]>) => {
-                Message.success("成功");
-                this.dialogVisible = false;
-                this.init();
-            }).catch(() => {
-            });
+
         }
 
         onClickFileName(file) {

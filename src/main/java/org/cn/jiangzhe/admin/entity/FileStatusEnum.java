@@ -1,6 +1,7 @@
 package org.cn.jiangzhe.admin.entity;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * @author jz
@@ -22,6 +23,7 @@ public enum FileStatusEnum {
         this.desc = desc;
     }
 
+    @JsonValue
     @EnumValue//标记数据库存的值是code
     private final int code;
 
