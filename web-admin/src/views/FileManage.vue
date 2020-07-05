@@ -31,7 +31,7 @@
                                  width="500px">
                     <template slot-scope="scope">
                         <el-link
-                                :icon="getIcon(scope.row.isDir)"
+                                :icon="getIcon(scope.row.type)"
                                 @click="onClickFileName(scope.row)"
                                 v-if="!scope.row.editable">
                             {{scope.row.fileName}}
@@ -196,8 +196,11 @@
             });
         }
 
-        getIcon(isDir: boolean) {
-            return isDir ? 'el-icon-folder' : 'el-icon-document';
+        getIcon(type) {
+            if (type === 0) {
+                return 'el-icon-folder'
+            }
+            return 'el-icon-document';
         }
 
         makeDir() {

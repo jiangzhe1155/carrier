@@ -3,7 +3,6 @@
         <uploader ref="uploader" :options="options"
                   @file-added="onFileAdded"
                   @file-success="onFileSuccess"
-                  @file-complete="onFileComplete"
                   @file-progress="onFileProgress">
             <uploader-unsupport></uploader-unsupport>
 
@@ -14,6 +13,7 @@
                          :body-style="{ padding: '0 10px' }"
                          class="file-panel"
                          v-show="showDrawer">
+                    {{props.files}}
                     <el-row justify="end" type="flex">
                         <el-button :icon="showTable?'el-icon-minus':'el-icon-full-screen'"
                                    type="text"
@@ -46,14 +46,13 @@
                         </el-table-column>
                         <el-table-column label="状态" min-width="100px">
                             <template slot-scope="scope">
-
-                                <span v-show="!getRemoveStatus(getStatus(scope.row))">
+                                <span v-show="!getRemoveStatus(getStatus(scope.row,scope.$index))">
                                     <i class="el-icon-circle-check" style="color: #67C23A"></i>
                                 </span>
-                                <span v-show="getStatus(scope.row)!=='uploading'">
+                                <span v-show="getStatus(scope.row,scope.$index)!=='uploading'">
                                     {{statusText[getStatus(scope.row)]}}
                                 </span>
-                                <span v-show="getStatus(scope.row)==='uploading'">
+                                <span v-show="getStatus(scope.row,scope.$index)==='uploading'">
                                     {{getProcess(scope.row)}}
                                 </span>
 
@@ -63,17 +62,17 @@
                             <template slot-scope="scope">
                                 <el-button type="text"
                                            size="medium"
-                                           v-show="getStatus(scope.row)==='paused'"
+                                           v-show="getStatus(scope.row,scope.$index)==='paused'"
                                            icon="el-icon-video-play"
                                            @click="resume(scope.row,scope.$index)">
                                 </el-button>
                                 <el-button type="text"
-                                           v-show="getStatus(scope.row)==='uploading'"
+                                           v-show="getStatus(scope.row,scope.$index)==='uploading'"
                                            icon="el-icon-video-pause"
                                            @click="pause(scope.row,scope.$index)">
                                 </el-button>
                                 <el-button type="text"
-                                           v-show="getStatus(scope.row)==='error'"
+                                           v-show="getStatus(scope.row,scope.$index)==='error'"
                                            icon="el-icon-refresh-right"
                                            @click="retry(scope.row,scope.$index)">
                                 </el-button>
@@ -98,9 +97,6 @@
 
     @Component
     export default class FileUpload extends Vue {
-        @Prop() relativePath: string;
-        showDrawer = false;
-        showTable = false;
         options = {
             target: 'http://127.0.0.1:18080/chunkUploadFile',
             chunkSize: 4 * 1024 * 1024,
@@ -111,23 +107,28 @@
             checkChunkUploadedByResponse: function (chunk, data) {
                 let objMessage = JSON.parse(data);
                 if (objMessage.code !== 0) {
-                    chunk.file.error = true;
+                    Vue.set(chunk.file, 'error', true);
                     chunk.file.pause();
                 }
 
                 const {skipUpload, uploaded, id} = objMessage.data;
                 chunk.file.storageId = id;
                 if (skipUpload) {
-                    chunk.file.skipUpload = true;
+                    Vue.set(chunk.file, 'skipUpload', true);
                     return true;
                 }
                 return (uploaded || []).indexOf(chunk.offset + 1) >= 0
             }
         };
 
+        @Prop() relativePath: string;
+        showDrawer = false;
+        showTable = false;
+        uploader: any;
+        files: any;
 
         cancel() {
-            this.$refs.uploader.uploader.cancel();
+            this.uploader.cancel();
             this.showDrawer = false;
         }
 
@@ -138,8 +139,9 @@
             })
         }
 
-        mounted(): void {
-
+        mounted() {
+            this.uploader = this.$refs.uploader.uploader;
+            this.files = this.$refs.uploaderFiles.files;
         }
 
         formatSize(size) {
@@ -148,9 +150,9 @@
         }
 
         getProcess(file) {
+            console.log('getProcess', file);
             let speed = this.formatSize(file.averageSpeed);
             let progress = (file.progress() * 100).toFixed(2);
-            console.log('progress', this.$refs.uploader);
             return `(${progress}%) ${speed}`;
         }
 
@@ -158,7 +160,7 @@
             return status !== 'skipUpload' && status !== 'success';
         }
 
-        getStatus(file) {
+        getStatus(file, idx) {
             const {md5, skipUpload, completed, error, paused, isUploading} = file;
             if (md5) {
                 return 'md5'
@@ -197,14 +199,6 @@
             Vue.set(this.$refs.uploaderFiles.files, idx, file);
         }
 
-        find(id) {
-            let uploaderFile = this.$refs.uploaderFile;
-            for (let uploader of uploaderFile) {
-                if (uploader.file.id === id) {
-                    return uploader;
-                }
-            }
-        }
 
         statusText = {
             md5: '校验MD5',
@@ -216,15 +210,14 @@
             skipUpload: '秒传'
         };
 
-        get uploader() {
-            return this.$refs.uploader.uploader;
-        }
-
-        onFileComplete(file) {
-
-        }
 
         onFileProgress(rootFile, file, chunk) {
+            let files = this.$refs.uploaderFiles.files;
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].id === file.id) {
+                    Vue.set(this.$refs.uploaderFiles.files, i, file);
+                }
+            }
             console.log(`上传中 ${file.name}，chunk：${chunk.startByte / 1024 / 1024} ~ ${chunk.endByte / 1024 / 1024}`)
         }
 
@@ -232,9 +225,9 @@
         onFileAdded(file) {
             this.showDrawer = true;
             this.showTable = true;
+
             file.relativePath = this.relativePath + "/" + file.relativePath;
             file.uploadPath = this.relativePath;
-
             let idx = this.relativePath.lastIndexOf("/");
             file.uploadPathName = idx === -1 ? '主目录' : this.relativePath.substring(idx + 1);
             this.computeMD5(file);
@@ -248,7 +241,7 @@
             const chunkSize = 10 * 1024 * 1000;
             let chunks = Math.ceil(file.size / chunkSize);
             let spark = new SparkMD5.ArrayBuffer();
-            file.md5 = true;
+            Vue.set(file, 'md5', true);
             file.pause();
             loadNext();
             fileReader.onload = (e => {
@@ -302,7 +295,6 @@
 
     }
 </script>
-
 <style scoped lang="less">
 
 </style>
