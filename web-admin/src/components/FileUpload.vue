@@ -46,13 +46,13 @@
                         </el-table-column>
                         <el-table-column label="状态" min-width="100px">
                             <template slot-scope="scope">
-                                <span v-show="!getRemoveStatus(getStatus(scope.row,scope.$index))">
+                                <span v-show="!getRemoveStatus(getStatus(scope.row)">
                                     <i class="el-icon-circle-check" style="color: #67C23A"></i>
                                 </span>
-                                <span v-show="getStatus(scope.row,scope.$index)!=='uploading'">
+                                <span v-show="getStatus(scope.row)!=='uploading'">
                                     {{statusText[getStatus(scope.row)]}}
                                 </span>
-                                <span v-show="getStatus(scope.row,scope.$index)==='uploading'">
+                                <span v-show="getStatus(scope.row)==='uploading'">
                                     {{getProcess(scope.row)}}
                                 </span>
 
@@ -62,17 +62,17 @@
                             <template slot-scope="scope">
                                 <el-button type="text"
                                            size="medium"
-                                           v-show="getStatus(scope.row,scope.$index)==='paused'"
+                                           v-show="getStatus(scope.row)==='paused'"
                                            icon="el-icon-video-play"
                                            @click="resume(scope.row,scope.$index)">
                                 </el-button>
                                 <el-button type="text"
-                                           v-show="getStatus(scope.row,scope.$index)==='uploading'"
+                                           v-show="getStatus(scope.row)==='uploading'"
                                            icon="el-icon-video-pause"
                                            @click="pause(scope.row,scope.$index)">
                                 </el-button>
                                 <el-button type="text"
-                                           v-show="getStatus(scope.row,scope.$index)==='error'"
+                                           v-show="getStatus(scope.row)==='error'"
                                            icon="el-icon-refresh-right"
                                            @click="retry(scope.row,scope.$index)">
                                 </el-button>
@@ -160,7 +160,7 @@
             return status !== 'skipUpload' && status !== 'success';
         }
 
-        getStatus(file, idx) {
+        getStatus(file) {
             const {md5, skipUpload, completed, error, paused, isUploading} = file;
             if (md5) {
                 return 'md5'

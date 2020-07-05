@@ -181,8 +181,6 @@
             this.$nextTick(() => {
                 this.$refs.editInput.select();
             });
-
-
         }
 
         init() {
