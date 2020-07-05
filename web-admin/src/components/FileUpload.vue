@@ -9,39 +9,78 @@
 
             <uploader-btn v-show="false" ref="btn1">上传文件</uploader-btn>
             <uploader-btn :directory="true" v-show="false">上传文件夹</uploader-btn>
-            {{drawer}}
-            <uploader-files ref="aaaa">
+            <uploader-files ref="uploaderFiles">
                 <el-card slot-scope="props"
-                         class="file-panel">
-                    <el-button-group>
-                        <el-button @click="shousuo">收缩</el-button>
-                    </el-button-group>
+                         :body-style="{ padding: '0 10px' }"
+                         class="file-panel"
+                         v-show="showDrawer">
+                    <el-row justify="end" type="flex">
+                        <el-button :icon="showTable?'el-icon-minus':'el-icon-full-screen'"
+                                   type="text"
+                                   @click="showTable = !showTable">
+                        </el-button>
+                        <el-button icon="el-icon-close"
+                                   type="text"
+                                   @click="cancel">
+                        </el-button>
+                    </el-row>
                     <el-table
                             :data="props.files"
-                            stripe
                             style="min-height: 400px"
                             v-show="showTable">
-                        <el-table-column prop="name" label="名称">
+                        <el-table-column prop="name" label="文件名" min-width="128px">
                         </el-table-column>
-                        <el-table-column label="状态">
+
+                        <el-table-column label="大小">
                             <template slot-scope="scope">
-                                {{getStatus(scope.row)}}
+                                {{scope.row.getFormatSize()}}
                             </template>
                         </el-table-column>
-                        <el-table-column label="操作">
+                        <el-table-column label="上传目录">
                             <template slot-scope="scope">
-                                <el-button type="primary" v-show="getStatus(scope.row)==='paused'"
-                                           @click="resume(scope.row,scope.$index)">启动
+                                <el-link type="primary"
+                                         @click="onClickUploadPath(scope.row)">
+                                    {{scope.row.uploadPathName}}
+                                </el-link>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="状态" min-width="100px">
+                            <template slot-scope="scope">
+
+                                <span v-show="!getRemoveStatus(getStatus(scope.row))">
+                                    <i class="el-icon-circle-check" style="color: #67C23A"></i>
+                                </span>
+                                <span v-show="getStatus(scope.row)!=='uploading'">
+                                    {{statusText[getStatus(scope.row)]}}
+                                </span>
+                                <span v-show="getStatus(scope.row)==='uploading'">
+                                    {{getProcess(scope.row)}}
+                                </span>
+
+                            </template>
+                        </el-table-column>
+                        <el-table-column min-width="64px">
+                            <template slot-scope="scope">
+                                <el-button type="text"
+                                           size="medium"
+                                           v-show="getStatus(scope.row)==='paused'"
+                                           icon="el-icon-video-play"
+                                           @click="resume(scope.row,scope.$index)">
                                 </el-button>
-                                <el-button type="primary" v-show="getStatus(scope.row)==='uploading'"
-                                           @click="pause(scope.row,scope.$index)">暂停
+                                <el-button type="text"
+                                           v-show="getStatus(scope.row)==='uploading'"
+                                           icon="el-icon-video-pause"
+                                           @click="pause(scope.row,scope.$index)">
                                 </el-button>
-                                <el-button type="primary" v-show="getStatus(scope.row)==='error'"
-                                           @click="retry(scope.row,scope.$index)">重试
+                                <el-button type="text"
+                                           v-show="getStatus(scope.row)==='error'"
+                                           icon="el-icon-refresh-right"
+                                           @click="retry(scope.row,scope.$index)">
                                 </el-button>
-                                <el-button type="primary"
+                                <el-button type="text"
                                            v-show="getRemoveStatus(getStatus(scope.row))"
-                                           @click="remove(scope.row,scope.$index)">移除
+                                           icon="el-icon-circle-close"
+                                           @click="remove(scope.row,scope.$index)">
                                 </el-button>
                             </template>
                         </el-table-column>
@@ -50,8 +89,6 @@
             </uploader-files>
         </uploader>
     </div>
-
-
 </template>
 
 <script lang="ts">
@@ -62,9 +99,8 @@
     @Component
     export default class FileUpload extends Vue {
         @Prop() relativePath: string;
-        drawer = true;
-        showTable = true;
-        files = [];
+        showDrawer = false;
+        showTable = false;
         options = {
             target: 'http://127.0.0.1:18080/chunkUploadFile',
             chunkSize: 4 * 1024 * 1024,
@@ -74,7 +110,7 @@
             simultaneousUploads: 1,
             checkChunkUploadedByResponse: function (chunk, data) {
                 let objMessage = JSON.parse(data);
-                if (objMessage.code != 0) {
+                if (objMessage.code !== 0) {
                     chunk.file.error = true;
                     chunk.file.pause();
                 }
@@ -89,17 +125,33 @@
             }
         };
 
-        shousuo() {
-            this.showTable = !this.showTable
+
+        cancel() {
+            this.$refs.uploader.uploader.cancel();
+            this.showDrawer = false;
+        }
+
+        onClickUploadPath(file) {
+            this.$router.push({
+                name: "FileManage",
+                query: {"relativePath": file.uploadPath}
+            })
         }
 
         mounted(): void {
-            console.log(this.$refs.aaaa);
-            this.files = this.$refs.aaaa.files;
+
         }
 
-        onBeforeClose() {
-            this.showTable = false
+        formatSize(size) {
+            let speed = size < 1024 ? size.toFixed(0) + " bytes" : size < 1048576 ? (size / 1024).toFixed(0) + " KB" : size < 1073741824 ? (size / 1024 / 1024).toFixed(1) + " MB" : (size / 1024 / 1024 / 1024).toFixed(1) + " GB";
+            return speed + '/ s';
+        }
+
+        getProcess(file) {
+            let speed = this.formatSize(file.averageSpeed);
+            let progress = (file.progress() * 100).toFixed(2);
+            console.log('progress', this.$refs.uploader);
+            return `(${progress}%) ${speed}`;
         }
 
         getRemoveStatus(status) {
@@ -107,44 +159,42 @@
         }
 
         getStatus(file) {
-            console.log(file);
-            let skipUpload = file.skipUpload;
-            let md5 = file.md5;
+            const {md5, skipUpload, completed, error, paused, isUploading} = file;
             if (md5) {
                 return 'md5'
             } else if (skipUpload) {
                 return 'skipUpload'
-            } else if (file.completed) {
+            } else if (completed) {
                 return 'success'
-            } else if (file.error) {
+            } else if (error) {
                 return 'error'
-            } else if (file.paused) {
+            } else if (paused) {
                 return 'paused'
-            } else if (file.isUploading) {
+            } else if (isUploading) {
                 return 'uploading'
             } else {
                 return 'waiting'
             }
         }
 
+
         remove(file, idx) {
             file.cancel();
-            // Vue.set(this.fileList, idx, file);
         }
 
         pause(file, idx) {
             file.pause();
-            Vue.set(this.$refs.aaaa.files, idx, file);
+            Vue.set(this.$refs.uploaderFiles.files, idx, file);
         }
 
         retry(file, idx) {
             file.retry();
-            Vue.set(this.$refs.aaaa.files, idx, file);
+            Vue.set(this.$refs.uploaderFiles.files, idx, file);
         }
 
         resume(file, idx) {
             file.resume();
-            Vue.set(this.$refs.aaaa.files, idx, file);
+            Vue.set(this.$refs.uploaderFiles.files, idx, file);
         }
 
         find(id) {
@@ -158,11 +208,11 @@
 
         statusText = {
             md5: '校验MD5',
-            success: '成功了',
-            error: '出错了',
+            success: '成功',
+            error: '出错',
             uploading: '上传中',
-            paused: '暂停中',
-            waiting: '等待中',
+            paused: '暂停',
+            waiting: '等待',
             skipUpload: '秒传'
         };
 
@@ -180,8 +230,13 @@
 
 
         onFileAdded(file) {
-            this.drawer = true;
+            this.showDrawer = true;
+            this.showTable = true;
             file.relativePath = this.relativePath + "/" + file.relativePath;
+            file.uploadPath = this.relativePath;
+
+            let idx = this.relativePath.lastIndexOf("/");
+            file.uploadPathName = idx === -1 ? '主目录' : this.relativePath.substring(idx + 1);
             this.computeMD5(file);
         }
 
@@ -205,7 +260,7 @@
                     let md5 = spark.end();
                     file.uniqueIdentifier = md5;
                     console.log(`MD5计算完毕：${file.name} \nMD5：${md5} \n分片：${chunks} 大小:${file.size} 用时：${new Date().getTime() - time} ms`);
-                    file.md5 = false;
+                    Vue.delete(file, 'md5');
                     file.resume();
                 }
             });

@@ -22,8 +22,7 @@
         <template>
             <el-table :data="fileList"
                       stripe
-                      @selection-change="handleSelectionChange"
-            >
+                      @selection-change="handleSelectionChange">
                 <el-table-column
                         type="selection"
                         width="55">
@@ -54,7 +53,11 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="type" label="类型"></el-table-column>
-                <el-table-column prop="size" label="大小"></el-table-column>
+                <el-table-column prop="size" label="大小">
+                    <template slot-scope="scope">
+                        {{formatSize(scope.row)}}
+                    </template>
+                </el-table-column>
                 <el-table-column prop="updateTime" label="最后修改时间"></el-table-column>
 
                 <el-table-column label="操作">
@@ -93,7 +96,6 @@
             })
         }
 
-
         onClickClose(file, idx) {
             if (file.id) {
                 file.editable = false;
@@ -101,6 +103,14 @@
             } else {
                 this.fileList.splice(idx, 1);
             }
+        }
+
+        formatSize(file) {
+            if (file.type === 0) {
+                return '-'
+            }
+            let size = file.size;
+            return size < 1024 ? size.toFixed(0) + " bytes" : size < 1048576 ? (size / 1024).toFixed(0) + " KB" : size < 1073741824 ? (size / 1024 / 1024).toFixed(1) + " MB" : (size / 1024 / 1024 / 1024).toFixed(1) + " GB";
         }
 
         onEditConfirm(file, idx) {
@@ -181,7 +191,7 @@
         }
 
         getFileList() {
-            this.http.post("listFile", {relativePath: this.relativePath}).then(data => {
+            this.http.post("listFile", {relativePath: this.relativePath}, false).then(data => {
                 this.fileList = data.data;
             });
         }
