@@ -152,7 +152,6 @@ public class FileController {
                         .eq(TFile::getRelativePath, relativePath)
                         .or()
                         .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH)));
-        );
         String fileName = FileUtil.getName(params.getRelativePath());
         for (TFile file : files) {
             String suf = StrUtil.removePrefix(file.getRelativePath(), params.getRelativePath());
