@@ -1,6 +1,6 @@
 <template>
     <div>
-        <FileUpload :relativePath="relativePath" ref="fileUpload"></FileUpload>
+        <FileUpload :relativePath="relativePath" ref="fileUpload" @refresh="init()"></FileUpload>
 
         <template>
             <el-button-group>
@@ -16,7 +16,31 @@
             <el-button size="mini" type="primary" style="margin-left: 20px" @click="onMakeDir">
                 新建文件夹
             </el-button>
+            <el-button size="mini" type="primary" @click="onDelete">
+                删除
+            </el-button>
+            <el-button size="mini" type="primary" @click="onMove">
+                移动到
+            </el-button>
         </template>
+
+        <el-dialog
+                title="提示"
+                :visible.sync="centerDialogVisible"
+                width="30%"
+                center>
+
+            <el-tree
+                    :props="props"
+                    :load="loadNode"
+                    lazy
+                    @node-click="handleCheckChange">
+            </el-tree>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="centerDialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="centerDialogVisible = false">确 定</el-button>
+            </span>
+        </el-dialog>
 
         {{multipleSelection}}
         <template>
@@ -87,6 +111,48 @@
         multipleSelection = [];
         inputValue = '';
 
+        centerDialogVisible = false;
+        props = {
+            label: 'fileName',
+            children: 'zones',
+            isLeaf: 'leaf'
+        };
+
+        handleCheckChange(data) {
+            console.log(data);
+        }
+
+        loadNode(node, resolve) {
+            console.log(node, resolve);
+            if (node.level === 0) {
+                return resolve([{fileName: "主目录", relativePath: ""}]);
+            }
+
+            let relativePath = node.data.relativePath;
+            this.http.post("listFile", {relativePath: relativePath, type: 0}, false).then(data => {
+                resolve(data.data);
+            });
+
+        }
+
+        onDelete() {
+            let deletePaths = [];
+            this.multipleSelection.forEach(
+                m => deletePaths.push(this.relativePath + "/" + m.fileName)
+            );
+
+            this.http.post("deleteFile", {
+                relativePaths: deletePaths,
+            }).then((data: R<CommonFile[]>) => {
+                this.init();
+                Message.success("成功");
+            })
+        }
+
+        onMove() {
+            this.centerDialogVisible = true
+
+        }
 
         mounted() {
             this.$nextTick(() => {
@@ -110,7 +176,7 @@
                 return '-'
             }
             let size = file.size;
-            return size < 1024 ? size.toFixed(0) + " bytes" : size < 1048576 ? (size / 1024).toFixed(0) + " KB" : size < 1073741824 ? (size / 1024 / 1024).toFixed(1) + " MB" : (size / 1024 / 1024 / 1024).toFixed(1) + " GB";
+            return size < 1024 ? size.toFixed(0) + " B" : size < 1048576 ? (size / 1024).toFixed(0) + " KB" : size < 1073741824 ? (size / 1024 / 1024).toFixed(1) + " MB" : (size / 1024 / 1024 / 1024).toFixed(1) + " GB";
         }
 
         onEditConfirm(file, idx) {
@@ -167,13 +233,14 @@
         }
 
         rename(index, file) {
-            console.log(index, file);
+
             for (let file of this.fileList) {
                 if (file.editable === true) {
                     this.$refs.editInput.select();
                     return;
                 }
             }
+
             file.editable = true;
             Vue.set(this.fileList, index, file);
 

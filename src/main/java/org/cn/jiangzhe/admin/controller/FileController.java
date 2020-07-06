@@ -76,21 +76,23 @@ public class FileController {
         private List<String> relativePaths;
         private String targetName;
         private List<FileVO> fileList;
+        private FileTypeEnum type;
 
     }
 
     @Data
-    private class FileVO {
+    private static class FileVO {
         private String relativePath;
         private String targetPath;
         private String targetName;
     }
 
     @PostMapping("listFile")
-    public Object listFile(@RequestBody TFile params) {
+    public Object listFile(@RequestBody Params params) {
         Long folderId = null;
 
-        if (StrUtil.isBlank(params.getRelativePath())) {
+        String relativePath = params.getRelativePath();
+        if (StrUtil.isBlank(relativePath)) {
             folderId = TOP_FOLDER_ID;
         }
 
@@ -99,8 +101,7 @@ public class FileController {
             TFile folder = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
                     .select(TFile::getId)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                    .eq(TFile::getRelativePath, params.getRelativePath())
-                    .orderByDesc(TFile::getUpdateTime));
+                    .eq(TFile::getRelativePath, relativePath));
             if (folder == null) {
                 return Collections.emptyList();
             }
@@ -108,9 +109,15 @@ public class FileController {
         }
 
         return fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .select(TFile::getId, TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
+                .select(TFile::getId, TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType,
+                        TFile::getSize, TFile::getRelativePath)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .eq(TFile::getFolderId, folderId));
+                .eq(params.getType() != null, TFile::getType, params.getType())
+                .eq(TFile::getFolderId, folderId)
+                .orderByDesc(TFile::getUpdateTime)
+                .orderByAsc(TFile::getType)
+        );
+
     }
 
     @PostMapping("deleteFile")
@@ -170,10 +177,10 @@ public class FileController {
 
         if (target != null) {
             if (target.getStatus().equals(FileStatusEnum.CREATED)) {
-                return new Response().id(target.getId()).skipUpload(true);
+                return new Response().setId(target.getId()).setSkipUpload(true);
             }
             List<Integer> uploaded = new ArrayList<>(map.getOrDefault(params.getIdentifier(), new HashSet<>()));
-            return new Response().id(target.getId()).skipUpload(false).uploaded(uploaded);
+            return new Response().setId(target.getId()).setSkipUpload(false).setUploaded(uploaded);
         }
 
         String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
@@ -182,11 +189,11 @@ public class FileController {
                 .setPath(realFilePath)
                 .setStatus(FileStatusEnum.NEW);
         fileStoreMapper.insert(target);
-        return new Response().id(target.getId()).skipUpload(false);
+        return new Response().setId(target.getId()).setSkipUpload(false);
     }
 
     @Data
-    @Accessors(chain = true, fluent = true)
+    @Accessors(chain = true)
     public static class Response {
         private Boolean skipUpload;
         private Long id;

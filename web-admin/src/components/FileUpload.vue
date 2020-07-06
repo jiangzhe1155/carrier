@@ -13,7 +13,6 @@
                          :body-style="{ padding: '0 10px' }"
                          class="file-panel"
                          v-show="showDrawer">
-                    {{props.files}}
                     <el-row justify="end" type="flex">
                         <el-button :icon="showTable?'el-icon-minus':'el-icon-full-screen'"
                                    type="text"
@@ -31,9 +30,9 @@
                         <el-table-column prop="name" label="文件名" min-width="128px">
                         </el-table-column>
 
-                        <el-table-column label="大小">
+                        <el-table-column label="大小" width="100px">
                             <template slot-scope="scope">
-                                {{scope.row.getFormatSize()}}
+                                {{formatSize(scope.row.size)}}
                             </template>
                         </el-table-column>
                         <el-table-column label="上传目录">
@@ -44,8 +43,9 @@
                                 </el-link>
                             </template>
                         </el-table-column>
-                        <el-table-column label="状态" min-width="100px">
+                        <el-table-column label="状态" width="144px">
                             <template slot-scope="scope">
+
                                 <span v-show="!getRemoveStatus(getStatus(scope.row))">
                                     <i class="el-icon-circle-check" style="color: #67C23A"></i>
                                 </span>
@@ -55,16 +55,15 @@
                                 <span v-show="getStatus(scope.row)==='uploading'">
                                     {{getProcess(scope.row)}}
                                 </span>
-
                             </template>
                         </el-table-column>
-                        <el-table-column min-width="64px">
-                            <template slot-scope="scope">
-                                <el-button type="text"
-                                           size="medium"
-                                           v-show="getStatus(scope.row)==='paused'"
-                                           icon="el-icon-video-play"
-                                           @click="resume(scope.row,scope.$index)">
+                        <el-table-column width="72px">
+                                <span style="float: right" slot-scope="scope">
+                                    <el-button type="text"
+                                               size="medium"
+                                               v-show="getStatus(scope.row)==='paused'"
+                                               icon="el-icon-video-play"
+                                               @click="resume(scope.row,scope.$index)">
                                 </el-button>
                                 <el-button type="text"
                                            v-show="getStatus(scope.row)==='uploading'"
@@ -80,8 +79,7 @@
                                            v-show="getRemoveStatus(getStatus(scope.row))"
                                            icon="el-icon-circle-close"
                                            @click="remove(scope.row,scope.$index)">
-                                </el-button>
-                            </template>
+                                </el-button></span>
                         </el-table-column>
                     </el-table>
                 </el-card>
@@ -91,7 +89,7 @@
 </template>
 
 <script lang="ts">
-    import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
+    import {Component, Prop, Vue, Watch, Emit} from 'vue-property-decorator';
     import {Message} from "element-ui";
     import SparkMD5 from 'spark-md5';
 
@@ -145,13 +143,12 @@
         }
 
         formatSize(size) {
-            let speed = size < 1024 ? size.toFixed(0) + " bytes" : size < 1048576 ? (size / 1024).toFixed(0) + " KB" : size < 1073741824 ? (size / 1024 / 1024).toFixed(1) + " MB" : (size / 1024 / 1024 / 1024).toFixed(1) + " GB";
-            return speed + '/ s';
+            let speed = size < 1024 ? size.toFixed(0) + " B" : size < 1048576 ? (size / 1024).toFixed(0) + " KB" : size < 1073741824 ? (size / 1024 / 1024).toFixed(1) + " MB" : (size / 1024 / 1024 / 1024).toFixed(1) + " GB";
+            return speed;
         }
 
         getProcess(file) {
-            console.log('getProcess', file);
-            let speed = this.formatSize(file.averageSpeed);
+            let speed = this.formatSize(file.averageSpeed) + '/ s';
             let progress = (file.progress() * 100).toFixed(2);
             return `(${progress}%) ${speed}`;
         }
@@ -285,8 +282,13 @@
                 relativePath: file.relativePath,
                 isDir: false
             }, false).then((data: R<any>) => {
-
+                // 通知刷新一下
+                this.refresh()
             })
+        }
+
+        @Emit("refresh")
+        refresh() {
         }
 
         onFileError(rootFile, file, response, chunk) {

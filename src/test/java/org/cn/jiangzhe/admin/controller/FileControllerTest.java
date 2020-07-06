@@ -1,10 +1,6 @@
 package org.cn.jiangzhe.admin.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import org.cn.jiangzhe.admin.entity.FileStatusEnum;
-import org.cn.jiangzhe.admin.entity.TFieStorage;
-import org.cn.jiangzhe.admin.entity.TFile;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.cn.jiangzhe.admin.mapper.FieStorageMapper;
 import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.junit.jupiter.api.Test;
@@ -35,5 +31,11 @@ public class FileControllerTest {
 
     }
 
+    @Test
+    public void reset() {
+        fileMapper.delete(Wrappers.emptyWrapper());
+        fieStorageMapper.delete(Wrappers.emptyWrapper());
+
+    }
 
 }
