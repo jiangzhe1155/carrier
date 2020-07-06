@@ -29,7 +29,6 @@
                 :visible.sync="centerDialogVisible"
                 width="30%"
                 center>
-
             <el-tree
                     :props="props"
                     :load="loadNode"
@@ -38,7 +37,7 @@
             </el-tree>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="centerDialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="centerDialogVisible = false">确 定</el-button>
+                <el-button type="primary" @click="onConfirm">确 定</el-button>
             </span>
         </el-dialog>
 
@@ -110,8 +109,9 @@
         relativePath = '';
         multipleSelection = [];
         inputValue = '';
-
         centerDialogVisible = false;
+
+        targetPath = '';
         props = {
             label: 'fileName',
             children: 'zones',
@@ -119,6 +119,7 @@
         };
 
         handleCheckChange(data) {
+            this.targetPath = data.relativePath;
             console.log(data);
         }
 
@@ -132,7 +133,19 @@
             this.http.post("listFile", {relativePath: relativePath, type: 0}, false).then(data => {
                 resolve(data.data);
             });
+        }
 
+        onConfirm() {
+            let targetPath = [];
+            this.multipleSelection.forEach(
+                m => targetPath.push({relativePath: m.relativePath, targetPath: this.targetPath})
+            );
+
+
+            this.http.post("move", {fileList: targetPath}, false).then(data => {
+                this.getFileList();
+            });
+            this.centerDialogVisible = false
         }
 
         onDelete() {
@@ -151,7 +164,6 @@
 
         onMove() {
             this.centerDialogVisible = true
-
         }
 
         mounted() {

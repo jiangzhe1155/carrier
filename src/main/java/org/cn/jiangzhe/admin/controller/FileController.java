@@ -147,9 +147,11 @@ public class FileController {
         String relativePath = params.getRelativePath();
         List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
                 .select(TFile::getRelativePath, TFile::getOriginalFileName, TFile::getId)
-                .eq(TFile::getRelativePath, relativePath)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .or(wrapper -> wrapper.likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH))
+                .and(wrapper -> wrapper
+                        .eq(TFile::getRelativePath, relativePath)
+                        .or()
+                        .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH)));
         );
         String fileName = FileUtil.getName(params.getRelativePath());
         for (TFile file : files) {
@@ -323,6 +325,11 @@ public class FileController {
         for (FileVO fileVO : fileList) {
             String relativePath = fileVO.getRelativePath();
             String targetPath = fileVO.getTargetPath();
+
+            if (targetPath.startsWith(relativePath)) {
+                throw new ServiceException("不能复制/移动到自身目录或子目录");
+            }
+
             if (!targetFolderIdMap.containsKey(targetPath)) {
                 TFile targetDir = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
                         .select(TFile::getId)
@@ -334,20 +341,25 @@ public class FileController {
             }
 
             String fileName = FileUtil.getName(relativePath);
-            TFile file = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+            List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
                     .select(TFile::getOriginalFileName, TFile::getSize, TFile::getStatus, TFile::getType,
                             TFile::getStorageId, TFile::getId)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                    .eq(TFile::getRelativePath, relativePath));
+                    .and(wrapper -> wrapper
+                            .eq(TFile::getRelativePath, relativePath)
+                            .or()
+                            .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH)));
 
-            if (!move) {
-                file.setId(null);
+
+            for (TFile file : files) {
+                if (!move) {
+                    file.setId(null);
+                }
+
+                file.setFolderId(targetFolderIdMap.get(targetPath));
+                file.setRelativePath(targetPath + StrUtil.SLASH + fileName);
             }
-
-            file.setFolderId(targetFolderIdMap.get(targetPath));
-            file.setRelativePath(targetPath + StrUtil.SLASH + fileName);
-            file.insertOrUpdate();
-            res.add(file);
+            fileService.updateBatchById(files);
         }
         return res;
     }
