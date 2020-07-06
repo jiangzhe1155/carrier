@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
@@ -45,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @CommonLog
 @RestController
 public class FileController {
-
 
     Map<String, Set<Integer>> map = new ConcurrentHashMap<>();
 
@@ -77,15 +74,22 @@ public class FileController {
         private String identifier;
         private Integer totalChunks;
         private List<String> relativePaths;
-        private String originName;
         private String targetName;
+        private List<FileVO> fileList;
+
+    }
+
+    @Data
+    private class FileVO {
+        private String relativePath;
         private String targetPath;
-        private Boolean isDir;
+        private String targetName;
     }
 
     @PostMapping("listFile")
     public Object listFile(@RequestBody TFile params) {
         Long folderId = null;
+
         if (StrUtil.isBlank(params.getRelativePath())) {
             folderId = TOP_FOLDER_ID;
         }
@@ -106,8 +110,7 @@ public class FileController {
         return fileMapper.selectList(new LambdaQueryWrapper<TFile>()
                 .select(TFile::getId, TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .eq(TFile::getFolderId, folderId)
-        );
+                .eq(TFile::getFolderId, folderId));
     }
 
     @PostMapping("deleteFile")
@@ -227,7 +230,7 @@ public class FileController {
         // 判断是否有重名文件
         TFile sameNameFile = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
                 .eq(TFile::getRelativePath, relativePath)
-                .ne(TFile::getStatus, FileStatusEnum.DELETED));
+                .eq(TFile::getStatus, FileStatusEnum.CREATED));
         if (sameNameFile != null && touch) {
             return sameNameFile;
         }
@@ -263,7 +266,8 @@ public class FileController {
     }
 
     @PostMapping("merge")
-    public synchronized Object merge(@RequestBody Params params) {
+    public Object merge(@RequestBody Params params) {
+
         String filename = params.getFilename();
         String relativePath = FileUtil.normalize(params.getRelativePath());
 
@@ -294,4 +298,52 @@ public class FileController {
         fileMapper.insert(file);
         return R.ok(file);
     }
+
+
+    @PostMapping("copy")
+    public Object copy(@RequestBody Params params) {
+        return moveOrCopy(params.getFileList(), false);
+    }
+
+    @PostMapping("move")
+    public Object move(@RequestBody Params params) {
+        return moveOrCopy(params.getFileList(), true);
+    }
+
+    private List<TFile> moveOrCopy(List<FileVO> fileList, boolean move) {
+        List<TFile> res = new ArrayList<>();
+        Map<String, Long> targetFolderIdMap = new HashMap<>(2);
+        for (FileVO fileVO : fileList) {
+            String relativePath = fileVO.getRelativePath();
+            String targetPath = fileVO.getTargetPath();
+            if (!targetFolderIdMap.containsKey(targetPath)) {
+                TFile targetDir = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                        .select(TFile::getId)
+                        .eq(TFile::getRelativePath, targetPath)
+                        .eq(TFile::getStatus, FileStatusEnum.CREATED));
+                if (targetDir != null) {
+                    targetFolderIdMap.putIfAbsent(targetPath, targetDir.getId());
+                }
+            }
+
+            String fileName = FileUtil.getName(relativePath);
+            TFile file = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                    .select(TFile::getOriginalFileName, TFile::getSize, TFile::getStatus, TFile::getType,
+                            TFile::getStorageId, TFile::getId)
+                    .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                    .eq(TFile::getRelativePath, relativePath));
+
+            if (!move) {
+                file.setId(null);
+            }
+
+            file.setFolderId(targetFolderIdMap.get(targetPath));
+            file.setRelativePath(targetPath + StrUtil.SLASH + fileName);
+            file.insertOrUpdate();
+            res.add(file);
+        }
+        return res;
+    }
+
+
 }

@@ -21,7 +21,7 @@ public class TFieStorage {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    @TableField("`path`")
+    @TableField("`relativePath`")
     private String path;
 
     @TableField("`identifier`")

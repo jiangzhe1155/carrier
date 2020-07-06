@@ -3,6 +3,7 @@ package org.cn.jiangzhe.admin.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -19,7 +20,7 @@ import java.util.Date;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Accessors(chain = true)
-public class TFile {
+public class TFile extends Model<TFile> {
 
     //id
     @TableId(type = IdType.AUTO)
@@ -66,7 +67,7 @@ public class TFile {
     @TableField("`update_time`")
     private Date updateTime;
 
-        //更新时间
+    //更新时间
     @TableField("`storage_id`")
     private Long storageId;
 }
