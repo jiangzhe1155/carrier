@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -45,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 public class FileController {
 
+
     Map<String, Set<Integer>> map = new ConcurrentHashMap<>();
 
     @Autowired
@@ -60,6 +62,7 @@ public class FileController {
     FieStorageMapper fileStoreMapper;
 
     public static String DEMO_DIR = "public/";
+    public static final long TOP_FOLDER_ID = 0L;
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -84,7 +87,7 @@ public class FileController {
     public Object listFile(@RequestBody TFile params) {
         Long folderId = null;
         if (StrUtil.isBlank(params.getRelativePath())) {
-            folderId = 0L;
+            folderId = TOP_FOLDER_ID;
         }
 
         if (folderId == null) {
@@ -109,22 +112,23 @@ public class FileController {
 
     @PostMapping("deleteFile")
     public Object deleteFile(@RequestBody Params params) {
-
-        String relativePath = params.getRelativePath();
-        int update = fileMapper.update(null, new LambdaUpdateWrapper<TFile>()
-                .set(TFile::getStatus, FileStatusEnum.DELETED)
-                .eq(TFile::getRelativePath, relativePath)
-                .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .or(wrapper -> wrapper.likeRight(TFile::getRelativePath, relativePath + File.separator)));
+        List<String> relativePaths = params.getRelativePaths();
+        for (String relativePath : relativePaths) {
+            int update = fileMapper.update(null, new LambdaUpdateWrapper<TFile>()
+                    .set(TFile::getStatus, FileStatusEnum.DELETED)
+                    .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                    .and(wrapper -> wrapper
+                            .eq(TFile::getRelativePath, relativePath)
+                            .or()
+                            .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH)));
+        }
         return R.ok(null);
     }
 
     @PostMapping("makeDir")
     public Object makeDir(@RequestBody Params params) {
         String folderName = StrUtil.subAfter(params.getRelativePath(), StrUtil.SLASH, true);
-        TFile file = create(folderName, params.getRelativePath(), true, false);
-
-        return file;
+        return create(folderName, params.getRelativePath(), true, false);
     }
 
     @PostMapping("rename")
@@ -135,7 +139,7 @@ public class FileController {
                 .select(TFile::getRelativePath, TFile::getOriginalFileName, TFile::getId)
                 .eq(TFile::getRelativePath, relativePath)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .or(wrapper -> wrapper.likeRight(TFile::getRelativePath, relativePath + File.separator))
+                .or(wrapper -> wrapper.likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH))
         );
         String fileName = FileUtil.getName(params.getRelativePath());
         for (TFile file : files) {
@@ -155,8 +159,6 @@ public class FileController {
         if (FileUtil.containsInvalid(params.getFilename())) {
             throw new ServiceException("文件名不合法");
         }
-
-        Response response = new Response();
         TFieStorage target = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFieStorage>()
                 .select(TFieStorage::getId, TFieStorage::getStatus)
                 .ne(TFieStorage::getStatus, FileStatusEnum.DELETED)
@@ -165,30 +167,23 @@ public class FileController {
 
         if (target != null) {
             if (target.getStatus().equals(FileStatusEnum.CREATED)) {
-                response.setId(target.getId());
-                response.setSkipUpload(true);
-            } else {
-                List<Integer> uploaded = new ArrayList<>(map.getOrDefault(params.getIdentifier(), new HashSet<>()));
-                System.out.println(uploaded);
-                response.setUploaded(uploaded);
-                response.setId(target.getId());
-                response.setSkipUpload(false);
+                return new Response().id(target.getId()).skipUpload(true);
             }
-        } else {
-            String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
-            target = new TFieStorage()
-                    .setIdentifier(params.getIdentifier())
-                    .setPath(realFilePath)
-                    .setStatus(FileStatusEnum.NEW);
-            fileStoreMapper.insert(target);
-            response.setSkipUpload(false);
-            response.setId(target.getId());
+            List<Integer> uploaded = new ArrayList<>(map.getOrDefault(params.getIdentifier(), new HashSet<>()));
+            return new Response().id(target.getId()).skipUpload(false).uploaded(uploaded);
         }
-        return R.ok(response);
+
+        String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
+        target = new TFieStorage()
+                .setIdentifier(params.getIdentifier())
+                .setPath(realFilePath)
+                .setStatus(FileStatusEnum.NEW);
+        fileStoreMapper.insert(target);
+        return new Response().id(target.getId()).skipUpload(false);
     }
 
     @Data
-    @Accessors(chain = true)
+    @Accessors(chain = true, fluent = true)
     public static class Response {
         private Boolean skipUpload;
         private Long id;
@@ -200,36 +195,33 @@ public class FileController {
 
         String realFilePath = fileUtilService.absPath(null,
                 params.getFilename() + DateUtil.format(new Date(), "yyyyMMdd_HHmmss"));
-        String fileName = params.getFilename();
-        File chunkFile = FileUtil.touch(realFilePath);
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(chunkFile, "rw")) {
-            map.putIfAbsent(params.getIdentifier(), new HashSet<>());
-            Set<Integer> set = map.get(params.getIdentifier());
-            if (!set.contains(params.getChunkNumber())) {
-                randomAccessFile.seek((params.getChunkNumber()) * params.getChunkSize());
-                randomAccessFile.write(file.getBytes());
-                set.add(params.getChunkNumber());
+
+        Integer chunkNumber = params.getChunkNumber();
+        Integer totalChunks = params.getTotalChunks();
+        String identifier = params.getIdentifier();
+        map.putIfAbsent(identifier, new HashSet<>());
+        Set<Integer> set = map.get(identifier);
+        if (!set.contains(chunkNumber)) {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(FileUtil.touch(realFilePath), "rw");
+            randomAccessFile.seek((chunkNumber - 1) * params.getChunkSize());
+            randomAccessFile.write(file.getBytes());
+            randomAccessFile.close();
+
+            if (chunkNumber.equals(totalChunks) || chunkNumber == 1) {
+                fileStoreMapper.update(null, new LambdaUpdateWrapper<TFieStorage>()
+                        .set(TFieStorage::getStatus, chunkNumber.equals(totalChunks) ?
+                                FileStatusEnum.CREATED : FileStatusEnum.CREATING)
+                        .eq(TFieStorage::getId, params.getStorageId()));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw e;
+            set.add(chunkNumber);
         }
 
-        if (params.getChunkNumber() == 1) {
-            fileStoreMapper.update(new TFieStorage().setStatus(FileStatusEnum.CREATING).setId(params.getStorageId()),
-                    null);
-        }
-
-        if (params.getChunkNumber().equals(params.getTotalChunks())) {
-            fileStoreMapper.update(new TFieStorage().setStatus(FileStatusEnum.CREATED).setId(params.getStorageId()),
-                    null);
-        }
         return R.ok(null);
     }
 
     private TFile create(String fileName, String relativePath, Boolean isDir, Boolean touch) {
         if (StrUtil.isBlank(fileName)) {
-            return new TFile().setId(0L);
+            return new TFile().setId(TOP_FOLDER_ID);
         }
 
         // 判断是否有重名文件
@@ -277,8 +269,10 @@ public class FileController {
 
         // 判断是否有重名文件
         TFile sameNameFile = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
+                .select(TFile::getId)
                 .eq(TFile::getRelativePath, relativePath)
-                .ne(TFile::getStatus, FileStatusEnum.DELETED));
+                .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                .last("limit 1"));
 
         if (sameNameFile != null) {
             filename = newFileName(filename);
@@ -296,9 +290,8 @@ public class FileController {
                 .setSize(params.getTotalSize())
                 .setRelativePath(parentDirPath + StrUtil.SLASH + filename)
                 .setOriginalFileName(filename)
-                .setFolderId(parentDir == null ? 0L : parentDir.getId());
+                .setFolderId(parentDir == null ? TOP_FOLDER_ID : parentDir.getId());
         fileMapper.insert(file);
         return R.ok(file);
     }
-
 }

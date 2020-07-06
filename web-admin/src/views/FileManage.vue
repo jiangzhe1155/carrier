@@ -13,7 +13,7 @@
                     <label ref="btnDir"></label>
                 </el-button>
             </el-button-group>
-            <el-button size="mini" type="primary" style="margin-left: 20px" @click="onNewDir">
+            <el-button size="mini" type="primary" style="margin-left: 20px" @click="onMakeDir">
                 新建文件夹
             </el-button>
         </template>
@@ -136,7 +136,7 @@
 
         }
 
-        onNewDir() {
+        onMakeDir() {
             for (let file of this.fileList) {
                 if (file.editable) {
                     this.$refs.editInput.select();
@@ -158,7 +158,7 @@
 
         deleteFile(index, row) {
             this.http.post("deleteFile", {
-                relativePath: this.relativePath + "/" + row.fileName
+                relativePaths: [this.relativePath + "/" + row.fileName]
             }).then((data: R<CommonFile[]>) => {
                 Message.success("成功");
                 this.init();
@@ -201,9 +201,6 @@
             return 'el-icon-document';
         }
 
-        makeDir() {
-
-        }
 
         onClickFileName(file) {
             if (file.type === 0) {

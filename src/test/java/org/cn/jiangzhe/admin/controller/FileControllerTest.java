@@ -1,5 +1,11 @@
 package org.cn.jiangzhe.admin.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import org.cn.jiangzhe.admin.entity.FileStatusEnum;
+import org.cn.jiangzhe.admin.entity.TFieStorage;
+import org.cn.jiangzhe.admin.entity.TFile;
+import org.cn.jiangzhe.admin.mapper.FieStorageMapper;
 import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +21,13 @@ public class FileControllerTest {
     private String fileName2 = "C:\\Users\\jiangzhe\\Desktop\\v2.0-JavaGuide2.pdf";
 
     @Autowired
-    FileMapper fileEngineMapper;
-
+    FileMapper fileMapper;
+    @Autowired
+    FieStorageMapper fieStorageMapper;
 
     @Test
     public void uploadFile() {
+
     }
 
     @Test
@@ -27,7 +35,5 @@ public class FileControllerTest {
 
     }
 
-    @Autowired
-    FileMapper fileMapper;
 
 }

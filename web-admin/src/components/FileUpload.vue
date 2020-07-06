@@ -46,7 +46,7 @@
                         </el-table-column>
                         <el-table-column label="状态" min-width="100px">
                             <template slot-scope="scope">
-                                <span v-show="!getRemoveStatus(getStatus(scope.row)">
+                                <span v-show="!getRemoveStatus(getStatus(scope.row))">
                                     <i class="el-icon-circle-check" style="color: #67C23A"></i>
                                 </span>
                                 <span v-show="getStatus(scope.row)!=='uploading'">
