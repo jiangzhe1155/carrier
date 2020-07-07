@@ -9,9 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 /**
- * 修饰返回体
  *
- * @author MinWeikai
+ * @author jiangzhe
  * @date 2019/6/24 10:56
  */
 @RestControllerAdvice
