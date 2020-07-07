@@ -10,6 +10,7 @@ import org.cn.jiangzhe.admin.entity.TFile;
 import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;

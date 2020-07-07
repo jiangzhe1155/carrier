@@ -364,7 +364,7 @@ public class FileController {
             String targetPath = fileVO.getTargetPath();
 
             String sufPath = StrUtil.subBefore(relativePath, StrUtil.SLASH, true);
-            if (sufPath.equals(targetPath) || targetPath.startsWith(relativePath)) {
+            if (sufPath.equals(targetPath) || targetPath.startsWith(relativePath + StrUtil.SLASH)) {
                 throw new ServiceException("不能复制/移动到自身目录或子目录");
             }
 
@@ -381,7 +381,7 @@ public class FileController {
             String fileName = FileUtil.getName(relativePath);
             List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
                     .select(TFile::getOriginalFileName, TFile::getSize, TFile::getStatus, TFile::getType,
-                            TFile::getStorageId, TFile::getId)
+                            TFile::getStorageId, TFile::getId, TFile::getRelativePath)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)
                     .and(wrapper -> wrapper
                             .eq(TFile::getRelativePath, relativePath)
@@ -408,8 +408,8 @@ public class FileController {
                 if (file.getRelativePath().equals(relativePath)) {
                     //说明是根文件
                     file.setFolderId(targetFolderIdMap.get(targetPath));
+                    file.setOriginalFileName(fileName);
                 }
-
 
                 file.setRelativePath(targetRelativePath + StrUtil.removePrefix(file.getRelativePath(), relativePath));
             }
