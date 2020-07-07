@@ -20,7 +20,7 @@ import java.util.Date;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Accessors(chain = true)
-public class TFile extends Model<TFile> {
+public class TFile {
 
     //id
     @TableId(type = IdType.AUTO)

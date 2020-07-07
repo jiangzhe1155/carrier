@@ -68,6 +68,7 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
     response => {
         let data = response.data;
+
         //隐藏等待框
         if (data.code === 0) {
             return Promise.resolve(data)
@@ -111,20 +112,23 @@ const get = function get(url: string, params = {}, showLoading = true) {
  * @param url
  * @param params
  * @param showLoading
- * @param config
+ * @param showError
  * @returns {Promise}
  */
 
-const post = function post(url: string, params = {}, showLoading = true, config: AxiosRequestConfig = {}) {
+const post = function post(url: string, params = {}, showLoading = true, showError = true) {
     return new Promise((resolve, reject) => {
         showLoading && showFullScreenLoading(); //显示等待框
 
-        Axios.post(url, params, config)
+        Axios.post(url, params)
             .then((response: any) => {
                 showLoading && tryHideFullScreenLoading();//隐藏等待框
                 resolve(response);
             }, err => {
                 showLoading && tryHideFullScreenLoading();//隐藏等待框
+                if (showError) {
+                    Message.error(err.msg);
+                }
                 reject(err)
             })
     })

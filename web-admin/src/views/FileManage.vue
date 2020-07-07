@@ -8,7 +8,7 @@
                     <i class="el-icon-upload"></i><span>上传文件</span>
                     <label ref="btnFile"></label>
                 </el-button>
-                <el-button size="mini" type="primary" @click="$refs.btnDir.click();">
+                <el-button size="mini" type="primary" @click="$refs.btnDir.click()">
                     <i class="el-icon-upload"></i><span>上传文件夹</span>
                     <label ref="btnDir"></label>
                 </el-button>
@@ -33,6 +33,7 @@
                     :props="props"
                     :load="loadNode"
                     lazy
+                    v-if="centerDialogVisible"
                     @node-click="handleCheckChange">
             </el-tree>
             <span slot="footer" class="dialog-footer">
@@ -140,10 +141,9 @@
             this.multipleSelection.forEach(
                 m => targetPath.push({relativePath: m.relativePath, targetPath: this.targetPath})
             );
-
-
-            this.http.post("move", {fileList: targetPath}, false).then(data => {
+            this.http.post("move", {fileList: targetPath}, true, true).then(data => {
                 this.getFileList();
+            }).catch(() => {
             });
             this.centerDialogVisible = false
         }

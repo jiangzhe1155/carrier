@@ -95,6 +95,7 @@
 
     @Component
     export default class FileUpload extends Vue {
+
         options = {
             target: 'http://127.0.0.1:18080/chunkUploadFile',
             chunkSize: 4 * 1024 * 1024,
@@ -215,6 +216,7 @@
                     Vue.set(this.$refs.uploaderFiles.files, i, file);
                 }
             }
+            console.log(file);
             console.log(`上传中 ${file.name}，chunk：${chunk.startByte / 1024 / 1024} ~ ${chunk.endByte / 1024 / 1024}`)
         }
 
