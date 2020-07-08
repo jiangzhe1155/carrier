@@ -7,8 +7,8 @@ import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.api.R;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -75,7 +75,8 @@ public class FileController {
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Params {
-        private String filename;
+        @JsonAlias("filename")
+        private String fileName;
         private String relativePath;
         private Integer chunkNumber;
         private Integer chunkSize;
@@ -191,6 +192,14 @@ public class FileController {
 
     @GetMapping("chunkUploadFile")
     public Object chunkFile(Params params) {
+
+        if (FileUtil.containsInvalid(params.getFileName())) {
+            throw new ServiceException("文件名不合法");
+        }
+        if (params.getTotalSize() <= 0) {
+            throw new ServiceException("文件大小不能为0");
+        }
+
         TFieStorage target = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFieStorage>()
                 .select(TFieStorage::getId, TFieStorage::getStatus)
                 .ne(TFieStorage::getStatus, FileStatusEnum.DELETED)
@@ -225,16 +234,8 @@ public class FileController {
     @PostMapping("chunkUploadFile")
     public Object chunkUploadFile(@RequestBody MultipartFile file, Params params) throws IOException {
 
-        if (FileUtil.containsInvalid(params.getFilename())) {
-            throw new ServiceException("文件名不合法");
-        }
-        if (params.getTotalSize() <= 0) {
-            throw new ServiceException("文件大小不能为0");
-        }
-
-
         String realFilePath = fileUtilService.absPath(null,
-                params.getFilename() + DateUtil.format(new Date(), "yyyyMMdd_HHmmss"));
+                params.getFileName() + DateUtil.format(new Date(), "yyyyMMdd_HHmmss"));
 
         Integer chunkNumber = params.getChunkNumber();
         Integer totalChunks = params.getTotalChunks();
@@ -251,7 +252,7 @@ public class FileController {
                 fileStoreMapper.update(null, new LambdaUpdateWrapper<TFieStorage>()
                         .set(TFieStorage::getStatus, chunkNumber.equals(totalChunks) ?
                                 FileStatusEnum.CREATED : FileStatusEnum.CREATING)
-                        .eq(TFieStorage::getId, params.getStorageId()));
+                        .eq(TFieStorage::getIdentifier, identifier));
             }
             set.add(chunkNumber);
         }
@@ -303,7 +304,7 @@ public class FileController {
     @PostMapping("merge")
     public Object merge(@RequestBody Params params) {
 
-        String filename = params.getFilename();
+        String filename = params.getFileName();
         String relativePath = FileUtil.normalize(params.getRelativePath());
 
         // 判断是否有重名文件
@@ -368,7 +369,7 @@ public class FileController {
                 throw new ServiceException("不能复制/移动到自身目录或子目录");
             }
 
-            if (!targetFolderIdMap.containsKey(targetPath)) {
+            if (StrUtil.isNotEmpty(targetPath)) {
                 TFile targetDir = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
                         .select(TFile::getId)
                         .eq(TFile::getRelativePath, targetPath)
@@ -381,7 +382,7 @@ public class FileController {
             String fileName = FileUtil.getName(relativePath);
             List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
                     .select(TFile::getOriginalFileName, TFile::getSize, TFile::getStatus, TFile::getType,
-                            TFile::getStorageId, TFile::getId, TFile::getRelativePath)
+                            TFile::getStorageId, TFile::getId, TFile::getRelativePath, TFile::getFolderId)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)
                     .and(wrapper -> wrapper
                             .eq(TFile::getRelativePath, relativePath)

@@ -19,8 +19,11 @@
             <el-button size="mini" type="primary" @click="onDelete">
                 删除
             </el-button>
-            <el-button size="mini" type="primary" @click="onMove">
+            <el-button size="mini" type="primary" @click="onMove('move')">
                 移动到
+            </el-button>
+            <el-button size="mini" type="primary" @click="onMove('copy')">
+                复制到
             </el-button>
         </template>
 
@@ -41,8 +44,6 @@
                 <el-button type="primary" @click="onConfirm">确 定</el-button>
             </span>
         </el-dialog>
-
-        {{multipleSelection}}
         <template>
             <el-table :data="fileList"
                       stripe
@@ -111,12 +112,10 @@
         multipleSelection = [];
         inputValue = '';
         centerDialogVisible = false;
-
+        methodType = '';
         targetPath = '';
         props = {
-            label: 'fileName',
-            children: 'zones',
-            isLeaf: 'leaf'
+            label: 'fileName'
         };
 
         handleCheckChange(data) {
@@ -141,7 +140,7 @@
             this.multipleSelection.forEach(
                 m => targetPath.push({relativePath: m.relativePath, targetPath: this.targetPath})
             );
-            this.http.post("move", {fileList: targetPath}, true, true).then(data => {
+            this.http.post(this.methodType, {fileList: targetPath}, true, true,true).then(data => {
                 this.getFileList();
             }).catch(() => {
             });
@@ -162,7 +161,8 @@
             })
         }
 
-        onMove() {
+        onMove(methodType) {
+            this.methodType = methodType;
             this.centerDialogVisible = true
         }
 

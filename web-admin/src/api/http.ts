@@ -113,16 +113,20 @@ const get = function get(url: string, params = {}, showLoading = true) {
  * @param params
  * @param showLoading
  * @param showError
+ * @param showSuccess
  * @returns {Promise}
  */
 
-const post = function post(url: string, params = {}, showLoading = true, showError = true) {
+const post = function post(url: string, params = {}, showLoading = true, showError = true, showSuccess = false) {
     return new Promise((resolve, reject) => {
         showLoading && showFullScreenLoading(); //显示等待框
 
         Axios.post(url, params)
             .then((response: any) => {
                 showLoading && tryHideFullScreenLoading();//隐藏等待框
+                if (showSuccess) {
+                    Message.success(response.msg)
+                }
                 resolve(response);
             }, err => {
                 showLoading && tryHideFullScreenLoading();//隐藏等待框
