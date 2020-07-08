@@ -33,7 +33,7 @@
                 width="30%"
                 center>
             <el-tree
-                    :props="props"
+                    :props="{label: 'fileName'}"
                     :load="loadNode"
                     lazy
                     v-if="centerDialogVisible"
@@ -64,7 +64,7 @@
                         <div v-else>
                             <el-input clearable
                                       v-model="inputValue"
-                                      style="width: 200px"
+                                      style="width: 324px"
                                       ref="editInput"
                                       size="mini">
                             </el-input>
@@ -114,9 +114,6 @@
         centerDialogVisible = false;
         methodType = '';
         targetPath = '';
-        props = {
-            label: 'fileName'
-        };
 
         handleCheckChange(data) {
             this.targetPath = data.relativePath;
@@ -142,8 +139,7 @@
             );
             this.http.post(this.methodType, {fileList: targetPath}, true, true,true).then(data => {
                 this.getFileList();
-            }).catch(() => {
-            });
+            }).catch(() => {});
             this.centerDialogVisible = false
         }
 
@@ -238,7 +234,6 @@
             this.http.post("deleteFile", {
                 relativePaths: [this.relativePath + "/" + row.fileName]
             }).then((data: R<CommonFile[]>) => {
-                Message.success("成功");
                 this.init();
             }).catch(() => {
             });
