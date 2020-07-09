@@ -16,7 +16,7 @@ Vue.config.productionTip = false;
 Vue.use(ElementUI);
 Vue.prototype.http = http;
 
-const originalPush = Router.prototype.push
+const originalPush = Router.prototype.push;
 Router.prototype.push = function push(location) {
   return originalPush.call(this, location).catch(err => err)
 };
@@ -29,7 +29,7 @@ new Vue({
 
 declare module 'vue/types/vue' {
     interface Vue {
-        http: any,
+        http: any
     }
 }
 

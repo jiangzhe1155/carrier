@@ -25,7 +25,11 @@
             <el-button size="mini" type="primary" @click="onMove('copy')">
                 复制到
             </el-button>
+            <el-button size="mini" type="primary" @click="onDownLoad">
+                下载
+            </el-button>
         </template>
+        {{multipleSelection}}
 
         <el-dialog
                 title="提示"
@@ -104,6 +108,7 @@
     import FileUpload from '@/components/FileUpload.vue'
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
+    import axios from 'axios'
 
     @Component({components: {FileUpload}})
     export default class FileManage extends Vue {
@@ -127,9 +132,37 @@
             }
 
             let relativePath = node.data.relativePath;
-            this.http.post("listFile", {relativePath: relativePath, type: 0}, false).then(data => {
+            this.http.post("listFile", {relativePath: relativePath, type: 0}, true).then(data => {
                 resolve(data.data);
             });
+        }
+
+        onDownLoad() {
+            let fidList = [];
+            this.multipleSelection.forEach(
+                m => fidList.push(m.id)
+            );
+
+
+            axios({
+                method: 'post',
+                url: 'http://127.0.0.1:18080/download',
+                data: {},
+                responseType: 'blob'
+            }).then(res => {
+                let data = res.data
+                let url = window.URL.createObjectURL(new Blob([data]))
+                let link = document.createElement('a')
+                link.style.display = 'none'
+                link.href = url
+                link.setAttribute('download', 'test.rar')
+
+                document.body.appendChild(link)
+                link.click()
+            }).catch((error) => {
+            })
+
+
         }
 
         onConfirm() {
@@ -137,9 +170,10 @@
             this.multipleSelection.forEach(
                 m => targetPath.push({relativePath: m.relativePath, targetPath: this.targetPath})
             );
-            this.http.post(this.methodType, {fileList: targetPath}, true, true,true).then(data => {
+            this.http.post(this.methodType, {fileList: targetPath}, true, true, true).then(data => {
                 this.getFileList();
-            }).catch(() => {});
+            }).catch(() => {
+            });
             this.centerDialogVisible = false
         }
 

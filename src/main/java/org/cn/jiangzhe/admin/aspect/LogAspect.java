@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.ServletResponse;
+
 /**
  * @author 江哲
  * @date 2020/06/14
@@ -40,7 +42,7 @@ public class LogAspect {
         Object[] args = joinPoint.getArgs();
         MapBuilder<String, Object> builder = MapUtil.builder();
         for (Object arg : args) {
-            if (arg == null) {
+            if (arg == null || arg instanceof ServletResponse) {
                 continue;
             }
             if (ObjectUtil.isBasicType(arg) || arg instanceof String) {

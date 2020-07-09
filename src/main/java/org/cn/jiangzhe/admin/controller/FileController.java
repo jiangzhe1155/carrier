@@ -2,9 +2,11 @@ package org.cn.jiangzhe.admin.controller;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ZipUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
@@ -24,14 +26,17 @@ import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -89,7 +94,7 @@ public class FileController {
         private String targetName;
         private List<FileVO> fileList;
         private FileTypeEnum type;
-
+        private List<Long> fidList;
     }
 
     @Data
@@ -418,5 +423,22 @@ public class FileController {
             fileService.saveOrUpdateBatch(files);
         }
         return res;
+    }
+
+
+    @PostMapping("download")
+    public void download(@RequestBody Params params, HttpServletResponse response) throws IOException {
+        List<Long> fidList = params.getFidList();
+        response.setContentType(MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE);
+
+        File zip = ZipUtil.zip(FileUtil.file("public/yasuo.zip"), new String[]{"/xixi/3年经验简历.pdf"},
+                new InputStream[]{FileUtil.getInputStream("public/xixi/3年经验简历 .pdf20200705_071815")});
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=hello-world");
+        BufferedInputStream inputStream = FileUtil.getInputStream(zip);
+        ServletOutputStream outputStream = response.getOutputStream();
+        IoUtil.copy(inputStream, outputStream);
+        outputStream.close();
+        System.out.println(zip.delete());
+
     }
 }
