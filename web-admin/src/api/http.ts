@@ -68,7 +68,10 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
     response => {
         let data = response.data;
-
+        console.log(response)
+        if (response.config.responseType === 'blob'){
+            Promise.resolve(data);
+        }
         //隐藏等待框
         if (data.code === 0) {
             return Promise.resolve(data)
@@ -141,5 +144,5 @@ const post = function post(url: string, params = {}, showLoading = true, showErr
 
 export default {
     post,
-    get,
+    get
 }
