@@ -68,9 +68,9 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
     response => {
         let data = response.data;
-        console.log(response)
-        if (response.config.responseType === 'blob'){
-            Promise.resolve(data);
+
+        if (response.config.responseType == 'blob') {
+            return Promise.resolve(response);
         }
         //隐藏等待框
         if (data.code === 0) {
@@ -120,11 +120,11 @@ const get = function get(url: string, params = {}, showLoading = true) {
  * @returns {Promise}
  */
 
-const post = function post(url: string, params = {}, showLoading = true, showError = true, showSuccess = false) {
+const post = function post(url: string, params = {}, showLoading = true, showError = true, showSuccess = false, config = {}) {
     return new Promise((resolve, reject) => {
         showLoading && showFullScreenLoading(); //显示等待框
 
-        Axios.post(url, params)
+        Axios.post(url, params, {})
             .then((response: any) => {
                 showLoading && tryHideFullScreenLoading();//隐藏等待框
                 if (showSuccess) {

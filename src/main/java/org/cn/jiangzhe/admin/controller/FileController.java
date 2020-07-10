@@ -4,13 +4,10 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.CharUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.ZipUtil;
+import cn.hutool.core.util.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -27,18 +24,23 @@ import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import sun.nio.ch.IOUtil;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 作为一个文件大致有三种状态：生成、完成、删除
@@ -80,8 +82,7 @@ public class FileController {
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Params {
-        @JsonAlias("filename")
-        private String fileName;
+        private String filename;
         private String relativePath;
         private Integer chunkNumber;
         private Integer chunkSize;
@@ -198,7 +199,7 @@ public class FileController {
     @GetMapping("chunkUploadFile")
     public Object chunkFile(Params params) {
 
-        if (FileUtil.containsInvalid(params.getFileName())) {
+        if (FileUtil.containsInvalid(params.getFilename())) {
             throw new ServiceException("文件名不合法");
         }
         if (params.getTotalSize() <= 0) {
@@ -240,7 +241,7 @@ public class FileController {
     public Object chunkUploadFile(@RequestBody MultipartFile file, Params params) throws IOException {
 
         String realFilePath = fileUtilService.absPath(null,
-                params.getFileName() + DateUtil.format(new Date(), "yyyyMMdd_HHmmss"));
+                newFileName(params.getFilename()));
 
         Integer chunkNumber = params.getChunkNumber();
         Integer totalChunks = params.getTotalChunks();
@@ -309,7 +310,7 @@ public class FileController {
     @PostMapping("merge")
     public Object merge(@RequestBody Params params) {
 
-        String filename = params.getFileName();
+        String filename = params.getFilename();
         String relativePath = FileUtil.normalize(params.getRelativePath());
 
         // 判断是否有重名文件
@@ -429,16 +430,21 @@ public class FileController {
     @PostMapping("download")
     public void download(@RequestBody Params params, HttpServletResponse response) throws IOException {
         List<Long> fidList = params.getFidList();
-        response.setContentType(MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE);
 
-        File zip = ZipUtil.zip(FileUtil.file("public/yasuo.zip"), new String[]{"/xixi/3年经验简历.pdf"},
-                new InputStream[]{FileUtil.getInputStream("public/xixi/3年经验简历 .pdf20200705_071815")});
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=hello-world");
-        BufferedInputStream inputStream = FileUtil.getInputStream(zip);
-        ServletOutputStream outputStream = response.getOutputStream();
-        IoUtil.copy(inputStream, outputStream);
-        outputStream.close();
-        System.out.println(zip.delete());
+
+
+
+        response.setContentType(MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, URLUtil.encode("哇哈哈.zip"));
+        response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
+        BufferedInputStream inputStream = FileUtil.getInputStream("public/1807180355520200710_163031.csv");
+        ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+
+        zos.putNextEntry(new ZipEntry("xixi/wahaha.xlsx"));
+        IoUtil.copy(inputStream, zos);
+        zos.closeEntry();
+        zos.close();
+
 
     }
 }

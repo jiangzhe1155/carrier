@@ -140,29 +140,21 @@
         onDownLoad() {
             let fidList = [];
             this.multipleSelection.forEach(
-                m => fidList.push(m.id)
-            );
-
-
-            axios({
-                method: 'post',
-                url: 'http://127.0.0.1:18080/download',
-                data: {},
-                responseType: 'blob'
-            }).then(res => {
-                let data = res.data
-                let url = window.URL.createObjectURL(new Blob([data]))
-                let link = document.createElement('a')
-                link.style.display = 'none'
-                link.href = url
-                link.setAttribute('download', 'test.rar')
-
-                document.body.appendChild(link)
-                link.click()
-            }).catch((error) => {
+                m => fidList.push(m.id));
+            axios.post('download', {}, {responseType: 'blob'})
+                .then(res => {
+                    console.log(res)
+                    let data = res.data;
+                    let url = window.URL.createObjectURL(data);
+                    let link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.href = url;
+                    link.download = decodeURI(res.headers['content-disposition']);
+                    link.click();
+                    URL.revokeObjectURL(url);
+                }).catch((error) => {
+                console.log(error)
             })
-
-
         }
 
         onConfirm() {
