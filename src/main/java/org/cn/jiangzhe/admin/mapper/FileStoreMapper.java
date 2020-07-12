@@ -2,7 +2,7 @@ package org.cn.jiangzhe.admin.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.cn.jiangzhe.admin.entity.TFieStorage;
+import org.cn.jiangzhe.admin.entity.TFileStore;
 
 /**
  * (TFieStorage)表数据库访问层
@@ -11,6 +11,6 @@ import org.cn.jiangzhe.admin.entity.TFieStorage;
  * @since 2020-06-26 08:31:05
  */
 @Mapper
-public interface FieStorageMapper extends BaseMapper<TFieStorage> {
+public interface FileStoreMapper extends BaseMapper<TFileStore> {
 
 }

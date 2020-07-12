@@ -16,7 +16,7 @@ import java.util.Date;
  */
 @Data
 @Accessors(chain = true)
-public class TFieStorage {
+public class TFileStore {
 
     @TableId(type = IdType.AUTO)
     private Long id;

@@ -19,9 +19,9 @@ import org.cn.jiangzhe.admin.aspect.CommonLog;
 import org.cn.jiangzhe.admin.aspect.ServiceException;
 import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
-import org.cn.jiangzhe.admin.entity.TFieStorage;
+import org.cn.jiangzhe.admin.entity.TFileStore;
 import org.cn.jiangzhe.admin.entity.TFile;
-import org.cn.jiangzhe.admin.mapper.FieStorageMapper;
+import org.cn.jiangzhe.admin.mapper.FileStoreMapper;
 import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
@@ -34,12 +34,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -77,7 +73,7 @@ public class FileController {
     FileMapper fileMapper;
 
     @Autowired
-    FieStorageMapper fileStoreMapper;
+    FileStoreMapper fileStoreMapper;
 
     public static String DEMO_DIR = "public/";
     public static final long TOP_FOLDER_ID = 0L;
@@ -209,10 +205,10 @@ public class FileController {
             throw new ServiceException("文件大小不能为0");
         }
 
-        TFieStorage target = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFieStorage>()
-                .select(TFieStorage::getId, TFieStorage::getStatus)
-                .ne(TFieStorage::getStatus, FileStatusEnum.DELETED)
-                .eq(TFieStorage::getIdentifier, params.getIdentifier())
+        TFileStore target = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileStore>()
+                .select(TFileStore::getId, TFileStore::getStatus)
+                .ne(TFileStore::getStatus, FileStatusEnum.DELETED)
+                .eq(TFileStore::getIdentifier, params.getIdentifier())
         );
 
         if (target != null) {
@@ -223,8 +219,9 @@ public class FileController {
             return new Response().setId(target.getId()).setSkipUpload(false).setUploaded(uploaded);
         }
 
-        String realFilePath = fileUtilService.absPath(null, params.getIdentifier());
-        target = new TFieStorage()
+        String realFilePath = fileUtilService.absPath(null,
+                newFileName(params.getFilename()));
+        target = new TFileStore()
                 .setIdentifier(params.getIdentifier())
                 .setPath(realFilePath)
                 .setStatus(FileStatusEnum.NEW);
@@ -258,10 +255,10 @@ public class FileController {
             randomAccessFile.close();
 
             if (chunkNumber.equals(totalChunks) || chunkNumber == 1) {
-                fileStoreMapper.update(null, new LambdaUpdateWrapper<TFieStorage>()
-                        .set(TFieStorage::getStatus, chunkNumber.equals(totalChunks) ?
+                fileStoreMapper.update(null, new LambdaUpdateWrapper<TFileStore>()
+                        .set(TFileStore::getStatus, chunkNumber.equals(totalChunks) ?
                                 FileStatusEnum.CREATED : FileStatusEnum.CREATING)
-                        .eq(TFieStorage::getIdentifier, identifier));
+                        .eq(TFileStore::getIdentifier, identifier));
             }
             set.add(chunkNumber);
         }
@@ -367,6 +364,7 @@ public class FileController {
     }
 
     private List<TFile> moveOrCopy(List<FileVO> fileList, boolean move) {
+
         List<TFile> res = new ArrayList<>();
         Map<String, Long> targetFolderIdMap = new HashMap<>(2);
         for (FileVO fileVO : fileList) {
@@ -435,38 +433,51 @@ public class FileController {
         List<Long> fidList = params.getFidList();
         List<TFile> files = fileMapper.selectBatchIds(fidList);
         String commonPrefix = getCommonPrefix(files);
-        String fileName = null;
+        String fileName;
         if (files.size() == 1 && !files.get(0).getType().equals(FileTypeEnum.DIR)) {
-            LambdaQueryWrapper<TFile> wrapper = new LambdaQueryWrapper<>();
-            for (TFile file : files) {
-                wrapper.or(w -> w.eq(TFile::getRelativePath, file.getRelativePath())
-                        .likeRight(file.getType().equals(FileTypeEnum.DIR), TFile::getRelativePath,
-                                file.getRelativePath() + StrUtil.SLASH));
-            }
-            List<TFile> fileListWithRealPath = fileMapper.getFileListWithRealPath(wrapper);
-            ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
-            for (TFile file : fileListWithRealPath) {
-                zos.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath(), commonPrefix)));
-                if (!file.getType().equals(FileTypeEnum.DIR)) {
-                    BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
-                    IoUtil.copy(inputStream, zos);
-                    inputStream.close();
-                }
-                zos.closeEntry();
-            }
-            zos.close();
-            fileName = StrUtil.subBefore(files.get(0).getOriginalFileName(), StrUtil.DOT, true) + ".zip";
+            fileName = files.get(0).getOriginalFileName();
         } else {
-            TFile file = files.get(0);
-            ServletOutputStream outputStream = response.getOutputStream();
-            BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
-            IoUtil.copy(inputStream, outputStream);
-            fileName = file.getOriginalFileName();
+            fileName = StrUtil.subBefore(files.get(0).getOriginalFileName(), StrUtil.DOT, true) + ".zip";
         }
-
+        LambdaQueryWrapper<TFile> wrapper = new LambdaQueryWrapper<>();
+        for (TFile file : files) {
+            wrapper.or(w -> w.eq(TFile::getRelativePath, file.getRelativePath())
+                    .or()
+                    .likeRight(file.getType().equals(FileTypeEnum.DIR), TFile::getRelativePath,
+                            file.getRelativePath() + StrUtil.SLASH));
+        }
         response.setContentType(MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE);
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, URLUtil.encode(fileName));
         response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
+
+        List<TFile> fileListWithRealPath = fileMapper.getFileListWithRealPath(wrapper);
+        OutputStream outputStream;
+        if (files.size() == 1 && !files.get(0).getType().equals(FileTypeEnum.DIR)) {
+            TFile file = fileListWithRealPath.get(0);
+            outputStream = response.getOutputStream();
+            BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
+            IoUtil.copy(inputStream, outputStream);
+            inputStream.close();
+        } else {
+            outputStream = new ZipOutputStream(response.getOutputStream());
+            zip((ZipOutputStream) outputStream, fileListWithRealPath, commonPrefix);
+        }
+        outputStream.close();
+    }
+
+    private void zip(ZipOutputStream outputStream, List<TFile> fileListWithRealPath, String commonPrefix) throws IOException {
+        for (TFile file : fileListWithRealPath) {
+            if (!file.getType().equals(FileTypeEnum.DIR)) {
+                outputStream.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath(), commonPrefix)));
+                BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
+                IoUtil.copy(inputStream, outputStream);
+                inputStream.close();
+            } else {
+                outputStream.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath() + StrUtil.SLASH,
+                        commonPrefix)));
+            }
+            outputStream.closeEntry();
+        }
     }
 
     private String getCommonPrefix(List<TFile> files) {
@@ -497,24 +508,4 @@ public class FileController {
     }
 
 
-    public static void main(String[] args) throws IOException {
-
-        File zip = FileUtil.file("public/tmp.zip");
-        ZipOutputStream zipOutputStream = new ZipOutputStream(FileUtil.getOutputStream(zip));
-        zipOutputStream.putNextEntry(new ZipEntry("/haha/"));
-        zipOutputStream.closeEntry();
-
-        zipOutputStream.putNextEntry(new ZipEntry("/haha/hh.txt"));
-        BufferedInputStream inputStream2 = FileUtil.getInputStream("public/面试题.zip20200706_213804");
-        IoUtil.copy(inputStream2, zipOutputStream);
-        zipOutputStream.closeEntry();
-        inputStream2.close();
-        zipOutputStream.putNextEntry(new ZipEntry("/haha2/hh.txt"));
-        BufferedInputStream inputStream = FileUtil.getInputStream("public/面试题.zip20200706_213804");
-        IoUtil.copy(inputStream, zipOutputStream);
-        zipOutputStream.closeEntry();
-        inputStream.close();
-        zipOutputStream.close();
-
-    }
 }

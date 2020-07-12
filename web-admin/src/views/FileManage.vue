@@ -141,9 +141,10 @@
             let fidList = [];
             this.multipleSelection.forEach(
                 m => fidList.push(m.id));
-            axios.post('download', {}, {responseType: 'blob'})
+
+            axios.post('download', {fidList: fidList}, {responseType: 'blob'})
                 .then(res => {
-                    console.log(res)
+                    console.log(res);
                     let data = res.data;
                     let url = window.URL.createObjectURL(data);
                     let link = document.createElement('a');

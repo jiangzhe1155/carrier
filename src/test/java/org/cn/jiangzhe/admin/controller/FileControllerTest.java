@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.cn.jiangzhe.admin.entity.FileStatusEnum;
 import org.cn.jiangzhe.admin.entity.FileTypeEnum;
 import org.cn.jiangzhe.admin.entity.TFile;
-import org.cn.jiangzhe.admin.mapper.FieStorageMapper;
+import org.cn.jiangzhe.admin.mapper.FileStoreMapper;
 import org.cn.jiangzhe.admin.mapper.FileMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class FileControllerTest {
     @Autowired
     FileMapper fileMapper;
     @Autowired
-    FieStorageMapper fieStorageMapper;
+    FileStoreMapper fileStoreMapper;
 
     @Test
     public void uploadFile() {
@@ -54,7 +54,7 @@ public class FileControllerTest {
     @Test
     public void reset() {
         fileMapper.delete(Wrappers.emptyWrapper());
-        fieStorageMapper.delete(Wrappers.emptyWrapper());
+        fileStoreMapper.delete(Wrappers.emptyWrapper());
     }
 
 
