@@ -69,4 +69,6 @@ public class TFile {
     //更新时间
     @TableField("`storage_id`")
     private Long storageId;
+
+    private transient String path;
 }

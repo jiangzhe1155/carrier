@@ -1,10 +1,13 @@
 package org.cn.jiangzhe.admin.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.*;
+import cn.hutool.core.util.CharUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
@@ -24,19 +27,19 @@ import org.cn.jiangzhe.admin.service.FileServiceImpl;
 import org.cn.jiangzhe.admin.service.FileUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import sun.nio.ch.IOUtil;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.net.URLEncoder;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -430,21 +433,88 @@ public class FileController {
     @PostMapping("download")
     public void download(@RequestBody Params params, HttpServletResponse response) throws IOException {
         List<Long> fidList = params.getFidList();
-
-
-
+        List<TFile> files = fileMapper.selectBatchIds(fidList);
+        String commonPrefix = getCommonPrefix(files);
+        String fileName = null;
+        if (files.size() == 1 && !files.get(0).getType().equals(FileTypeEnum.DIR)) {
+            LambdaQueryWrapper<TFile> wrapper = new LambdaQueryWrapper<>();
+            for (TFile file : files) {
+                wrapper.or(w -> w.eq(TFile::getRelativePath, file.getRelativePath())
+                        .likeRight(file.getType().equals(FileTypeEnum.DIR), TFile::getRelativePath,
+                                file.getRelativePath() + StrUtil.SLASH));
+            }
+            List<TFile> fileListWithRealPath = fileMapper.getFileListWithRealPath(wrapper);
+            ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+            for (TFile file : fileListWithRealPath) {
+                zos.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath(), commonPrefix)));
+                if (!file.getType().equals(FileTypeEnum.DIR)) {
+                    BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
+                    IoUtil.copy(inputStream, zos);
+                    inputStream.close();
+                }
+                zos.closeEntry();
+            }
+            zos.close();
+            fileName = StrUtil.subBefore(files.get(0).getOriginalFileName(), StrUtil.DOT, true) + ".zip";
+        } else {
+            TFile file = files.get(0);
+            ServletOutputStream outputStream = response.getOutputStream();
+            BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
+            IoUtil.copy(inputStream, outputStream);
+            fileName = file.getOriginalFileName();
+        }
 
         response.setContentType(MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE);
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, URLUtil.encode("哇哈哈.zip"));
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, URLUtil.encode(fileName));
         response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
-        BufferedInputStream inputStream = FileUtil.getInputStream("public/1807180355520200710_163031.csv");
-        ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+    }
 
-        zos.putNextEntry(new ZipEntry("xixi/wahaha.xlsx"));
-        IoUtil.copy(inputStream, zos);
-        zos.closeEntry();
-        zos.close();
+    private String getCommonPrefix(List<TFile> files) {
 
+        if (CollUtil.isEmpty(files)) {
+            return StrUtil.EMPTY;
+        }
+
+        int l = 0;
+        int r = files.get(0).getRelativePath().indexOf(StrUtil.SLASH, l);
+        while (r != -1) {
+            String tmp = files.get(0).getRelativePath().substring(l, r);
+            boolean can = true;
+            for (TFile file : files) {
+                int idx = file.getRelativePath().indexOf(StrUtil.SLASH, l);
+                if (idx != r || !tmp.equals(file.getRelativePath().substring(l, idx))) {
+                    can = false;
+                    break;
+                }
+            }
+            if (can) {
+                l = r + 1;
+                r = files.get(0).getRelativePath().indexOf(StrUtil.SLASH, l);
+            }
+        }
+
+        return files.get(0).getRelativePath().substring(0, l);
+    }
+
+
+    public static void main(String[] args) throws IOException {
+
+        File zip = FileUtil.file("public/tmp.zip");
+        ZipOutputStream zipOutputStream = new ZipOutputStream(FileUtil.getOutputStream(zip));
+        zipOutputStream.putNextEntry(new ZipEntry("/haha/"));
+        zipOutputStream.closeEntry();
+
+        zipOutputStream.putNextEntry(new ZipEntry("/haha/hh.txt"));
+        BufferedInputStream inputStream2 = FileUtil.getInputStream("public/面试题.zip20200706_213804");
+        IoUtil.copy(inputStream2, zipOutputStream);
+        zipOutputStream.closeEntry();
+        inputStream2.close();
+        zipOutputStream.putNextEntry(new ZipEntry("/haha2/hh.txt"));
+        BufferedInputStream inputStream = FileUtil.getInputStream("public/面试题.zip20200706_213804");
+        IoUtil.copy(inputStream, zipOutputStream);
+        zipOutputStream.closeEntry();
+        inputStream.close();
+        zipOutputStream.close();
 
     }
 }
