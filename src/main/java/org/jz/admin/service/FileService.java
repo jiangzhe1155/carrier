@@ -1,7 +1,7 @@
-package org.cn.jiangzhe.admin.service;
+package org.jz.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.cn.jiangzhe.admin.entity.TFile;
+import org.jz.admin.entity.TFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;

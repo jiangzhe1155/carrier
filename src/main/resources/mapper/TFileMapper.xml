@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.cn.jiangzhe.admin.mapper.FileMapper">
+<mapper namespace="org.jz.admin.mapper.FileMapper">
 
 
-    <select id="getFileListWithRealPath" resultType="org.cn.jiangzhe.admin.entity.TFile">
+    <select id="getFileListWithRealPath" resultType="org.jz.admin.entity.TFile">
         select a.relative_path,a.type,b.path from t_file a left join t_file_store b on a.storage_id = b.id
          ${ew.customSqlSegment}
          and a.status = ${@org.cn.jiangzhe.admin.entity.FileStatusEnum@CREATED.code}

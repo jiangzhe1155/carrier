@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.aspect;
+package org.jz.admin.aspect;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;

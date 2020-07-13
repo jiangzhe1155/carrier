@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.entity;
+package org.jz.admin.entity;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -8,17 +8,18 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @date 2020/06/22
  */
 
-public enum FileStatusEnum {
+public enum FileTypeEnum {
 
-    NEW(0, "初始化"),
+    DIR(0, "文件夹"),
+    IMAGE(1, "图片"),
+    DOCUMENT(2, "文档"),
+    VIDEO(3, "媒体"),
+    OTHER(4, "其他");
 
-    CREATING(1, "创建中"),
 
-    CREATED(2, "创建成功"),
+    private final String desc;
 
-    DELETED(3, "删除");
-
-    FileStatusEnum(int code, String desc) {
+    FileTypeEnum(int code, String desc) {
         this.code = code;
         this.desc = desc;
     }
@@ -27,5 +28,4 @@ public enum FileStatusEnum {
     @EnumValue//标记数据库存的值是code
     private final int code;
 
-    private final String desc;
 }

@@ -1,9 +1,9 @@
-package org.cn.jiangzhe.admin.service;
+package org.jz.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.cn.jiangzhe.admin.entity.TFile;
-import org.cn.jiangzhe.admin.mapper.FileMapper;
+import org.jz.admin.entity.TFile;
+import org.jz.admin.mapper.FileMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

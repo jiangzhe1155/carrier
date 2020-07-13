@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.entity;
+package org.jz.admin.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

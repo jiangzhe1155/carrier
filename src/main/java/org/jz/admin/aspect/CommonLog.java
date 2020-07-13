@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.aspect;
+package org.jz.admin.aspect;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

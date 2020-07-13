@@ -1,8 +1,8 @@
-package org.cn.jiangzhe.admin.service;
+package org.jz.admin.service;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
-import org.cn.jiangzhe.admin.controller.FileController;
+import org.jz.admin.controller.FileController;
 import org.springframework.stereotype.Service;
 
 import java.io.File;

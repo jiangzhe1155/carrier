@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.aspect;
+package org.jz.admin.aspect;
 
 import com.baomidou.mybatisplus.extension.api.R;
 import org.springframework.core.MethodParameter;

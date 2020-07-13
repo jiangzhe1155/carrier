@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.util;
+package org.jz.admin.util;
 
 /**
  * @author jz

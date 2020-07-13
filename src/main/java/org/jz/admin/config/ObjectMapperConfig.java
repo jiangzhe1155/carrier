@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.config;
+package org.jz.admin.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;

@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.aspect;
+package org.jz.admin.aspect;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.extension.api.R;

@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.aspect;
+package org.jz.admin.aspect;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapBuilder;
@@ -29,7 +29,7 @@ public class LogAspect {
     @Autowired
     ObjectMapper mapper;
 
-    @Pointcut("@within(org.cn.jiangzhe.admin.aspect.CommonLog) || @annotation(org.cn.jiangzhe.admin.aspect.CommonLog)")
+    @Pointcut("@within(org.jz.admin.aspect.CommonLog) || @annotation(org.jz.admin.aspect.CommonLog)")
     public void paramsLog() {
 
     }

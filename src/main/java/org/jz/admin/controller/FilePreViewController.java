@@ -1,4 +1,4 @@
-package org.cn.jiangzhe.admin.controller;
+package org.jz.admin.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-
-import static org.cn.jiangzhe.admin.controller.FileController.DEMO_DIR;
 
 /**
  * @author jz
@@ -24,7 +22,7 @@ public class FilePreViewController {
 
     @GetMapping("previewFile")
     public void previewFile(HttpServletResponse response, String url) {
-        String path = StrUtil.join(File.separator, DEMO_DIR, url);
+        String path = StrUtil.join(File.separator, FileController.DEMO_DIR, url);
     }
 
 }
