@@ -132,7 +132,7 @@
             }
 
             let relativePath = node.data.relativePath;
-            this.http.post("listFile", {relativePath: relativePath, type: 0}, true).then(data => {
+            this.http.post("list", {relativePath: relativePath, type: 0}, true).then(data => {
                 resolve(data.data);
             });
         }
@@ -290,7 +290,7 @@
         }
 
         getFileList() {
-            this.http.post("listFile", {relativePath: this.relativePath}, false).then(data => {
+            this.http.post("list", {relativePath: this.relativePath}, false).then(data => {
                 this.fileList = data.data;
             });
         }
