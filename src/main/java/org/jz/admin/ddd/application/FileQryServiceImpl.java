@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Service
 public class FileQryServiceImpl {
 
+
+
     public Response list(@RequestBody FileListQry query) {
         return null;
     }
