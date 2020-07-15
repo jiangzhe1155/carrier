@@ -15,7 +15,6 @@ public class FileCmdServiceImpl {
 
 
     public Response delete(@RequestBody FileDeleteCmd cmd) {
-
         return null;
     }
 

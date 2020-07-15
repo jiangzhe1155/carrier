@@ -19,6 +19,6 @@ import java.util.List;
 @Mapper
 public interface FileMapper extends BaseMapper<TFile> {
 
-
     List<TFile> getFileListWithRealPath(@Param(Constants.WRAPPER) Wrapper<TFile> wrapper);
+
 }
