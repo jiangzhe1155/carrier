@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @date 2020/07/14
  */
 @Service
-public class FileServiceImpl {
+public class FileServiceI {
 
     @Autowired
     FileDeleteCmdExe fileDeleteCmdExe;
@@ -75,7 +75,6 @@ public class FileServiceImpl {
     public Response download(FileDownloadCmd cmd) {
         return fileDownloadCmdExe.execute(cmd);
     }
-
 
     public Response list(@RequestBody FileListQry qry) {
         return fileListQryExe.execute(qry);

@@ -6,12 +6,14 @@ import org.jz.admin.ddd.application.dto.FileListQry;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.TFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 
 /**
  * @author 江哲
  * @date 2020/07/14
  */
+@Component
 public class FileListQryExe {
 
     @Autowired

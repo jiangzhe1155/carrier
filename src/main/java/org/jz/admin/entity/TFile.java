@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -26,7 +25,7 @@ public class TFile {
     private Long id;
 
     //原始文件名
-    @TableField("`original_file_name`")
+    @TableField("`file_name`")
     private String fileName;
 
     //大小
@@ -44,10 +43,6 @@ public class TFile {
     //文件属性
     @TableField("`properties`")
     private Integer properties;
-
-    //唯一文件名
-    @TableField("`unique_file_name`")
-    private String uniqueFileName;
 
     //父文件夹id
     @TableField("`folder_id`")

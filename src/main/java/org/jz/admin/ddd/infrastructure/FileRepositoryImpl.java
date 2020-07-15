@@ -10,11 +10,14 @@ import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
 import org.jz.admin.mapper.FileMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author jz
  * @date 2020/07/14
  */
+
+@Repository
 public class FileRepositoryImpl {
 
     @Autowired
