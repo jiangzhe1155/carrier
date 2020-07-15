@@ -31,6 +31,7 @@ public class FileRepositoryImpl {
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(TFile::getFolderId, folderId)
                 .eq(type != null, TFile::getType, type)
+                .orderByAsc(type == null, TFile::getType)
                 .orderBy(true, asc, orderBy);
         return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
