@@ -26,9 +26,8 @@ public class TFile {
     private Long id;
 
     //原始文件名
-    @JsonProperty("fileName")
     @TableField("`original_file_name`")
-    private String originalFileName;
+    private String fileName;
 
     //大小
     @TableField("`size`")

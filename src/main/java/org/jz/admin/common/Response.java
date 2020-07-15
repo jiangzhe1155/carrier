@@ -1,12 +1,7 @@
 package org.jz.admin.common;
 
-import com.baomidou.mybatisplus.extension.api.IErrorCode;
-import com.baomidou.mybatisplus.extension.api.R;
-import com.baomidou.mybatisplus.extension.enums.ApiErrorCode;
-import com.sun.xml.internal.ws.developer.Serialization;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.http.HttpStatus;
 
 /**
  * @author jz

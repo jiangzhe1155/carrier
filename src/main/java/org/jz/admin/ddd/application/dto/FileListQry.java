@@ -1,6 +1,7 @@
 package org.jz.admin.ddd.application.dto;
 
 import lombok.Data;
+import org.jz.admin.entity.FileTypeEnum;
 
 /**
  * @author jz
@@ -10,5 +11,13 @@ import lombok.Data;
 public class FileListQry {
 
     private String relativePath;
+
+    private FileTypeEnum fileType;
+
+    private Boolean asc;
+
+    private Integer page;
+
+    private Integer pageSize;
 
 }

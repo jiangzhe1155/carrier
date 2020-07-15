@@ -126,7 +126,7 @@ public class FileController {
         }
 
         return fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .select(TFile::getId, TFile::getOriginalFileName, TFile::getUpdateTime, TFile::getType,
+                .select(TFile::getId, TFile::getFileName, TFile::getUpdateTime, TFile::getType,
                         TFile::getSize, TFile::getRelativePath)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(params.getType() != null, TFile::getType, params.getType())
@@ -173,7 +173,7 @@ public class FileController {
         }
 
         List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .select(TFile::getRelativePath, TFile::getOriginalFileName, TFile::getId)
+                .select(TFile::getRelativePath, TFile::getFileName, TFile::getId)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .and(wrapper -> wrapper
                         .eq(TFile::getRelativePath, relativePath)
@@ -185,7 +185,7 @@ public class FileController {
             String suf = StrUtil.removePrefix(file.getRelativePath(), relativePath);
             if (StrUtil.isEmpty(suf)) {
                 //说明就是要改名的文件
-                file.setOriginalFileName(targetName);
+                file.setFileName(targetName);
                 file.setType(parseType(FileUtil.extName(targetName)));
             }
 
@@ -292,7 +292,7 @@ public class FileController {
                 .setType(FileTypeEnum.DIR)
                 .setFolderId(folderId)
                 .setRelativePath(StrUtil.removeSuffix(relativePath, fileName) + newFileName)
-                .setOriginalFileName(newFileName);
+                .setFileName(newFileName);
         fileMapper.insert(file);
         return file;
     }
@@ -334,7 +334,7 @@ public class FileController {
                 .setStorageId(params.getStorageId())
                 .setSize(params.getTotalSize())
                 .setRelativePath(parentDirPath + StrUtil.SLASH + filename)
-                .setOriginalFileName(filename)
+                .setFileName(filename)
                 .setFolderId(parentDir == null ? TOP_FOLDER_ID : parentDir.getId());
         fileMapper.insert(file);
         return R.ok(file);
@@ -388,7 +388,7 @@ public class FileController {
 
             String fileName = FileUtil.getName(relativePath);
             List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                    .select(TFile::getOriginalFileName, TFile::getSize, TFile::getStatus, TFile::getType,
+                    .select(TFile::getFileName, TFile::getSize, TFile::getStatus, TFile::getType,
                             TFile::getStorageId, TFile::getId, TFile::getRelativePath, TFile::getFolderId)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)
                     .and(wrapper -> wrapper
@@ -416,7 +416,7 @@ public class FileController {
                 if (file.getRelativePath().equals(relativePath)) {
                     //说明是根文件
                     file.setFolderId(targetFolderIdMap.get(targetPath));
-                    file.setOriginalFileName(fileName);
+                    file.setFileName(fileName);
                 }
 
                 file.setRelativePath(targetRelativePath + StrUtil.removePrefix(file.getRelativePath(), relativePath));
@@ -435,9 +435,9 @@ public class FileController {
         String commonPrefix = getCommonPrefix(files);
         String fileName;
         if (files.size() == 1 && !files.get(0).getType().equals(FileTypeEnum.DIR)) {
-            fileName = files.get(0).getOriginalFileName();
+            fileName = files.get(0).getFileName();
         } else {
-            fileName = StrUtil.subBefore(files.get(0).getOriginalFileName(), StrUtil.DOT, true) + ".zip";
+            fileName = StrUtil.subBefore(files.get(0).getFileName(), StrUtil.DOT, true) + ".zip";
         }
         LambdaQueryWrapper<TFile> wrapper = new LambdaQueryWrapper<>();
         for (TFile file : files) {
