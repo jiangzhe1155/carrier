@@ -22,7 +22,7 @@ public class FileRepositoryImpl {
 
     public static final Long ROOT_FOLDER_ID = 0L;
 
-    public Page<TFile> getFileList(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
+    public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
                                    Integer page, Integer pageSize) {
 
         LambdaQueryWrapper<TFile> wrapper = Wrappers.lambdaQuery();

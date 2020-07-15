@@ -7,7 +7,6 @@ import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.TFile;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
 
 /**
  * @author 江哲
@@ -20,7 +19,8 @@ public class FileListQryExe {
 
     public Response execute(FileListQry qry) {
         Long folderId = fileRepository.getFolderIdByRelativePath(qry.getRelativePath());
-        Page<TFile> filePage = fileRepository.getFileList(folderId, qry.getFileType(), TFile::getFileName, qry.getAsc(), qry.getPage(), qry.getPageSize());
+        Page<TFile> filePage = fileRepository.getFilePage(folderId, qry.getFileType(), TFile::getFileName,
+                qry.getAsc(), qry.getPage(), qry.getPageSize());
         return Response.ok(filePage);
     }
 }
