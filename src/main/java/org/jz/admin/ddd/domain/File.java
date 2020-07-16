@@ -15,6 +15,4 @@ public class File {
     private String relativePath;
     private Long size;
     private FileTypeEnum typeEnum;
-
-
 }

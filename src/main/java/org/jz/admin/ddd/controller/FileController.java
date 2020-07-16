@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 作为一个文件大致有三种状态：生成、完成、删除
  *
  * @author jz
  * @date 2020/05/14
