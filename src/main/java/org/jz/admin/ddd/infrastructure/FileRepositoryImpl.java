@@ -5,10 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.jz.admin.ddd.domain.FileName;
+import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
+import org.jz.admin.entity.TFileStore;
 import org.jz.admin.mapper.FileMapper;
+import org.jz.admin.mapper.FileStoreMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -20,7 +24,10 @@ public class FileRepositoryImpl {
     @Autowired
     FileMapper fileMapper;
 
-    public static final Long ROOT_FOLDER_ID = 0L;
+    @Autowired
+    FileStoreMapper fileStoreMapper;
+
+    private static final long ROOT_FOLDER_ID = 0L;
 
     public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
                                    Integer page, Integer pageSize) {
@@ -40,7 +47,6 @@ public class FileRepositoryImpl {
         if (StrUtil.isEmpty(relativePath)) {
             return ROOT_FOLDER_ID;
         }
-
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(TFile::getId)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
@@ -50,4 +56,14 @@ public class FileRepositoryImpl {
         return fileMapper.selectOne(wrapper).getId();
     }
 
+    public TFileStore getResourceByIdentifier( String identifier) {
+
+        TFileStore fileStoreDO = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileStore>()
+                .select(TFileStore::getId, TFileStore::getStatus)
+                .ne(TFileStore::getStatus, FileStatusEnum.DELETED)
+                .eq(TFileStore::getIdentifier, identifier)
+        );
+
+        return fileStoreDO;
+    }
 }
