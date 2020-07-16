@@ -1,18 +1,17 @@
 package org.jz.admin.ddd.domain;
 
 import lombok.Data;
-import org.jz.admin.ddd.domain.valueobject.FileName;
 import org.jz.admin.entity.FileTypeEnum;
 
 /**
- * @author 江哲
- * @date 2020/07/15
+ * @author jz
+ * @date 2020/07/16
  */
 @Data
-public class File {
+public class File extends AbstractFile {
+
     private Long id;
-    private FileName fileName;
-    private String relativePath;
-    private Long size;
-    private FileTypeEnum typeEnum;
+    private String name;
+    private FileTypeEnum type;
+
 }
