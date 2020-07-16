@@ -10,6 +10,7 @@ import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFileStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
@@ -17,6 +18,7 @@ import java.util.*;
  * @author 江哲
  * @date 2020/07/14
  */
+@Component
 public class FileCheckUpProcessCmdExe {
 
     @Autowired
@@ -24,7 +26,6 @@ public class FileCheckUpProcessCmdExe {
 
     @Autowired
     RedisTemplate redisTemplate;
-
 
     public Response execute(FileCheckUpProcessCmd cmd) {
 
@@ -36,21 +37,18 @@ public class FileCheckUpProcessCmdExe {
 
         FileCheckUpProcessCO fileCheckUpProcessCO = new FileCheckUpProcessCO();
         if (resource.isCreated()) {
-            fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(true);
-            return Response.ok(fileCheckUpProcessCO);
+            return Response.ok(fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(true));
         }
 
         if (resource.isCreating()) {
             Set<Integer> members = redisTemplate.opsForSet().members(cmd.getIdentifier());
-            fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(members);
-            return Response.ok(fileCheckUpProcessCO);
+            return Response.ok(fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(members));
         }
 
         resource.generateRealPath().setStatus(FileStatusEnum.NEW);
         if (!fileRepository.save(resource)) {
             throw new ServiceException("未知错误");
         }
-        fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false);
-        return null;
+        return Response.ok(fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false));
     }
 }
