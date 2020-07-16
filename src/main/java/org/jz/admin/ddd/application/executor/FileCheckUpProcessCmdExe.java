@@ -31,15 +31,15 @@ public class FileCheckUpProcessCmdExe {
         resource.setId(fileStoreDO.getId()).setStatus(fileStoreDO.getStatus());
 
 
-        FileCheckUpProcessCO checkUpProcessCO = new FileCheckUpProcessCO();
+        FileCheckUpProcessCO fileCheckUpProcessCO = new FileCheckUpProcessCO();
         if (resource.isCreated()) {
-            checkUpProcessCO.setId(resource.getId()).setSkipUpload(true);
-            return Response.ok(checkUpProcessCO);
+            fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(true);
+            return Response.ok(fileCheckUpProcessCO);
         }
 
         if (resource.isCreating()) {
-            checkUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(Collections.emptyList());
-            return Response.ok(checkUpProcessCO);
+            fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(Collections.emptyList());
+            return Response.ok(fileCheckUpProcessCO);
         }
 
         resource.setStatus(FileStatusEnum.NEW);
