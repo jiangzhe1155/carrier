@@ -1,5 +1,6 @@
 package org.jz.admin.ddd.application.executor;
 
+import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileCheckUpProcessCmd;
 import org.jz.admin.ddd.domain.FileName;
@@ -8,6 +9,7 @@ import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFileStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.*;
 
@@ -20,16 +22,17 @@ public class FileCheckUpProcessCmdExe {
     @Autowired
     FileRepositoryImpl fileRepository;
 
+    @Autowired
+    RedisTemplate redisTemplate;
+
 
     public Response execute(FileCheckUpProcessCmd cmd) {
 
-
-        FileResource resource =
-                new FileResource().setIdentifier(cmd.getIdentifier())
-                        .setName(FileName.valueOf(cmd.getFilename()));
+        FileResource resource = new FileResource()
+                .setIdentifier(cmd.getIdentifier())
+                .setFileName(FileName.valueOf(cmd.getFilename()));
         TFileStore fileStoreDO = fileRepository.getResourceByIdentifier(cmd.getIdentifier());
         resource.setId(fileStoreDO.getId()).setStatus(fileStoreDO.getStatus());
-
 
         FileCheckUpProcessCO fileCheckUpProcessCO = new FileCheckUpProcessCO();
         if (resource.isCreated()) {
@@ -38,18 +41,16 @@ public class FileCheckUpProcessCmdExe {
         }
 
         if (resource.isCreating()) {
-            fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(Collections.emptyList());
+            Set<Integer> members = redisTemplate.opsForSet().members(cmd.getIdentifier());
+            fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(members);
             return Response.ok(fileCheckUpProcessCO);
         }
 
-        resource.setStatus(FileStatusEnum.NEW);
-
-//        String realFilePath = fileUtilService.absPath(null, newFileName(params.getFilename()));
-//        target = new TFileStore()
-//                .setIdentifier(params.getIdentifier())
-//                .setPath(realFilePath)
-//                .setStatus(FileStatusEnum.NEW);
-//        fileStoreMapper.insert(target);
+        resource.generateRealPath().setStatus(FileStatusEnum.NEW);
+        if (!fileRepository.save(resource)) {
+            throw new ServiceException("未知错误");
+        }
+        fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false);
         return null;
     }
 }

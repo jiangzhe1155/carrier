@@ -3,7 +3,7 @@ package org.jz.admin.ddd.application.executor;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author jz
@@ -15,6 +15,6 @@ public class FileCheckUpProcessCO {
 
     private Boolean skipUpload;
     private Long id;
-    private List<Integer> uploaded;
+    private Set<Integer> uploaded;
 
 }

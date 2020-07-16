@@ -1,11 +1,11 @@
 package org.jz.admin.ddd.infrastructure;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.jz.admin.ddd.domain.FileName;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
@@ -30,6 +30,7 @@ public class FileRepositoryImpl {
     @Autowired
     FileStoreMapper fileStoreMapper;
 
+    public static final String LIMIT_ONE = "LIMIT 1";
     private static final long ROOT_FOLDER_ID = 0L;
 
     public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
@@ -54,19 +55,34 @@ public class FileRepositoryImpl {
                 .select(TFile::getId)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(TFile::getRelativePath, relativePath)
-                .last("limit 1");
+                .last(LIMIT_ONE);
 
         return fileMapper.selectOne(wrapper).getId();
     }
 
-    public TFileStore getResourceByIdentifier( String identifier) {
+    public TFileStore getResourceByIdentifier(String identifier) {
 
         TFileStore fileStoreDO = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileStore>()
                 .select(TFileStore::getId, TFileStore::getStatus)
                 .ne(TFileStore::getStatus, FileStatusEnum.DELETED)
                 .eq(TFileStore::getIdentifier, identifier)
+                .last(LIMIT_ONE)
         );
 
         return fileStoreDO;
+    }
+
+    public boolean save(FileResource resource) {
+        TFileStore file = new TFileStore();
+        BeanUtil.copyProperties(resource, file);
+        int effectRow;
+        if (file.getId() == null) {
+            effectRow = fileStoreMapper.insert(file);
+            resource.setId(file.getId());
+        } else {
+            effectRow = fileStoreMapper.updateById(file);
+        }
+
+        return effectRow > 0;
     }
 }

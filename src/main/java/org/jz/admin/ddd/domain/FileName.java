@@ -2,7 +2,6 @@ package org.jz.admin.ddd.domain;
 
 import cn.hutool.core.io.FileUtil;
 import lombok.Data;
-import lombok.Value;
 import lombok.experimental.Accessors;
 import org.jz.admin.aspect.ServiceException;
 
@@ -14,17 +13,17 @@ import org.jz.admin.aspect.ServiceException;
 @Accessors(chain = true)
 public class FileName {
 
-    private String name;
+    private String value;
 
-    public FileName setName(String fileName) {
+    public FileName setValue(String fileName) {
         if (FileUtil.containsInvalid(fileName)) {
             throw new ServiceException("文件名不合法");
         }
-        name = fileName;
+        value = fileName;
         return this;
     }
 
     public static FileName valueOf(String fileName) {
-        return new FileName().setName(fileName);
+        return new FileName().setValue(fileName);
     }
 }
