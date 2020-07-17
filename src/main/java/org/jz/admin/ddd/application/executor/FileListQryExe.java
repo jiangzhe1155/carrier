@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileListQry;
+import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.TFile;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,16 +22,16 @@ public class FileListQryExe {
     FileRepositoryImpl fileRepository;
 
     public Response execute(FileListQry qry) {
-        Long folderId = null;
-        if (StrUtil.isEmpty(qry.getRelativePath())) {
-            folderId = 0L;
-        } else {
+        File parentFolder = new File().setRelativePath(qry.getRelativePath());
+
+        if (parentFolder.getId() == null) {
             TFile fileByRelativePath = fileRepository.getFileByRelativePath(qry.getRelativePath(), TFile::getId);
             if (fileByRelativePath != null) {
-                folderId = fileByRelativePath.getId();
+                parentFolder.setId(fileByRelativePath.getId());
             }
         }
-        Page<TFile> filePage = fileRepository.getFilePage(folderId, qry.getFileType(), TFile::getFileName,
+
+        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(), TFile::getFileName,
                 qry.getAsc(), qry.getPage(), qry.getPageSize());
         return Response.ok(filePage);
     }

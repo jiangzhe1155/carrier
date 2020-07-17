@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class FileDeleteCmdExe {
-
-
     public Response execute(FileDeleteCmd cmd) {
         return null;
     }

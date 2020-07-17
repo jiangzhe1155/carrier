@@ -7,8 +7,9 @@ import org.jz.admin.ddd.application.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 /**
- *
  * @author jz
  * @date 2020/05/14
  */
@@ -45,7 +46,7 @@ public class FileController {
     }
 
     @PostMapping("chunkUpload")
-    public Response chunkUpload(FileChunkUploadCmd cmd){
+    public Response chunkUpload(FileChunkUploadCmd cmd) {
         return fileService.chunkUpload(cmd);
     }
 

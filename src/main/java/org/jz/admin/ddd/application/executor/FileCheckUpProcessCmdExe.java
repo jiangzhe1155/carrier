@@ -33,6 +33,7 @@ public class FileCheckUpProcessCmdExe {
                 .setStatus(FileStatusEnum.NEW);
 
         TFileStore fileStoreDO = fileResourceRepository.getResourceByIdentifier(cmd.getIdentifier());
+
         if (fileStoreDO != null) {
             resource.setId(fileStoreDO.getId()).setStatus(fileStoreDO.getStatus());
         }

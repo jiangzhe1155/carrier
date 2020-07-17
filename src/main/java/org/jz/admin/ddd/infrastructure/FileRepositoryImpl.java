@@ -29,7 +29,9 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
     @Autowired
     FileMapper fileMapper;
 
-    public static final String LIMIT_ONE = "LIMIT 1";
+    private static final String LIMIT_ONE = "LIMIT 1";
+    private String relativePath;
+
 
     public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
                                    Integer page, Integer pageSize) {
@@ -45,7 +47,8 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
 
-    public TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
+    @SafeVarargs
+    public final TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)

@@ -30,17 +30,10 @@ public class File {
     private Long size;
     private Long resourceId;
 
-    public String getExt() {
-        return FileUtil.extName(fileName);
-    }
-
-    public String getMainName() {
-        return FileUtil.mainName(fileName);
-    }
 
     public void toNewFileName() {
-        String ext = getExt();
-        String mainName = getMainName();
+        String ext = FileUtil.extName(fileName);
+        String mainName = FileUtil.mainName(fileName);
         String suf = DateUtil.format(new Date(), "yyyyMMdd_HHmmss");
         String newFileName;
         if (StrUtil.isBlank(ext)) {
@@ -54,12 +47,15 @@ public class File {
 
     public File setRelativePath(String relativePath) {
         FileUtil.normalize(relativePath);
+
+        if (StrUtil.isEmpty(relativePath)) {
+            id = ROOT_FOLDER_ID;
+        }
         this.relativePath = relativePath;
         return this;
     }
 
-
-    public String getParentFolderPath() {
+    private String getParentFolderPath() {
         return StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
     }
 
