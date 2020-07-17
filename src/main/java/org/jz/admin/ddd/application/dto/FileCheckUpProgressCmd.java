@@ -7,7 +7,7 @@ import lombok.Data;
  * @date 2020/07/14
  */
 @Data
-public class FileCheckUpProcessCmd {
+public class FileCheckUpProgressCmd {
     private Integer chunkNumber;
     private Integer chunkSize;
     private Integer currentChunkSize;

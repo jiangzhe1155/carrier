@@ -1,11 +1,11 @@
 package org.jz.admin.ddd.infrastructure;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.jz.admin.ddd.domain.FileName;
+import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
@@ -14,11 +14,14 @@ import org.jz.admin.entity.TFileStore;
 import org.jz.admin.mapper.FileMapper;
 import org.jz.admin.mapper.FileStoreMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author jz
  * @date 2020/07/14
  */
+
+@Repository
 public class FileRepositoryImpl {
 
     @Autowired
@@ -27,6 +30,7 @@ public class FileRepositoryImpl {
     @Autowired
     FileStoreMapper fileStoreMapper;
 
+    public static final String LIMIT_ONE = "LIMIT 1";
     private static final long ROOT_FOLDER_ID = 0L;
 
     public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
@@ -43,27 +47,56 @@ public class FileRepositoryImpl {
         return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
 
-    public Long getFolderIdByRelativePath(String relativePath) {
-        if (StrUtil.isEmpty(relativePath)) {
-            return ROOT_FOLDER_ID;
-        }
+    public TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
-                .select(TFile::getId)
+                .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(TFile::getRelativePath, relativePath)
-                .last("limit 1");
-
-        return fileMapper.selectOne(wrapper).getId();
+                .last(LIMIT_ONE);
+        return fileMapper.selectOne(wrapper);
     }
 
-    public TFileStore getResourceByIdentifier( String identifier) {
-
+    public TFileStore getResourceByIdentifier(String identifier) {
         TFileStore fileStoreDO = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileStore>()
-                .select(TFileStore::getId, TFileStore::getStatus)
                 .ne(TFileStore::getStatus, FileStatusEnum.DELETED)
                 .eq(TFileStore::getIdentifier, identifier)
-        );
-
+                .last(LIMIT_ONE));
         return fileStoreDO;
+    }
+
+    public boolean save(FileResource resource) {
+        TFileStore file = new TFileStore();
+        BeanUtil.copyProperties(resource, file);
+        int effectRow;
+        if (file.getId() == null) {
+            effectRow = fileStoreMapper.insert(file);
+            resource.setId(file.getId());
+        } else {
+            effectRow = fileStoreMapper.updateById(file);
+        }
+
+        return effectRow > 0;
+    }
+
+    public void changeUploadProgressStatus(FileStatusEnum status) {
+
+    }
+
+    public int save(File file) {
+        TFile fileDO = new TFile()
+                .setId(file.getId())
+                .setStatus(FileStatusEnum.CREATED)
+                .setType(file.getType())
+                .setFolderId(file.getFolderId())
+                .setRelativePath(file.getRelativePath())
+                .setFileName(file.getFileName());
+        int effectRow;
+        if (file.getId() == null) {
+            effectRow = fileMapper.insert(fileDO);
+            file.setId(file.getId());
+        } else {
+            effectRow = fileMapper.updateById(fileDO);
+        }
+        return effectRow;
     }
 }

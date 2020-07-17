@@ -10,8 +10,8 @@ import lombok.Data;
 public class FileMergeCmd {
 
     private String filename;
-    private String storageId;
+    private Long storageId;
     private String relativePath;
-    private Integer totalSize;
+    private Long totalSize;
 
 }

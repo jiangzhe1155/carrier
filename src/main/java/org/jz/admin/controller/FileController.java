@@ -239,13 +239,11 @@ public class FileController {
 
     @PostMapping("chunkUploadFile")
     public Object chunkUploadFile(@RequestBody MultipartFile file, Params params) throws IOException {
-
-        String realFilePath = fileUtilService.absPath(null,
-                newFileName(params.getFilename()));
-
+        String realFilePath = fileUtilService.absPath(null, newFileName(params.getFilename()));
         Integer chunkNumber = params.getChunkNumber();
         Integer totalChunks = params.getTotalChunks();
         String identifier = params.getIdentifier();
+
         map.putIfAbsent(identifier, new HashSet<>());
         Set<Integer> set = map.get(identifier);
         if (!set.contains(chunkNumber)) {
@@ -262,7 +260,6 @@ public class FileController {
             }
             set.add(chunkNumber);
         }
-
         return R.ok(null);
     }
 

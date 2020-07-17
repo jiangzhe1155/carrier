@@ -2,13 +2,12 @@ package org.jz.admin.ddd.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jz.admin.common.Response;
-import org.jz.admin.ddd.application.FileServiceImpl;
+import org.jz.admin.ddd.application.FileServiceI;
 import org.jz.admin.ddd.application.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 作为一个文件大致有三种状态：生成、完成、删除
  *
  * @author jz
  * @date 2020/05/14
@@ -18,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class FileController {
 
     @Autowired
-    FileServiceImpl fileService;
+    FileServiceI fileService;
 
     @PostMapping("list")
     public Response list(@RequestBody FileListQry query) {
@@ -41,12 +40,12 @@ public class FileController {
     }
 
     @GetMapping("chunkUpload")
-    public Response checkUpProcess(FileCheckUpProcessCmd cmd) {
-        return fileService.checkUpProcess(cmd);
+    public Response checkUpProgress(FileCheckUpProgressCmd cmd) {
+        return fileService.checkUpProgress(cmd);
     }
 
     @PostMapping("chunkUpload")
-    public Response chunkUpload(FileChunkUploadCmd cmd) {
+    public Response chunkUpload(FileChunkUploadCmd cmd){
         return fileService.chunkUpload(cmd);
     }
 
