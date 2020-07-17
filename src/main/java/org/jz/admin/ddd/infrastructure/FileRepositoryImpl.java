@@ -65,4 +65,23 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return saveOrUpdate(fileDO);
     }
 
+    public File createDir(File rootDir, boolean touch) {
+        if (rootDir.getId() != null) {
+            return rootDir;
+        }
+        // 判断是否有重名文件
+        TFile fileByRelativePath = getFileByRelativePath(rootDir.getRelativePath());
+        if (fileByRelativePath != null) {
+            if (touch) {
+                return rootDir.setId(fileByRelativePath.getId());
+            } else {
+                rootDir.toNewFileName();
+            }
+        }
+
+        Long folderId = createDir(rootDir.getParentFolder(), true).getId();
+        rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
+        save(rootDir);
+        return rootDir;
+    }
 }

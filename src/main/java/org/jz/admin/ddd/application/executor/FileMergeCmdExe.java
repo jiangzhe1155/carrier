@@ -28,10 +28,12 @@ public class FileMergeCmdExe {
     FileRepositoryImpl fileRepository;
 
     public Response execute(FileMergeCmd cmd) {
-
-        File file = new File().setFileName(cmd.getFilename())
+        File file = new File()
+                .setFileName(cmd.getFilename())
                 .setRelativePath(cmd.getRelativePath())
-                .setSize(cmd.getTotalSize()).setResourceId(cmd.getStorageId());
+                .setSize(cmd.getTotalSize())
+                .setResourceId(cmd.getStorageId())
+                .setStatus(FileStatusEnum.CREATED);
 
         TFile fileFormDb = fileRepository.getFileByRelativePath(cmd.getRelativePath());
 
@@ -40,34 +42,14 @@ public class FileMergeCmdExe {
             file.toNewFileName();
         }
 
-        File parentFolder = createDir(new File().getParentFolder(), true);
-        file.setFolderId(parentFolder.getId()).setStatus(FileStatusEnum.CREATED);
+        File parentFolder = fileRepository.createDir(new File().getParentFolder(), true);
+        file.setFolderId(parentFolder.getId());
 
-        // 开始创建文件
         if (!fileRepository.save(file)) {
             throw new ServiceException("创建文件失败");
         }
+
         return Response.ok();
-    }
-
-    private File createDir(File rootDir, boolean touch) {
-        if (rootDir.getId() != null) {
-            return rootDir;
-        }
-        // 判断是否有重名文件
-        TFile fileByRelativePath = fileRepository.getFileByRelativePath(rootDir.getRelativePath());
-        if (fileByRelativePath != null) {
-            if (touch) {
-                return rootDir.setId(fileByRelativePath.getId());
-            } else {
-                rootDir.toNewFileName();
-            }
-        }
-
-        Long folderId = createDir(rootDir.getParentFolder(), true).getId();
-        rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
-        fileRepository.save(rootDir);
-        return rootDir;
     }
 
 }

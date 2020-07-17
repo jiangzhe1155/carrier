@@ -11,7 +11,7 @@ import java.util.Set;
  */
 @Data
 @Accessors(chain = true)
-public class FileCheckUpProcessCO {
+public class FileCheckUpProgressCO {
 
     private Boolean skipUpload;
     private Long id;

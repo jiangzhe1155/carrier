@@ -37,15 +37,16 @@ public class FileChunkUploadCmdExe {
 
         FileResource resource =
                 new FileResource().setIdentifier(cmd.getIdentifier()).setChunkNumber(cmd.getChunkNumber()).setTotalChunks(cmd.getTotalChunks());
+
         TFileStore fileStoreDO = fileResourceRepository.getResourceByIdentifier(cmd.getIdentifier());
+
         if (fileStoreDO == null) {
             throw new ServiceException("上传文件失败,源文件缺失");
         }
         resource.setId(fileStoreDO.getId()).setPath(fileStoreDO.getPath()).setStatus(fileStoreDO.getStatus());
+
         if (BooleanUtil.isFalse(redisTemplate.opsForSet().isMember(cmd.getIdentifier(), cmd.getChunkNumber()))) {
-
             resource.rangeWrite(cmd.getFile());
-
             FileStatusEnum status = resource.todoUpdateStatus();
             if (!status.equals(resource.getStatus())) {
                 //需要更新状态

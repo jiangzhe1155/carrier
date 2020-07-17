@@ -3,9 +3,7 @@ package org.jz.admin.ddd.application.executor;
 import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileCheckUpProgressCmd;
-import org.jz.admin.ddd.domain.FileName;
 import org.jz.admin.ddd.domain.FileResource;
-import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.ddd.infrastructure.FileResourceRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFileStore;
@@ -31,28 +29,31 @@ public class FileCheckUpProcessCmdExe {
     public Response execute(FileCheckUpProgressCmd cmd) {
         FileResource resource = new FileResource()
                 .setIdentifier(cmd.getIdentifier())
-                .setFileName(cmd.getFilename());
+                .setFileName(cmd.getFilename())
+                .setStatus(FileStatusEnum.NEW);
+
         TFileStore fileStoreDO = fileResourceRepository.getResourceByIdentifier(cmd.getIdentifier());
         if (fileStoreDO != null) {
             resource.setId(fileStoreDO.getId()).setStatus(fileStoreDO.getStatus());
         }
 
+        FileCheckUpProgressCO progressResponse = new FileCheckUpProgressCO();
 
-        FileCheckUpProcessCO fileCheckUpProcessCO = new FileCheckUpProcessCO();
         if (resource.isCreated()) {
-            return Response.ok(fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(true));
+            return Response.ok(progressResponse.setId(resource.getId()).setSkipUpload(true));
         }
 
         if (resource.isCreating()) {
             Set<Integer> members = redisTemplate.opsForSet().members(cmd.getIdentifier());
-            return Response.ok(fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false).setUploaded(members));
+            return Response.ok(progressResponse.setId(resource.getId()).setSkipUpload(false).setUploaded(members));
         }
 
-        resource.generateRealPath().setStatus(FileStatusEnum.NEW);
+        resource.generateRealPath();
+
         if (!fileResourceRepository.save(resource)) {
-            throw new ServiceException("未知错误");
+            throw new ServiceException("保存失败");
         }
 
-        return Response.ok(fileCheckUpProcessCO.setId(resource.getId()).setSkipUpload(false));
+        return Response.ok(progressResponse.setId(resource.getId()).setSkipUpload(false));
     }
 }
