@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
@@ -13,6 +14,7 @@ import org.jz.admin.entity.TFile;
 import org.jz.admin.entity.TFileStore;
 import org.jz.admin.mapper.FileMapper;
 import org.jz.admin.mapper.FileStoreMapper;
+import org.jz.admin.service.FileServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -22,16 +24,12 @@ import org.springframework.stereotype.Repository;
  */
 
 @Repository
-public class FileRepositoryImpl {
+public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
 
     @Autowired
     FileMapper fileMapper;
 
-    @Autowired
-    FileStoreMapper fileStoreMapper;
-
     public static final String LIMIT_ONE = "LIMIT 1";
-    private static final long ROOT_FOLDER_ID = 0L;
 
     public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
                                    Integer page, Integer pageSize) {
@@ -56,33 +54,7 @@ public class FileRepositoryImpl {
         return fileMapper.selectOne(wrapper);
     }
 
-    public TFileStore getResourceByIdentifier(String identifier) {
-        TFileStore fileStoreDO = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileStore>()
-                .ne(TFileStore::getStatus, FileStatusEnum.DELETED)
-                .eq(TFileStore::getIdentifier, identifier)
-                .last(LIMIT_ONE));
-        return fileStoreDO;
-    }
-
-    public boolean save(FileResource resource) {
-        TFileStore file = new TFileStore();
-        BeanUtil.copyProperties(resource, file);
-        int effectRow;
-        if (file.getId() == null) {
-            effectRow = fileStoreMapper.insert(file);
-            resource.setId(file.getId());
-        } else {
-            effectRow = fileStoreMapper.updateById(file);
-        }
-
-        return effectRow > 0;
-    }
-
-    public void changeUploadProgressStatus(FileStatusEnum status) {
-
-    }
-
-    public int save(File file) {
+    public boolean save(File file) {
         TFile fileDO = new TFile()
                 .setId(file.getId())
                 .setStatus(FileStatusEnum.CREATED)
@@ -90,13 +62,7 @@ public class FileRepositoryImpl {
                 .setFolderId(file.getFolderId())
                 .setRelativePath(file.getRelativePath())
                 .setFileName(file.getFileName());
-        int effectRow;
-        if (file.getId() == null) {
-            effectRow = fileMapper.insert(fileDO);
-            file.setId(file.getId());
-        } else {
-            effectRow = fileMapper.updateById(fileDO);
-        }
-        return effectRow;
+        return saveOrUpdate(fileDO);
     }
+
 }

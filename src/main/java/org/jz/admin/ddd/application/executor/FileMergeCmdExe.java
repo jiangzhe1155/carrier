@@ -5,6 +5,7 @@ import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.api.R;
+import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileMergeCmd;
 import org.jz.admin.ddd.domain.File;
@@ -32,10 +33,10 @@ public class FileMergeCmdExe {
                 .setRelativePath(cmd.getRelativePath())
                 .setSize(cmd.getTotalSize()).setResourceId(cmd.getStorageId());
 
-        TFile fileDO = fileRepository.getFileByRelativePath(cmd.getRelativePath());
+        TFile fileFormDb = fileRepository.getFileByRelativePath(cmd.getRelativePath());
+
         // 判断是否有重名文件
-        if (fileDO != null) {
-            //存在重名
+        if (fileFormDb != null) {
             file.toNewFileName();
         }
 
@@ -43,7 +44,9 @@ public class FileMergeCmdExe {
         file.setFolderId(parentFolder.getId()).setStatus(FileStatusEnum.CREATED);
 
         // 开始创建文件
-        fileRepository.save(file);
+        if (!fileRepository.save(file)) {
+            throw new ServiceException("创建文件失败");
+        }
         return Response.ok();
     }
 
@@ -66,4 +69,5 @@ public class FileMergeCmdExe {
         fileRepository.save(rootDir);
         return rootDir;
     }
+
 }

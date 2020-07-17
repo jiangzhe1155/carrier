@@ -6,6 +6,7 @@ import org.jz.admin.ddd.application.dto.FileCheckUpProgressCmd;
 import org.jz.admin.ddd.domain.FileName;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
+import org.jz.admin.ddd.infrastructure.FileResourceRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFileStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import java.util.*;
 public class FileCheckUpProcessCmdExe {
 
     @Autowired
-    FileRepositoryImpl fileRepository;
+    FileResourceRepositoryImpl fileResourceRepository;
 
     @Autowired
     RedisTemplate redisTemplate;
@@ -31,8 +32,11 @@ public class FileCheckUpProcessCmdExe {
         FileResource resource = new FileResource()
                 .setIdentifier(cmd.getIdentifier())
                 .setFileName(cmd.getFilename());
-        TFileStore fileStoreDO = fileRepository.getResourceByIdentifier(cmd.getIdentifier());
-        resource.setId(fileStoreDO.getId()).setStatus(fileStoreDO.getStatus());
+        TFileStore fileStoreDO = fileResourceRepository.getResourceByIdentifier(cmd.getIdentifier());
+        if (fileStoreDO != null) {
+            resource.setId(fileStoreDO.getId()).setStatus(fileStoreDO.getStatus());
+        }
+
 
         FileCheckUpProcessCO fileCheckUpProcessCO = new FileCheckUpProcessCO();
         if (resource.isCreated()) {
@@ -45,7 +49,7 @@ public class FileCheckUpProcessCmdExe {
         }
 
         resource.generateRealPath().setStatus(FileStatusEnum.NEW);
-        if (!fileRepository.save(resource)) {
+        if (!fileResourceRepository.save(resource)) {
             throw new ServiceException("未知错误");
         }
 

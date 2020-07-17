@@ -8,12 +8,8 @@ import lombok.Data;
  */
 @Data
 public class FileCheckUpProgressCmd {
-    private Integer chunkNumber;
-    private Integer chunkSize;
-    private Integer currentChunkSize;
-    private Integer totalSize;
     private String identifier;
     private String filename;
-    private String relativePath;
-    private Integer totalChunks;
+
+
 }

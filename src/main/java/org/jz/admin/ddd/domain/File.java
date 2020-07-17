@@ -19,6 +19,8 @@ import java.util.Date;
 @Accessors(chain = true)
 public class File {
 
+    private static final long ROOT_FOLDER_ID = 0L;
+
     private Long id;
     private String fileName;
     private FileTypeEnum type;
@@ -64,7 +66,7 @@ public class File {
     public File getParentFolder() {
         File parentFolder = new File().setType(FileTypeEnum.DIR).setRelativePath(getParentFolderPath());
         if (StrUtil.isEmpty(parentFolder.getRelativePath())) {
-            parentFolder.setId(0L);
+            parentFolder.setId(ROOT_FOLDER_ID);
             return parentFolder;
         }
 

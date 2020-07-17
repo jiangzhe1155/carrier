@@ -9,6 +9,7 @@ import org.jz.admin.ddd.application.dto.FileChunkUploadCmd;
 import org.jz.admin.ddd.domain.FileName;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
+import org.jz.admin.ddd.infrastructure.FileResourceRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFileStore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ import java.io.RandomAccessFile;
 public class FileChunkUploadCmdExe {
 
     @Autowired
-    FileRepositoryImpl fileRepository;
+    FileResourceRepositoryImpl fileResourceRepository;
 
     @Autowired
     RedisTemplate redisTemplate;
@@ -36,7 +37,7 @@ public class FileChunkUploadCmdExe {
 
         FileResource resource =
                 new FileResource().setIdentifier(cmd.getIdentifier()).setChunkNumber(cmd.getChunkNumber()).setTotalChunks(cmd.getTotalChunks());
-        TFileStore fileStoreDO = fileRepository.getResourceByIdentifier(cmd.getIdentifier());
+        TFileStore fileStoreDO = fileResourceRepository.getResourceByIdentifier(cmd.getIdentifier());
         if (fileStoreDO == null) {
             throw new ServiceException("上传文件失败,源文件缺失");
         }
@@ -48,7 +49,7 @@ public class FileChunkUploadCmdExe {
             FileStatusEnum status = resource.todoUpdateStatus();
             if (!status.equals(resource.getStatus())) {
                 //需要更新状态
-                fileRepository.save(new FileResource().setId(resource.getId()).setStatus(status));
+                fileResourceRepository.save(new FileResource().setId(resource.getId()).setStatus(status));
             }
             //添加缓存
             redisTemplate.opsForSet().add(cmd.getIdentifier(), cmd.getChunkNumber());
