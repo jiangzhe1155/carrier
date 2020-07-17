@@ -1,0 +1,30 @@
+spring:
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      location: tmp/
+  datasource:
+    url: jdbc:mysql://172.16.1.13:3306/db_jyb_test?Unicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&zeroDateTimeBehavior=convertToNull&useAffectedRows=true
+    username: jiayoubao
+    password: root1234
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+  redis:
+    host: 172.16.1.16
+    port: 6379
+    database: 4
+
+
+server:
+  port: 18080
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  type-enums-package: org.jz.admin.*
+
