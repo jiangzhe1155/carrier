@@ -44,13 +44,12 @@ public class FileCheckUpProcessCmdExe {
             return Response.ok(progressResponse.setId(resource.getId()).setSkipUpload(true));
         }
 
-        if (resource.isCreating()) {
+        if (resource.getId() != null && !resource.isCreated()) {
             Set<Integer> members = redisTemplate.opsForSet().members(cmd.getIdentifier());
             return Response.ok(progressResponse.setId(resource.getId()).setSkipUpload(false).setUploaded(members));
         }
 
         resource.generateRealPath();
-
         if (!fileResourceRepository.save(resource)) {
             throw new ServiceException("保存失败");
         }

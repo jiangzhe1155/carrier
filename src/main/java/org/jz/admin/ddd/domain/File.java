@@ -30,6 +30,11 @@ public class File {
     private Long size;
     private Long resourceId;
 
+    public File setFileName(String fileName) {
+        this.fileName = fileName;
+        setType(FileTypeEnum.parseType(FileUtil.extName(fileName)));
+        return this;
+    }
 
     public void toNewFileName() {
         String ext = FileUtil.extName(fileName);

@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.jz.admin.aspect.ServiceException;
-import org.jz.admin.controller.FileController;
 import org.jz.admin.entity.FileStatusEnum;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +21,7 @@ import java.io.RandomAccessFile;
 public class FileResource {
 
     public final static String DEMO_DIR = "public/";
+    private static final String DEMO_DIR2 = "public";
 
     private Long id;
     private String fileName;
@@ -43,16 +43,12 @@ public class FileResource {
         return this;
     }
 
-    public boolean isCreating() {
-        return status.equals(FileStatusEnum.CREATING);
-    }
-
     public boolean isCreated() {
         return status.equals(FileStatusEnum.CREATING);
     }
 
     public FileResource generateRealPath() {
-        this.path = StrUtil.join(File.separator, FileController.DEMO_DIR, identifier, fileName);
+        this.path = StrUtil.join(File.separator, DEMO_DIR2, identifier);
         return this;
     }
 

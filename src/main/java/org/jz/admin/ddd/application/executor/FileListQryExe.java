@@ -1,6 +1,5 @@
 package org.jz.admin.ddd.application.executor;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileListQry;
@@ -31,7 +30,7 @@ public class FileListQryExe {
             }
         }
 
-        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(), TFile::getFileName,
+        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(), qry.getOrder().getKey(),
                 qry.getAsc(), qry.getPage(), qry.getPageSize());
         return Response.ok(filePage);
     }

@@ -1,6 +1,7 @@
 package org.jz.admin.aspect;
 
 import com.baomidou.mybatisplus.extension.api.R;
+import org.jz.admin.common.Response;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServerHttpRequest;
@@ -19,7 +20,7 @@ public class MyResponseBodyAdvice implements ResponseBodyAdvice {
     @Override
     public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
                                   Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
-        if (body instanceof R) {
+        if (body instanceof R || body instanceof Response) {
             return body;
         }
         return R.ok(body);

@@ -1,20 +1,15 @@
 package org.jz.admin.ddd.infrastructure;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jz.admin.ddd.domain.File;
-import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
-import org.jz.admin.entity.TFileStore;
 import org.jz.admin.mapper.FileMapper;
-import org.jz.admin.mapper.FileStoreMapper;
-import org.jz.admin.service.FileServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -47,8 +42,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
 
-    @SafeVarargs
-    public final TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
+    public TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
@@ -64,8 +58,13 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 .setType(file.getType())
                 .setFolderId(file.getFolderId())
                 .setRelativePath(file.getRelativePath())
-                .setFileName(file.getFileName());
-        return saveOrUpdate(fileDO);
+                .setFileName(file.getFileName())
+                .setSize(file.getSize());
+        boolean success = saveOrUpdate(fileDO);
+        if (file.getId() == null) {
+            file.setId(fileDO.getId());
+        }
+        return success;
     }
 
     public File createDir(File rootDir, boolean touch) {

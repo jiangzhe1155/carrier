@@ -1,5 +1,6 @@
 package org.jz.admin.ddd.application.executor;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -11,6 +12,7 @@ import java.util.Set;
  */
 @Data
 @Accessors(chain = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FileCheckUpProgressCO {
 
     private Boolean skipUpload;

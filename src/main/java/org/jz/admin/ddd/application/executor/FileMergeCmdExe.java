@@ -1,18 +1,11 @@
 package org.jz.admin.ddd.application.executor;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.CharUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileMergeCmd;
 import org.jz.admin.ddd.domain.File;
-import org.jz.admin.ddd.domain.FileName;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
-import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,6 +26,7 @@ public class FileMergeCmdExe {
                 .setRelativePath(cmd.getRelativePath())
                 .setSize(cmd.getTotalSize())
                 .setResourceId(cmd.getStorageId())
+                .setSize(cmd.getTotalSize())
                 .setStatus(FileStatusEnum.CREATED);
 
         TFile fileFormDb = fileRepository.getFileByRelativePath(cmd.getRelativePath());

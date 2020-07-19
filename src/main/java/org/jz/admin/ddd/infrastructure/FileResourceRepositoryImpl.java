@@ -2,17 +2,10 @@ package org.jz.admin.ddd.infrastructure;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
-import org.jz.admin.entity.FileTypeEnum;
-import org.jz.admin.entity.TFile;
 import org.jz.admin.entity.TFileStore;
-import org.jz.admin.mapper.FileMapper;
 import org.jz.admin.mapper.FileStoreMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -43,7 +36,11 @@ public class FileResourceRepositoryImpl extends ServiceImpl<FileStoreMapper, TFi
     public boolean save(FileResource resource) {
         TFileStore file = new TFileStore();
         BeanUtil.copyProperties(resource, file);
-        return saveOrUpdate(file);
+        boolean success = saveOrUpdate(file);
+        if (resource.getId() == null) {
+            resource.setId(file.getId());
+        }
+        return success;
     }
 
 

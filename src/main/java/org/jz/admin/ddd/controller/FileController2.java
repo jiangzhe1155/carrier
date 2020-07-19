@@ -6,6 +6,7 @@ import org.jz.admin.ddd.application.FileServiceI;
 import org.jz.admin.ddd.application.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 
@@ -15,13 +16,14 @@ import javax.validation.Valid;
  */
 @Slf4j
 @RequestMapping("/file")
-public class FileController {
+@RestController
+public class FileController2 {
 
     @Autowired
     FileServiceI fileService;
 
     @PostMapping("list")
-    public Response list(@RequestBody FileListQry query) {
+    public Response list(@Valid @RequestBody FileListQry query) {
         return fileService.list(query);
     }
 
@@ -30,7 +32,7 @@ public class FileController {
         return fileService.delete(cmd);
     }
 
-    @PostMapping("makeDir")
+    @PostMapping("/makeDir")
     public Response makeDir(@RequestBody FileMakeDirCmd cmd) {
         return fileService.makeDir(cmd);
     }
@@ -41,13 +43,13 @@ public class FileController {
     }
 
     @GetMapping("chunkUpload")
-    public Response checkUpProgress(FileCheckUpProgressCmd cmd) {
+    public Response checkUpProgress(@Valid FileCheckUpProgressCmd cmd) {
         return fileService.checkUpProgress(cmd);
     }
 
     @PostMapping("chunkUpload")
-    public Response chunkUpload(FileChunkUploadCmd cmd) {
-        return fileService.chunkUpload(cmd);
+    public Response chunkUpload(MultipartFile file, @Valid FileChunkUploadCmd cmd) {
+        return fileService.chunkUpload(file, cmd);
     }
 
     @PostMapping("merge")

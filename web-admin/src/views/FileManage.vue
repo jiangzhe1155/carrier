@@ -290,8 +290,14 @@
         }
 
         getFileList() {
-            this.http.post("list", {relativePath: this.relativePath}, false).then(data => {
-                this.fileList = data.data;
+            let self = this;
+            this.http.post("list", {
+                relativePath: this.relativePath,
+                asc: true,
+                page: 1,
+                pageSize: 100
+            }, false).then(data => {
+                self.fileList = data.data.records;
             });
         }
 

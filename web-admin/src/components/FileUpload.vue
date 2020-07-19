@@ -97,7 +97,7 @@
     export default class FileUpload extends Vue {
 
         options = {
-            target: 'http://127.0.0.1:18080/chunkUploadFile',
+            target: 'http://127.0.0.1:18080/file/chunkUpload',
             chunkSize: 4 * 1024 * 1024,
             testChunks: true,
             maxChunkRetries: 3,
