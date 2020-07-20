@@ -33,9 +33,8 @@ public class FileRenameCmdExe {
             return Response.failed();
         }
         File file = new File()
-                .setDescription(new Description(originFile.getRelativePath(),
-                        FileTypeEnum.isFolder(originFile.getType())))
-                .setId(originFile.getId());
+                .setDescription(new Description(originFile.getRelativePath()
+                        , originFile.getFileName(), originFile.getType())).setId(originFile.getId());
 
         String targetPath =
                 StrUtil.removeSuffix(originFile.getRelativePath(), originFile.getFileName()) + cmd.getTargetName();

@@ -18,9 +18,10 @@ import java.util.Date;
 @Getter
 @AllArgsConstructor
 public class Description {
+    private String relativePath;
     private String fileName;
     private FileTypeEnum type;
-    private String relativePath;
+
 
     public Description(String relativePath) {
         new Description(relativePath, false);
@@ -47,7 +48,7 @@ public class Description {
             newFileName = mainName + suf + StrUtil.DOT + ext;
         }
         String relativePath = StrUtil.removeSuffix(this.relativePath, fileName) + newFileName;
-        return new Description(fileName, this.type, relativePath);
+        return new Description(relativePath, fileName, this.type);
     }
 
     public String getParentFolderPath() {
