@@ -36,7 +36,7 @@ export function tryHideFullScreenLoading() {
 }
 
 Axios.defaults.timeout = 60000;
-Axios.defaults.baseURL = 'http://127.0.0.1:18080/';
+Axios.defaults.baseURL = 'http://127.0.0.1:18080/file/';
 
 
 //http request 拦截器

@@ -1,22 +1,20 @@
 package org.jz.admin.ddd.infrastructure;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jz.admin.ddd.domain.File;
-import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
-import org.jz.admin.entity.TFileStore;
 import org.jz.admin.mapper.FileMapper;
-import org.jz.admin.mapper.FileStoreMapper;
-import org.jz.admin.service.FileServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @author jz
@@ -46,8 +44,16 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
 
-
     public TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
+        LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
+                .select(columns)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                .eq(TFile::getRelativePath, relativePath)
+                .last(LIMIT_ONE);
+        return fileMapper.selectOne(wrapper);
+    }
+
+    public TFile getFilesByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
@@ -63,9 +69,29 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 .setType(file.getType())
                 .setFolderId(file.getFolderId())
                 .setRelativePath(file.getRelativePath())
-                .setFileName(file.getFileName());
-        return saveOrUpdate(fileDO);
+                .setFileName(file.getFileName())
+                .setSize(file.getSize());
+        boolean success = saveOrUpdate(fileDO);
+        if (file.getId() == null) {
+            file.setId(fileDO.getId());
+        }
+        return success;
     }
+
+
+    public boolean update(File file) {
+        TFile fileDO = new TFile()
+                .setId(file.getId())
+                .setStatus(file.getStatus())
+                .setType(file.getType())
+                .setFolderId(file.getFolderId())
+                .setRelativePath(file.getRelativePath())
+                .setFileName(file.getFileName())
+                .setSize(file.getSize());
+
+        return save(file);
+    }
+
 
     public File createDir(File rootDir, boolean touch) {
         if (rootDir.getId() != null) {
@@ -85,5 +111,23 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
         save(rootDir);
         return rootDir;
+    }
+
+
+    public List<TFile> getFilesWithSubFilesByRelativePath(List<File> files, SFunction<TFile, ?>... columns) {
+        LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
+                .select(columns)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED);
+        for (File file : files) {
+            if (file.getType().equals(FileTypeEnum.DIR)) {
+                wrapper.and(w -> w
+                        .eq(TFile::getRelativePath, relativePath)
+                        .or()
+                        .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH));
+            } else {
+                wrapper.eq(TFile::getRelativePath, relativePath);
+            }
+        }
+        return fileMapper.selectList(wrapper);
     }
 }

@@ -2,17 +2,19 @@ package org.jz.admin.ddd.application.executor;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileRenameCmd;
+import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
-import org.jz.admin.entity.FileStatusEnum;
+import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
+
+import static org.jz.admin.entity.FileTypeEnum.parseType;
 
 /**
  * @author 江哲
@@ -25,40 +27,33 @@ public class FileRenameCmdExe {
     FileRepositoryImpl fileRepository;
 
     public Response execute(FileRenameCmd cmd) {
+        TFile originFile = fileRepository.getFileByRelativePath(cmd.getRelativePath());
+        if (originFile == null) {
+            return Response.failed();
+        }
+        File file = new File().setRelativePath(originFile.getRelativePath())
+                .setId(originFile.getId()).setType(originFile.getType());
 
+        String targetPath =
+                StrUtil.removeSuffix(originFile.getRelativePath(), originFile.getFileName()) + cmd.getTargetName();
+        TFile targetFromDb = fileRepository.getFileByRelativePath(targetPath, TFile::getId);
 
-        String relativePath = params.getRelativePath();
-        String fileName = FileUtil.getName(relativePath);
-        String targetName = params.getTargetName();
-        String targetPath = StrUtil.removeSuffix(relativePath, fileName) + targetName;
-
-        fileRepository.getFileByRelativePath()
-
-        if (sameNameFile != null) {
-            targetName = newFileName(targetName);
+        if (targetFromDb != null) {
+            file.toNewFileName();
         }
 
-        List<TFile> files = fileMapper.selectList(new LambdaQueryWrapper<TFile>()
-                .select(TFile::getRelativePath, TFile::getFileName, TFile::getId)
-                .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .and(wrapper -> wrapper
-                        .eq(TFile::getRelativePath, relativePath)
-                        .or()
-                        .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH)));
-
-        String filePrePath = StrUtil.removeSuffix(relativePath, fileName) + targetName;
-        for (TFile file : files) {
-            String suf = StrUtil.removePrefix(file.getRelativePath(), relativePath);
-            if (StrUtil.isEmpty(suf)) {
-                //说明就是要改名的文件
-                file.setFileName(targetName);
-                file.setType(parseType(FileUtil.extName(targetName)));
+        if (!file.getType().equals(FileTypeEnum.DIR)) {
+            fileRepository.update(new File().setId(file.getId()).setRelativePath(file.getRelativePath()));
+        } else {
+            List<TFile> filesWithSubFiles =
+                    fileRepository.getFilesWithSubFilesByRelativePath(Collections.singletonList(file), TFile::getId,
+                            TFile::getRelativePath);
+            for (TFile filesWithSubFile : filesWithSubFiles) {
+                String suf = StrUtil.removePrefix(filesWithSubFile.getRelativePath(), cmd.getRelativePath());
+                filesWithSubFile.setRelativePath(file.getRelativePath() + suf);
             }
-
-            file.setRelativePath(filePrePath + suf);
+            fileRepository.saveOrUpdateBatch(filesWithSubFiles);
         }
-        fileService.updateBatchById(files);
-
         return Response.ok();
     }
 }

@@ -1,24 +1,17 @@
 package org.jz.admin.ddd.application.executor;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.BooleanUtil;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileChunkUploadCmd;
-import org.jz.admin.ddd.domain.FileName;
 import org.jz.admin.ddd.domain.FileResource;
-import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.ddd.infrastructure.FileResourceRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFileStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
-import javax.sql.rowset.serial.SerialException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author 江哲
@@ -33,10 +26,10 @@ public class FileChunkUploadCmdExe {
     @Autowired
     RedisTemplate redisTemplate;
 
-    public Response execute(FileChunkUploadCmd cmd) {
+    public Response execute(MultipartFile file, FileChunkUploadCmd cmd) {
 
         FileResource resource =
-                new FileResource().setIdentifier(cmd.getIdentifier()).setChunkNumber(cmd.getChunkNumber()).setTotalChunks(cmd.getTotalChunks());
+                new FileResource().setIdentifier(cmd.getIdentifier()).setChunkNumber(cmd.getChunkNumber()).setChunkSize(cmd.getChunkSize());
 
         TFileStore fileStoreDO = fileResourceRepository.getResourceByIdentifier(cmd.getIdentifier());
 
@@ -46,7 +39,7 @@ public class FileChunkUploadCmdExe {
         resource.setId(fileStoreDO.getId()).setPath(fileStoreDO.getPath()).setStatus(fileStoreDO.getStatus());
 
         if (BooleanUtil.isFalse(redisTemplate.opsForSet().isMember(cmd.getIdentifier(), cmd.getChunkNumber()))) {
-            resource.rangeWrite(cmd.getFile());
+            resource.rangeWrite(file);
             FileStatusEnum status = resource.todoUpdateStatus();
             if (!status.equals(resource.getStatus())) {
                 //需要更新状态

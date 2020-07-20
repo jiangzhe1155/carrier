@@ -1,9 +1,9 @@
 package org.jz.admin.ddd.application.dto;
 
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -14,9 +14,15 @@ import javax.validation.constraints.NotNull;
 public class FileChunkUploadCmd {
 
     @NotNull
+    @Min(value = 1)
     private Integer chunkNumber;
-    @NotEmpty
+
+    @NotBlank
     private String identifier;
-    private Integer totalChunks;
-    MultipartFile file;
+
+    @NotNull
+    @Min(value = 1)
+    private Integer chunkSize;
+
+
 }

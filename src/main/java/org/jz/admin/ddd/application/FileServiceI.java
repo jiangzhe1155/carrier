@@ -5,7 +5,7 @@ import org.jz.admin.ddd.application.dto.*;
 import org.jz.admin.ddd.application.executor.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author jz
@@ -55,8 +55,8 @@ public class FileServiceI {
     }
 
 
-    public Response chunkUpload(FileChunkUploadCmd cmd) {
-        return fileChunkUploadCmdExe.execute(cmd);
+    public Response chunkUpload(MultipartFile file, FileChunkUploadCmd cmd) {
+        return fileChunkUploadCmdExe.execute(file,cmd);
     }
 
 
@@ -76,7 +76,7 @@ public class FileServiceI {
         return fileDownloadCmdExe.execute(cmd);
     }
 
-    public Response list(@RequestBody FileListQry qry) {
+    public Response list(FileListQry qry) {
         return fileListQryExe.execute(qry);
     }
 

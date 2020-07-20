@@ -2,7 +2,9 @@ package org.jz.admin.ddd.application.dto;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author jz
@@ -11,9 +13,13 @@ import javax.validation.constraints.NotEmpty;
 @Data
 public class FileCheckUpProgressCmd {
 
-    @NotEmpty
+    @NotBlank
     private String identifier;
 
-    @NotEmpty
+    @NotBlank
     private String filename;
+
+    @NotNull
+    @Min(1)
+    private Integer totalSize;
 }

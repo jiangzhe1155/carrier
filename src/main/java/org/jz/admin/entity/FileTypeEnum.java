@@ -1,7 +1,13 @@
 package org.jz.admin.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.jz.admin.controller.FileController.FILE_TYPE_ENUM_LIST_MAP;
 
 /**
  * @author jz
@@ -27,5 +33,16 @@ public enum FileTypeEnum {
     @JsonValue
     @EnumValue//标记数据库存的值是code
     private final int code;
+
+    public static FileTypeEnum parseType(String extName) {
+        for (Map.Entry<FileTypeEnum, List<String>> entry : FILE_TYPE_ENUM_LIST_MAP.entrySet()) {
+            FileTypeEnum fileTypeEnum = entry.getKey();
+            List<String> types = entry.getValue();
+            if (types.contains(extName)) {
+                return fileTypeEnum;
+            }
+        }
+        return FileTypeEnum.OTHER;
+    }
 
 }
