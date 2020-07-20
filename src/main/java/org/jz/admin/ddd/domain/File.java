@@ -42,16 +42,15 @@ public class File {
             newFileName = mainName + suf + StrUtil.DOT + ext;
         }
         setRelativePath(StrUtil.removeSuffix(relativePath, fileName) + newFileName);
-        setFileName(newFileName);
     }
 
     public File setRelativePath(String relativePath) {
-        FileUtil.normalize(relativePath);
-
+        relativePath = FileUtil.normalize(relativePath);
         if (StrUtil.isEmpty(relativePath)) {
             id = ROOT_FOLDER_ID;
         }
         this.relativePath = relativePath;
+        setFileName(StrUtil.subAfter(relativePath, StrUtil.SLASH, true));
         return this;
     }
 
@@ -60,14 +59,7 @@ public class File {
     }
 
     public File getParentFolder() {
-        File parentFolder = new File().setType(FileTypeEnum.DIR).setRelativePath(getParentFolderPath());
-        if (StrUtil.isEmpty(parentFolder.getRelativePath())) {
-            parentFolder.setId(ROOT_FOLDER_ID);
-            return parentFolder;
-        }
-
-        String parentFolderName = FileUtil.getName(parentFolder.getRelativePath());
-        parentFolder.setFileName(parentFolderName);
-        return parentFolder;
+        return new File().setType(FileTypeEnum.DIR).setRelativePath(getParentFolderPath());
     }
+
 }

@@ -29,7 +29,6 @@ public class FileMergeCmdExe {
 
     public Response execute(FileMergeCmd cmd) {
         File file = new File()
-                .setFileName(cmd.getFilename())
                 .setRelativePath(cmd.getRelativePath())
                 .setSize(cmd.getTotalSize())
                 .setResourceId(cmd.getStorageId())
