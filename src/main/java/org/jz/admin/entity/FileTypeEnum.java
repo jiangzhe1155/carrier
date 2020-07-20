@@ -1,6 +1,5 @@
 package org.jz.admin.entity;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -45,7 +44,4 @@ public enum FileTypeEnum {
         return FileTypeEnum.OTHER;
     }
 
-    public static boolean isFolder(FileTypeEnum type) {
-        return type.equals(FileTypeEnum.DIR);
-    }
 }

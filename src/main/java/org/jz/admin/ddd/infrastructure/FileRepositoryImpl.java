@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.jz.admin.ddd.FileConvertor;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
@@ -44,33 +45,19 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
 
-    public TFile getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
+    public File getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(TFile::getRelativePath, relativePath)
                 .last(LIMIT_ONE);
-        return fileMapper.selectOne(wrapper);
+        TFile file = fileMapper.selectOne(wrapper);
+        return FileConvertor.deserialize(file);
     }
 
-    public TFile getFilesByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
-        LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
-                .select(columns)
-                .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .eq(TFile::getRelativePath, relativePath)
-                .last(LIMIT_ONE);
-        return fileMapper.selectOne(wrapper);
-    }
 
-    public boolean save(File file) {
-        TFile fileDO = new TFile()
-                .setId(file.getId())
-                .setStatus(file.getStatus())
-                .setType(file.getDescription().getType())
-                .setFolderId(file.getFolderId())
-                .setRelativePath(file.getDescription().getRelativePath())
-                .setFileName(file.getDescription().getFileName())
-                .setSize(file.getSize());
+    public boolean saveOrUpdate(File file) {
+        TFile fileDO = FileConvertor.serialize(file);
         boolean success = saveOrUpdate(fileDO);
         if (file.getId() == null) {
             file.setId(fileDO.getId());
@@ -79,26 +66,12 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
     }
 
 
-    public boolean update(File file) {
-        TFile fileDO = new TFile()
-                .setId(file.getId())
-                .setStatus(file.getStatus())
-                .setType(file.getDescription().getType())
-                .setFolderId(file.getFolderId())
-                .setRelativePath(file.getDescription().getRelativePath())
-                .setFileName(file.getDescription().getFileName())
-                .setSize(file.getSize());
-
-        return save(file);
-    }
-
-
     public File createDir(File rootDir, boolean touch) {
         if (rootDir.getId() != null) {
             return rootDir;
         }
         // 判断是否有重名文件
-        TFile fileByRelativePath = getFileByRelativePath(rootDir.getDescription().getRelativePath());
+        File fileByRelativePath = getFileByRelativePath(rootDir.getDescription().getRelativePath(), TFile::getId);
         if (fileByRelativePath != null) {
             if (touch) {
                 return rootDir.setId(fileByRelativePath.getId());
@@ -109,7 +82,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
 
         Long folderId = createDir(rootDir.newParentFolder(), true).getId();
         rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
-        save(rootDir);
+        saveOrUpdate(rootDir);
         return rootDir;
     }
 

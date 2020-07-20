@@ -28,18 +28,15 @@ public class FileMergeCmdExe {
                 .setResourceId(cmd.getStorageId())
                 .setSize(cmd.getTotalSize())
                 .setStatus(FileStatusEnum.CREATED);
-
-        TFile fileFormDb = fileRepository.getFileByRelativePath(cmd.getRelativePath());
-
         // 判断是否有重名文件
-        if (fileFormDb != null) {
+        if (fileRepository.getFileByRelativePath(cmd.getRelativePath(), TFile::getId) != null) {
             file.toNewFileName();
         }
 
         File parentFolder = fileRepository.createDir(file.newParentFolder(), true);
         file.setFolderId(parentFolder.getId());
 
-        if (!fileRepository.save(file)) {
+        if (!fileRepository.saveOrUpdate(file)) {
             throw new ServiceException("创建文件失败");
         }
 

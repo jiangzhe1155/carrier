@@ -1,14 +1,9 @@
 package org.jz.admin.ddd.domain;
 
-import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.jz.admin.entity.FileStatusEnum;
-import org.jz.admin.entity.FileTypeEnum;
-
-import java.util.Date;
 
 /**
  * @author jz
@@ -48,6 +43,10 @@ public class File {
     }
 
     public boolean isFolder() {
-        return FileTypeEnum.isFolder(description.getType());
+        return description.isFolder();
+    }
+
+    public void rename(String targetName) {
+        setDescription(description.rename(targetName));
     }
 }

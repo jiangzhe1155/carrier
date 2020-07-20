@@ -23,17 +23,15 @@ public class FileListQryExe {
 
     public Response execute(FileListQry qry) {
         File parentFolder = new File().setDescription(new Description(qry.getRelativePath()));
-
         if (parentFolder.getId() == null) {
-            TFile fileByRelativePath = fileRepository.getFileByRelativePath(qry.getRelativePath(), TFile::getId);
+            File fileByRelativePath = fileRepository.getFileByRelativePath(qry.getRelativePath(), TFile::getId);
             if (fileByRelativePath != null) {
                 parentFolder.setId(fileByRelativePath.getId());
             }
         }
 
         Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(),
-                qry.getOrder().getKey(),
-                qry.getAsc(), qry.getPage(), qry.getPageSize());
+                qry.getOrder().getKey(), qry.getAsc(), qry.getPage(), qry.getPageSize());
         return Response.ok(filePage);
     }
 }

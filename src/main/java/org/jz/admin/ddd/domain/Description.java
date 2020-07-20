@@ -5,7 +5,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import org.jz.admin.entity.FileTypeEnum;
 
@@ -37,7 +36,8 @@ public class Description {
         }
     }
 
-    public Description newFileName() {
+
+    Description newFileName() {
         String ext = FileUtil.extName(fileName);
         String mainName = FileUtil.mainName(fileName);
         String suf = DateUtil.format(new Date(), "yyyyMMdd_HHmmss");
@@ -51,7 +51,16 @@ public class Description {
         return new Description(relativePath, fileName, this.type);
     }
 
-    public String getParentFolderPath() {
+    String getParentFolderPath() {
         return StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
+    }
+
+    Description rename(String newFileName) {
+        String targetPath = StrUtil.removeSuffix(relativePath, fileName) + newFileName;
+        return new Description(targetPath, isFolder());
+    }
+
+    boolean isFolder() {
+        return type.equals(FileTypeEnum.DIR);
     }
 }
