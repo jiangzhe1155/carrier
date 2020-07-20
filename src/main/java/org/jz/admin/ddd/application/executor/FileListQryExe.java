@@ -3,6 +3,7 @@ package org.jz.admin.ddd.application.executor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileListQry;
+import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.TFile;
@@ -21,7 +22,7 @@ public class FileListQryExe {
     FileRepositoryImpl fileRepository;
 
     public Response execute(FileListQry qry) {
-        File parentFolder = new File().setRelativePath(qry.getRelativePath());
+        File parentFolder = new File().setDescription(new Description(qry.getRelativePath()));
 
         if (parentFolder.getId() == null) {
             TFile fileByRelativePath = fileRepository.getFileByRelativePath(qry.getRelativePath(), TFile::getId);
@@ -30,7 +31,8 @@ public class FileListQryExe {
             }
         }
 
-        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(), qry.getOrder().getKey(),
+        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(),
+                qry.getOrder().getKey(),
                 qry.getAsc(), qry.getPage(), qry.getPageSize());
         return Response.ok(filePage);
     }

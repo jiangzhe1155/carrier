@@ -3,6 +3,7 @@ package org.jz.admin.ddd.application.executor;
 import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileMergeCmd;
+import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
@@ -22,7 +23,7 @@ public class FileMergeCmdExe {
 
     public Response execute(FileMergeCmd cmd) {
         File file = new File()
-                .setRelativePath(cmd.getRelativePath())
+                .setDescription(new Description(cmd.getRelativePath(), false))
                 .setSize(cmd.getTotalSize())
                 .setResourceId(cmd.getStorageId())
                 .setSize(cmd.getTotalSize())
@@ -35,7 +36,7 @@ public class FileMergeCmdExe {
             file.toNewFileName();
         }
 
-        File parentFolder = fileRepository.createDir(new File().getParentFolder(), true);
+        File parentFolder = fileRepository.createDir(file.newParentFolder(), true);
         file.setFolderId(parentFolder.getId());
 
         if (!fileRepository.save(file)) {

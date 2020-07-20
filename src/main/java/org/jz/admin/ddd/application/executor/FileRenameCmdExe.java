@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileRenameCmd;
+import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.FileTypeEnum;
@@ -31,8 +32,10 @@ public class FileRenameCmdExe {
         if (originFile == null) {
             return Response.failed();
         }
-        File file = new File().setRelativePath(originFile.getRelativePath())
-                .setId(originFile.getId()).setType(originFile.getType());
+        File file = new File()
+                .setDescription(new Description(originFile.getRelativePath(),
+                        FileTypeEnum.isFolder(originFile.getType())))
+                .setId(originFile.getId());
 
         String targetPath =
                 StrUtil.removeSuffix(originFile.getRelativePath(), originFile.getFileName()) + cmd.getTargetName();
@@ -42,15 +45,15 @@ public class FileRenameCmdExe {
             file.toNewFileName();
         }
 
-        if (!file.getType().equals(FileTypeEnum.DIR)) {
-            fileRepository.update(new File().setId(file.getId()).setRelativePath(file.getRelativePath()));
+        if (!file.isFolder()) {
+            fileRepository.update(file);
         } else {
             List<TFile> filesWithSubFiles =
                     fileRepository.getFilesWithSubFilesByRelativePath(Collections.singletonList(file), TFile::getId,
                             TFile::getRelativePath);
             for (TFile filesWithSubFile : filesWithSubFiles) {
                 String suf = StrUtil.removePrefix(filesWithSubFile.getRelativePath(), cmd.getRelativePath());
-                filesWithSubFile.setRelativePath(file.getRelativePath() + suf);
+//                filesWithSubFile.setRelativePath(file.getRelativePath() + suf);
             }
             fileRepository.saveOrUpdateBatch(filesWithSubFiles);
         }

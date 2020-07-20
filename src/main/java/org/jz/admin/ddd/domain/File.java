@@ -1,9 +1,8 @@
 package org.jz.admin.ddd.domain;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.jz.admin.entity.FileStatusEnum;
@@ -22,50 +21,33 @@ public class File {
     private static final long ROOT_FOLDER_ID = 0L;
 
     private Long id;
-    private String fileName;
-    private FileTypeEnum type;
-    private String relativePath;
+    private Description description;
     private Long folderId;
     private FileStatusEnum status;
     private Long size;
     private Long resourceId;
 
-    public File setFileName(String fileName) {
-        this.fileName = fileName;
-        setType(FileTypeEnum.parseType(FileUtil.extName(fileName)));
+    public File setDescription(Description description) {
+        this.description = description;
+        if (StrUtil.isBlank(description.getRelativePath())) {
+            this.id = ROOT_FOLDER_ID;
+        }
         return this;
     }
 
     public void toNewFileName() {
-        String ext = FileUtil.extName(fileName);
-        String mainName = FileUtil.mainName(fileName);
-        String suf = DateUtil.format(new Date(), "yyyyMMdd_HHmmss");
-        String newFileName;
-        if (StrUtil.isBlank(ext)) {
-            newFileName = mainName + suf;
-        } else {
-            newFileName = mainName + suf + StrUtil.DOT + ext;
-        }
-        setRelativePath(StrUtil.removeSuffix(relativePath, fileName) + newFileName);
-    }
-
-    public File setRelativePath(String relativePath) {
-        relativePath = FileUtil.normalize(relativePath);
-        if (StrUtil.isEmpty(relativePath)) {
-            id = ROOT_FOLDER_ID;
-        }
-        this.relativePath = relativePath;
-        setFileName(StrUtil.subAfter(relativePath, StrUtil.SLASH, true));
-        setType(FileTypeEnum.parseType(getFileName()));
-        return this;
+        setDescription(description.newFileName());
     }
 
     private String getParentFolderPath() {
-        return StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
+        return description.getParentFolderPath();
     }
 
-    public File getParentFolder() {
-        return new File().setType(FileTypeEnum.DIR).setRelativePath(getParentFolderPath());
+    public File newParentFolder() {
+        return new File().setDescription(new Description(getParentFolderPath(), true));
     }
 
+    public boolean isFolder() {
+        return FileTypeEnum.isFolder(description.getType());
+    }
 }

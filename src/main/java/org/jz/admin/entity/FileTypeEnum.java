@@ -45,4 +45,7 @@ public enum FileTypeEnum {
         return FileTypeEnum.OTHER;
     }
 
+    public static boolean isFolder(FileTypeEnum type) {
+        return type.equals(FileTypeEnum.DIR);
+    }
 }

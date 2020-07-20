@@ -65,11 +65,11 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
     public boolean save(File file) {
         TFile fileDO = new TFile()
                 .setId(file.getId())
-                .setStatus(FileStatusEnum.CREATED)
-                .setType(file.getType())
+                .setStatus(file.getStatus())
+                .setType(file.getDescription().getType())
                 .setFolderId(file.getFolderId())
-                .setRelativePath(file.getRelativePath())
-                .setFileName(file.getFileName())
+                .setRelativePath(file.getDescription().getRelativePath())
+                .setFileName(file.getDescription().getFileName())
                 .setSize(file.getSize());
         boolean success = saveOrUpdate(fileDO);
         if (file.getId() == null) {
@@ -83,10 +83,10 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         TFile fileDO = new TFile()
                 .setId(file.getId())
                 .setStatus(file.getStatus())
-                .setType(file.getType())
+                .setType(file.getDescription().getType())
                 .setFolderId(file.getFolderId())
-                .setRelativePath(file.getRelativePath())
-                .setFileName(file.getFileName())
+                .setRelativePath(file.getDescription().getRelativePath())
+                .setFileName(file.getDescription().getFileName())
                 .setSize(file.getSize());
 
         return save(file);
@@ -98,7 +98,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
             return rootDir;
         }
         // 判断是否有重名文件
-        TFile fileByRelativePath = getFileByRelativePath(rootDir.getRelativePath());
+        TFile fileByRelativePath = getFileByRelativePath(rootDir.getDescription().getRelativePath());
         if (fileByRelativePath != null) {
             if (touch) {
                 return rootDir.setId(fileByRelativePath.getId());
@@ -107,7 +107,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
             }
         }
 
-        Long folderId = createDir(rootDir.getParentFolder(), true).getId();
+        Long folderId = createDir(rootDir.newParentFolder(), true).getId();
         rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
         save(rootDir);
         return rootDir;
@@ -119,7 +119,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);
         for (File file : files) {
-            if (file.getType().equals(FileTypeEnum.DIR)) {
+            if (file.isFolder()) {
                 wrapper.and(w -> w
                         .eq(TFile::getRelativePath, relativePath)
                         .or()
