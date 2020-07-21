@@ -1,7 +1,9 @@
 package org.jz.admin.ddd.infrastructure;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.AbstractLambdaWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author jz
@@ -55,6 +58,15 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return FileConvertor.deserialize(file);
     }
 
+    public List<File> getFilesByRelativePaths(List<String> relativePaths, SFunction<TFile, ?>... columns) {
+        LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
+                .select(columns)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED)
+                .in(TFile::getRelativePath, relativePaths);
+        List<TFile> files = fileMapper.selectList(wrapper);
+        return files.stream().map(FileConvertor::deserialize).collect(Collectors.toList());
+    }
+
 
     public boolean saveOrUpdate(File file) {
         TFile fileDO = FileConvertor.serialize(file);
@@ -79,7 +91,6 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 rootDir.toNewFileName();
             }
         }
-
         Long folderId = createDir(rootDir.newParentFolder(), true).getId();
         rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
         saveOrUpdate(rootDir);
@@ -87,10 +98,33 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
     }
 
 
-    public List<TFile> getFilesWithSubFilesByRelativePath(List<File> files, SFunction<TFile, ?>... columns) {
+    public List<File> getFilesWithSubFilesByRelativePath(List<File> files, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);
+        sqlFromDifferentType(wrapper, files);
+        return fileMapper.selectList(wrapper).stream().map(FileConvertor::deserialize).collect(Collectors.toList());
+    }
+
+    public void moveFiles(List<File> moveFiles, File targetFile) {
+
+    }
+
+    public boolean saveOrUpdateBatch(List<File> files) {
+        return saveOrUpdateBatch(files.stream().map(FileConvertor::serialize).collect(Collectors.toList()));
+    }
+
+    public void batchDelete(List<File> files) {
+        LambdaUpdateWrapper<TFile> wrapper = Wrappers.<TFile>lambdaUpdate()
+                .set(TFile::getStatus, FileStatusEnum.DELETED)
+                .eq(TFile::getStatus, FileStatusEnum.CREATED);
+
+        sqlFromDifferentType(wrapper, files);
+
+        fileMapper.update(null, wrapper);
+    }
+
+    private void sqlFromDifferentType(AbstractLambdaWrapper<TFile, ?> wrapper, List<File> files) {
         for (File file : files) {
             if (file.isFolder()) {
                 wrapper.and(w -> w
@@ -101,6 +135,5 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 wrapper.eq(TFile::getRelativePath, relativePath);
             }
         }
-        return fileMapper.selectList(wrapper);
     }
 }

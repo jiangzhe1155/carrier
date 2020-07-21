@@ -6,6 +6,7 @@ import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.entity.FileTypeEnum;
 
 import java.util.Date;
@@ -62,5 +63,23 @@ public class Description {
 
     boolean isFolder() {
         return type.equals(FileTypeEnum.DIR);
+    }
+
+    public boolean isSameOrParentFolder(Description path) {
+        String sufPath = StrUtil.subBefore(relativePath, StrUtil.SLASH, true);
+        return sufPath.equals(path.getRelativePath()) || isParent(path);
+    }
+
+    public boolean isParent(Description path) {
+        return path.getRelativePath().startsWith(relativePath + StrUtil.SLASH);
+    }
+
+
+    public Description subFile(String fileName, boolean isFolder) {
+        if (!isFolder()) {
+            throw new ServiceException("只有文件夹能创建子文件");
+        }
+        return new Description(this.fileName + StrUtil.SLASH + fileName, isFolder);
+
     }
 }

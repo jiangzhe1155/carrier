@@ -188,7 +188,6 @@ public class FileController {
                 file.setFileName(targetName);
                 file.setType(parseType(FileUtil.extName(targetName)));
             }
-
             file.setRelativePath(filePrePath + suf);
         }
         fileService.updateBatchById(files);
@@ -374,8 +373,7 @@ public class FileController {
             }
 
             if (StrUtil.isNotEmpty(targetPath)) {
-                TFile targetDir = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
-                        .select(TFile::getId)
+                TFile targetDir = fileMapper.selectOne(new LambdaQueryWrapper<TFile>().select(TFile::getId)
                         .eq(TFile::getRelativePath, targetPath)
                         .eq(TFile::getStatus, FileStatusEnum.CREATED));
                 if (targetDir != null) {

@@ -58,12 +58,12 @@ public class FileController2 {
     }
 
     @PostMapping("copy")
-    public Response copy(@RequestBody FileCopyCmd cmd) {
+    public Response copy(@RequestBody FileMoveOrCopyCmd cmd) {
         return fileService.copy(cmd);
     }
 
     @PostMapping("move")
-    public Response move(@RequestBody FileMoveCmd cmd) {
+    public Response move(@RequestBody FileMoveOrCopyCmd cmd) {
         return fileService.move(cmd);
     }
 

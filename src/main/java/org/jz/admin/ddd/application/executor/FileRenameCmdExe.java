@@ -36,12 +36,12 @@ public class FileRenameCmdExe {
         if (!file.isFolder()) {
             fileRepository.saveOrUpdate(file);
         } else {
-            List<TFile> filesWithSubFiles =
+            List<File> filesWithSubFiles =
                     fileRepository.getFilesWithSubFilesByRelativePath(Collections.singletonList(new File().setDescription(originFileDescription)));
-            for (TFile filesWithSubFile : filesWithSubFiles) {
-                String suf = StrUtil.removePrefix(filesWithSubFile.getRelativePath(),
+            for (File filesWithSubFile : filesWithSubFiles) {
+                String suf = StrUtil.removePrefix(filesWithSubFile.getDescription().getRelativePath(),
                         originFileDescription.getRelativePath());
-
+                filesWithSubFile.setDescription(new Description(file.getDescription().getRelativePath()));
             }
             fileRepository.saveOrUpdateBatch(filesWithSubFiles);
         }

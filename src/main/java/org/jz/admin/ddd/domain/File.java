@@ -49,4 +49,18 @@ public class File {
     public void rename(String targetName) {
         setDescription(description.rename(targetName));
     }
+
+    public boolean isSameOrParentDir(File path) {
+        return description.isSameOrParentFolder(path.getDescription());
+    }
+
+    public boolean isParentDir(File path) {
+        return description.isParent(path.getDescription());
+    }
+
+
+    public File newSubFile(String fileName, boolean folder) {
+        //创建一个子文件
+        return new File().setFolderId(id).setDescription(description.subFile(fileName, folder));
+    }
 }

@@ -4,6 +4,8 @@ import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.entity.TFile;
 
+import javax.validation.constraints.NotEmpty;
+
 /**
  * @author jz
  * @date 2020/07/20

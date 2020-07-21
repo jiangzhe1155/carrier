@@ -29,7 +29,7 @@ public class FileServiceI {
     @Autowired
     FileCopyCmdExe fileCopyCmdExe;
     @Autowired
-    FileMoveCmdExe fileMoveCmdExe;
+    FileMoveOrCopyCmdExe fileMoveOrCopyCmdExe;
     @Autowired
     FileDownloadCmdExe fileDownloadCmdExe;
     @Autowired
@@ -56,7 +56,7 @@ public class FileServiceI {
 
 
     public Response chunkUpload(MultipartFile file, FileChunkUploadCmd cmd) {
-        return fileChunkUploadCmdExe.execute(file,cmd);
+        return fileChunkUploadCmdExe.execute(file, cmd);
     }
 
 
@@ -64,12 +64,12 @@ public class FileServiceI {
         return fileMergeCmdExe.execute(cmd);
     }
 
-    public Response copy(FileCopyCmd cmd) {
-        return fileCopyCmdExe.execute(cmd);
+    public Response copy(FileMoveOrCopyCmd cmd) {
+        return fileMoveOrCopyCmdExe.execute(cmd, false);
     }
 
-    public Response move(FileMoveCmd cmd) {
-        return fileMoveCmdExe.execute(cmd);
+    public Response move(FileMoveOrCopyCmd cmd) {
+        return fileMoveOrCopyCmdExe.execute(cmd, true);
     }
 
     public Response download(FileDownloadCmd cmd) {
