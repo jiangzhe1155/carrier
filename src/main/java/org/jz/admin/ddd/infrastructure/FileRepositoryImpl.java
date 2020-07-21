@@ -97,17 +97,12 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return rootDir;
     }
 
-
     public List<File> getFilesWithSubFilesByRelativePath(List<File> files, SFunction<TFile, ?>... columns) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);
         sqlFromDifferentType(wrapper, files);
         return fileMapper.selectList(wrapper).stream().map(FileConvertor::deserialize).collect(Collectors.toList());
-    }
-
-    public void moveFiles(List<File> moveFiles, File targetFile) {
-
     }
 
     public boolean saveOrUpdateBatch(List<File> files) {
@@ -118,9 +113,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         LambdaUpdateWrapper<TFile> wrapper = Wrappers.<TFile>lambdaUpdate()
                 .set(TFile::getStatus, FileStatusEnum.DELETED)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);
-
         sqlFromDifferentType(wrapper, files);
-
         fileMapper.update(null, wrapper);
     }
 

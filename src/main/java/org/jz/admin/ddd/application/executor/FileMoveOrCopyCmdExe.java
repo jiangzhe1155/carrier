@@ -73,23 +73,4 @@ public class FileMoveOrCopyCmdExe {
         }
         return Response.ok();
     }
-
-    private void moveFiles(List<String> relativePaths, String targetPath) {
-
-    }
-
-
-    public static void main(String[] args) {
-        List<FileMoveOrCopyCo> res = Arrays.asList(
-                new FileMoveOrCopyCo("111", "222"),
-                new FileMoveOrCopyCo("333", "222"),
-                new FileMoveOrCopyCo("444", "222"),
-                new FileMoveOrCopyCo("444", "333")
-        );
-        Map<String, List<String>> targetPathMap =
-                res.stream().collect(Collectors.groupingBy(FileMoveOrCopyCo::getTargetPath,
-                        Collectors.mapping(FileMoveOrCopyCo::getRelativePath, Collectors.toList())));
-
-    }
-
 }
