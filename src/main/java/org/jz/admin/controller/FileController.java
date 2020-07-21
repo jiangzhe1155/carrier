@@ -114,7 +114,6 @@ public class FileController {
         }
 
         if (folderId == null) {
-            // 通过相对路径找到id
             TFile folder = fileMapper.selectOne(new LambdaQueryWrapper<TFile>()
                     .select(TFile::getId)
                     .eq(TFile::getStatus, FileStatusEnum.CREATED)

@@ -2,7 +2,6 @@ package org.jz.admin.ddd.domain;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -53,7 +52,7 @@ public class Description {
     }
 
     String getParentFolderPath() {
-        return StrUtil.subBefore(relativePath, CharUtil.SLASH, true);
+        return StrUtil.subBefore(relativePath, StrUtil.SLASH, true);
     }
 
     Description rename(String newFileName) {

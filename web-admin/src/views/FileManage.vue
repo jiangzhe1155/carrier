@@ -294,6 +294,7 @@
             this.http.post("list", {
                 relativePath: this.relativePath,
                 asc: true,
+                order:'name',
                 page: 1,
                 pageSize: 100
             }, false).then(data => {

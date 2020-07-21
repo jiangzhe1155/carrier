@@ -21,7 +21,7 @@ public class FileMergeCmdExe {
     @Autowired
     FileRepositoryImpl fileRepository;
 
-    public Response execute(FileMergeCmd cmd) {
+    public  Response execute(FileMergeCmd cmd) {
         File file = new File()
                 .setDescription(new Description(cmd.getRelativePath(), false))
                 .setSize(cmd.getTotalSize())
@@ -29,7 +29,7 @@ public class FileMergeCmdExe {
                 .setSize(cmd.getTotalSize())
                 .setStatus(FileStatusEnum.CREATED);
         // 判断是否有重名文件
-        if (fileRepository.getFileByRelativePath(cmd.getRelativePath(), TFile::getId) != null) {
+        if (fileRepository.getFileByRelativePath(file.getDescription().getRelativePath(), TFile::getId) != null) {
             file.toNewFileName();
         }
 
@@ -40,7 +40,7 @@ public class FileMergeCmdExe {
             throw new ServiceException("创建文件失败");
         }
 
-        return Response.ok();
+        return Response.ok(file);
     }
 
 }

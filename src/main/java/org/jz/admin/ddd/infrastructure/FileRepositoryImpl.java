@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.jz.admin.ddd.FileConvertor;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.entity.FileStatusEnum;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * @author jz
  * @date 2020/07/14
  */
-
+@Slf4j
 @Repository
 public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
 
@@ -92,6 +93,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
             }
         }
         Long folderId = createDir(rootDir.newParentFolder(), true).getId();
+        log.info("相对路径{} 找到父节点{}", rootDir.getDescription().getRelativePath(), folderId);
         rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
         saveOrUpdate(rootDir);
         return rootDir;
@@ -109,7 +111,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return saveOrUpdateBatch(files.stream().map(FileConvertor::serialize).collect(Collectors.toList()));
     }
 
-    public void batchDelete(List<File> files) {
+    public void batchDeleteByRelativePath(List<File> files) {
         LambdaUpdateWrapper<TFile> wrapper = Wrappers.<TFile>lambdaUpdate()
                 .set(TFile::getStatus, FileStatusEnum.DELETED)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);

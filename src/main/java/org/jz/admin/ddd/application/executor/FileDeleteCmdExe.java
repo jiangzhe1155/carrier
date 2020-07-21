@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author 江哲
@@ -27,7 +26,7 @@ public class FileDeleteCmdExe {
         List<File> deleteFiles =
                 fileRepository.getFilesWithSubFilesByRelativePath(filesByRelativePaths, TFile::getId);
 
-        fileRepository.batchDelete(deleteFiles.stream().map(File::getId).collect(Collectors.toList()));
+        fileRepository.batchDeleteByRelativePath(deleteFiles);
 
         return null;
     }

@@ -4,8 +4,6 @@ import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
 import org.jz.admin.entity.TFile;
 
-import javax.validation.constraints.NotEmpty;
-
 /**
  * @author jz
  * @date 2020/07/20
@@ -18,14 +16,13 @@ public class FileConvertor {
             return null;
         }
         return new TFile()
-                .setId(domainObject.getId())
-                .setFileName(domainObject.getDescription().getRelativePath())
+                .setFileName(domainObject.getDescription().getFileName())
                 .setFolderId(domainObject.getFolderId())
                 .setSize(domainObject.getSize())
                 .setType(domainObject.getDescription().getType())
                 .setStorageId(domainObject.getResourceId())
                 .setRelativePath(domainObject.getDescription().getRelativePath())
-                .setStatus(domainObject.getStatus());
+                .setStatus(domainObject.getStatus()).setId(domainObject.getId());
     }
 
 
@@ -33,11 +30,11 @@ public class FileConvertor {
         if (dataObject == null) {
             return null;
         }
-        return new File().setId(dataObject.getId())
+        return new File().setDescription(new Description(dataObject.getRelativePath(), dataObject.getFileName(),
+                dataObject.getType()))
                 .setStatus(dataObject.getStatus())
                 .setFolderId(dataObject.getFolderId())
                 .setSize(dataObject.getSize())
-                .setDescription(new Description(dataObject.getRelativePath(), dataObject.getFileName(),
-                        dataObject.getType()));
+                .setId(dataObject.getId());
     }
 }
