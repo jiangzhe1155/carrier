@@ -48,7 +48,7 @@ public class Description {
             newFileName = mainName + suf + StrUtil.DOT + ext;
         }
         String relativePath = StrUtil.removeSuffix(this.relativePath, fileName) + newFileName;
-        return new Description(relativePath, fileName, this.type);
+        return new Description(relativePath, newFileName, this.type);
     }
 
     String getParentFolderPath() {

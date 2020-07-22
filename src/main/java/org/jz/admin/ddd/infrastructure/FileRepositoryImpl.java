@@ -34,7 +34,6 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
     FileMapper fileMapper;
 
     private static final String LIMIT_ONE = "LIMIT 1";
-    private String relativePath;
 
     public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, SFunction<TFile, ?> orderBy, Boolean asc,
                                    Integer page, Integer pageSize) {
@@ -79,6 +78,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
     }
 
     public File createDir(File rootDir, boolean touch) {
+
         if (rootDir.getId() != null) {
             return rootDir;
         }
@@ -95,13 +95,7 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         do {
             Long folderId = createDir(rootDir.newParentFolder(), true).getId();
             rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
-            LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery().notExists(StrUtil.format("select id " +
-                    "from t_file where relative_path = '{}'", rootDir.getDescription().getRelativePath()));
-            TFile serialize = FileConvertor.serialize(rootDir);
-            int i = fileMapper.insertWhereNotExist(serialize, wrapper);
-            System.out.println(i);
-            if (i > 0) {
-                rootDir.setId(serialize.getId());
+            if (saveOrUpdate(rootDir)) {
                 return rootDir;
             } else {
                 return createDir(rootDir, true);
@@ -131,9 +125,10 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
 
     private void sqlFromDifferentType(AbstractLambdaWrapper<TFile, ?> wrapper, List<File> files) {
         for (File file : files) {
+            String relativePath = file.getDescription().getRelativePath();
             if (file.isFolder()) {
                 wrapper.and(w -> w
-                        .eq(TFile::getRelativePath, relativePath)
+                        .eq(TFile::getRelativePath,relativePath )
                         .or()
                         .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH));
             } else {

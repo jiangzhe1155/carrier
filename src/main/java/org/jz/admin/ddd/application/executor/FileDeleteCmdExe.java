@@ -17,17 +17,13 @@ import java.util.List;
 @Component
 public class FileDeleteCmdExe {
 
-
     @Autowired
     FileRepositoryImpl fileRepository;
 
     public Response execute(FileDeleteCmd cmd) {
         List<File> filesByRelativePaths = fileRepository.getFilesByRelativePaths(cmd.getRelativePaths());
-        List<File> deleteFiles =
-                fileRepository.getFilesWithSubFilesByRelativePath(filesByRelativePaths);
+        fileRepository.batchDeleteByRelativePath(filesByRelativePaths);
 
-        fileRepository.batchDeleteByRelativePath(deleteFiles);
-
-        return null;
+        return Response.ok();
     }
 }

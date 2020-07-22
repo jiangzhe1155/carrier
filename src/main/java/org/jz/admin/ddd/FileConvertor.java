@@ -35,6 +35,7 @@ public class FileConvertor {
                 .setStatus(dataObject.getStatus())
                 .setFolderId(dataObject.getFolderId())
                 .setSize(dataObject.getSize())
-                .setId(dataObject.getId());
+                .setId(dataObject.getId())
+                .setResourceId(dataObject.getStorageId());
     }
 }
