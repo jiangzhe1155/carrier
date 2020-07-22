@@ -11,7 +11,6 @@ import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
 import org.jz.admin.mapper.FileMapper;
 import org.jz.admin.mapper.FileStoreMapper;
-import org.jz.admin.mapper.TestMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -50,8 +49,6 @@ class FileRepositoryImplTest {
     @Autowired
     FileStoreMapper fileStoreMapper;
 
-    @Autowired
-    TestMapper testMapper;
 
     @Test
     void reset() {

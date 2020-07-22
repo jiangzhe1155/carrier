@@ -23,5 +23,4 @@ public interface FileMapper extends BaseMapper<TFile> {
 
     List<TFile> getFileListWithRealPath(@Param(Constants.WRAPPER) Wrapper<TFile> wrapper);
 
-    int insertWhereNotExist(@Param(Constants.ENTITY) TFile rootDir, @Param(Constants.WRAPPER) Wrapper<TFile> eq);
 }

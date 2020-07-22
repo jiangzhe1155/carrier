@@ -23,7 +23,6 @@ public class FileDeleteCmdExe {
     public Response execute(FileDeleteCmd cmd) {
         List<File> filesByRelativePaths = fileRepository.getFilesByRelativePaths(cmd.getRelativePaths());
         fileRepository.batchDeleteByRelativePath(filesByRelativePaths);
-
         return Response.ok();
     }
 }
