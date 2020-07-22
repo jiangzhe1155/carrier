@@ -1,6 +1,5 @@
 package org.jz.admin.ddd.application.executor;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileMergeCmd;
@@ -47,7 +46,6 @@ public class FileMergeCmdExe {
         } finally {
             fileLock.unlock();
         }
-
         file.setFolderId(parentFolder.getId());
         if (!fileRepository.saveOrUpdate(file)) {
             throw new ServiceException("创建文件失败");

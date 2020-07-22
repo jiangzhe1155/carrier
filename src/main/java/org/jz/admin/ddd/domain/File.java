@@ -60,7 +60,6 @@ public class File {
 
 
     public File newSubFile(String fileName, boolean folder) {
-        //创建一个子文件
         return new File().setFolderId(id).setDescription(description.subFile(fileName, folder));
     }
 }
