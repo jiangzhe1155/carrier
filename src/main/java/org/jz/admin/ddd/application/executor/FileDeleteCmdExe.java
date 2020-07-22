@@ -24,7 +24,7 @@ public class FileDeleteCmdExe {
     public Response execute(FileDeleteCmd cmd) {
         List<File> filesByRelativePaths = fileRepository.getFilesByRelativePaths(cmd.getRelativePaths());
         List<File> deleteFiles =
-                fileRepository.getFilesWithSubFilesByRelativePath(filesByRelativePaths, TFile::getId);
+                fileRepository.getFilesWithSubFilesByRelativePath(filesByRelativePaths);
 
         fileRepository.batchDeleteByRelativePath(deleteFiles);
 

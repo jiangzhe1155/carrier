@@ -176,7 +176,7 @@
                 m => deletePaths.push(this.relativePath + "/" + m.fileName)
             );
 
-            this.http.post("deleteFile", {
+            this.http.post("delete", {
                 relativePaths: deletePaths,
             }).then((data: R<CommonFile[]>) => {
                 this.init();
@@ -258,7 +258,7 @@
         }
 
         deleteFile(index, row) {
-            this.http.post("deleteFile", {
+            this.http.post("delete", {
                 relativePaths: [this.relativePath + "/" + row.fileName]
             }).then((data: R<CommonFile[]>) => {
                 this.init();

@@ -27,10 +27,6 @@ public class TFileStore {
     @TableField("`identifier`")
     private String identifier;
 
-
-    @TableField("`md5`")
-    private String md5;
-
     @TableField("`status`")
     private FileStatusEnum status;
 

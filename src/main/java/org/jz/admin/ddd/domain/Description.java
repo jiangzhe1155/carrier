@@ -5,6 +5,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import org.jz.admin.aspect.ServiceException;
 import org.jz.admin.entity.FileTypeEnum;
 
@@ -23,19 +24,18 @@ public class Description {
 
 
     public Description(String relativePath) {
-        new Description(relativePath, false);
+        this(relativePath, false);
     }
 
     public Description(String relativePath, boolean isFolder) {
         this.relativePath = FileUtil.normalize(relativePath);
         this.fileName = StrUtil.subAfter(this.relativePath, StrUtil.SLASH, true);
-        if (isFolder || StrUtil.isBlank(relativePath)) {
+        if (isFolder) {
             this.type = FileTypeEnum.DIR;
         } else {
             this.type = FileTypeEnum.parseType(FileUtil.extName(fileName));
         }
     }
-
 
     Description newFileName() {
         String ext = FileUtil.extName(fileName);

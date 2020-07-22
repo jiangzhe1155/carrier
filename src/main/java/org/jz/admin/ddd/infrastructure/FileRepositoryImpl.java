@@ -16,6 +16,7 @@ import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
 import org.jz.admin.mapper.FileMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -68,22 +69,20 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         return files.stream().map(FileConvertor::deserialize).collect(Collectors.toList());
     }
 
-
     public boolean saveOrUpdate(File file) {
         TFile fileDO = FileConvertor.serialize(file);
         boolean success = saveOrUpdate(fileDO);
-        if (file.getId() == null) {
+        if (success && file.getId() == null) {
             file.setId(fileDO.getId());
         }
         return success;
     }
 
-
     public File createDir(File rootDir, boolean touch) {
         if (rootDir.getId() != null) {
             return rootDir;
         }
-        // 判断是否有重名文件
+
         File fileByRelativePath = getFileByRelativePath(rootDir.getDescription().getRelativePath(), TFile::getId);
         if (fileByRelativePath != null) {
             if (touch) {
@@ -92,11 +91,22 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 rootDir.toNewFileName();
             }
         }
-        Long folderId = createDir(rootDir.newParentFolder(), true).getId();
-        log.info("相对路径{} 找到父节点{}", rootDir.getDescription().getRelativePath(), folderId);
-        rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
-        saveOrUpdate(rootDir);
-        return rootDir;
+
+        do {
+            Long folderId = createDir(rootDir.newParentFolder(), true).getId();
+            rootDir.setFolderId(folderId).setStatus(FileStatusEnum.CREATED);
+            LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery().notExists(StrUtil.format("select id " +
+                    "from t_file where relative_path = '{}'", rootDir.getDescription().getRelativePath()));
+            TFile serialize = FileConvertor.serialize(rootDir);
+            int i = fileMapper.insertWhereNotExist(serialize, wrapper);
+            System.out.println(i);
+            if (i > 0) {
+                rootDir.setId(serialize.getId());
+                return rootDir;
+            } else {
+                return createDir(rootDir, true);
+            }
+        } while (true);
     }
 
     public List<File> getFilesWithSubFilesByRelativePath(List<File> files, SFunction<TFile, ?>... columns) {

@@ -322,7 +322,6 @@ public class FileController {
         String parentDirName = FileUtil.getName(parentDirPath);
         TFile parentDir = createDir(parentDirName, parentDirPath, true);
 
-
         TFile file = new TFile()
                 .setStatus(FileStatusEnum.CREATED)
                 .setType(parseType(FileUtil.extName(filename)))
@@ -370,7 +369,6 @@ public class FileController {
             if (sufPath.equals(targetPath) || targetPath.startsWith(relativePath + StrUtil.SLASH)) {
                 throw new ServiceException("不能复制/移动到自身目录或子目录");
             }
-
             if (StrUtil.isNotEmpty(targetPath)) {
                 TFile targetDir = fileMapper.selectOne(new LambdaQueryWrapper<TFile>().select(TFile::getId)
                         .eq(TFile::getRelativePath, targetPath)

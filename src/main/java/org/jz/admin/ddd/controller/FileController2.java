@@ -32,7 +32,7 @@ public class FileController2 {
         return fileService.delete(cmd);
     }
 
-    @PostMapping("/makeDir")
+    @PostMapping("makeDir")
     public Response makeDir(@RequestBody FileMakeDirCmd cmd) {
         return fileService.makeDir(cmd);
     }
