@@ -8,7 +8,9 @@ import lombok.Data;
  */
 @Data
 public class FileMakeDirCmd {
-
     private String relativePath;
+
+    @FileName
+    private String fileName;
 
 }

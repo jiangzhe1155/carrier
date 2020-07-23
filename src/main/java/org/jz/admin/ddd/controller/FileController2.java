@@ -1,10 +1,12 @@
 package org.jz.admin.ddd.controller;
 
+import cn.hutool.core.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.FileServiceI;
 import org.jz.admin.ddd.application.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,8 +17,8 @@ import javax.validation.Valid;
  * @date 2020/05/14
  */
 @Slf4j
-@RequestMapping("/file")
 @RestController
+@RequestMapping("/file")
 public class FileController2 {
 
     @Autowired
@@ -28,17 +30,17 @@ public class FileController2 {
     }
 
     @PostMapping("delete")
-    public Response delete(@RequestBody FileDeleteCmd cmd) {
+    public Response delete(@Valid @RequestBody FileDeleteCmd cmd) {
         return fileService.delete(cmd);
     }
 
     @PostMapping("makeDir")
-    public Response makeDir(@RequestBody FileMakeDirCmd cmd) {
+    public Response makeDir(@Valid @RequestBody FileMakeDirCmd cmd) {
         return fileService.makeDir(cmd);
     }
 
     @PostMapping("rename")
-    public Response rename(@RequestBody FileRenameCmd cmd) {
+    public Response rename(@Valid @RequestBody FileRenameCmd cmd) {
         return fileService.rename(cmd);
     }
 
@@ -53,22 +55,22 @@ public class FileController2 {
     }
 
     @PostMapping("merge")
-    public Response merge(@RequestBody FileMergeCmd cmd) {
+    public Response merge(@Valid @RequestBody FileMergeCmd cmd) {
         return fileService.merge(cmd);
     }
 
     @PostMapping("copy")
-    public Response copy(@RequestBody FileMoveOrCopyCmd cmd) {
+    public Response copy(@Valid @RequestBody FileMoveOrCopyCmd cmd) {
         return fileService.copy(cmd);
     }
 
     @PostMapping("move")
-    public Response move(@RequestBody FileMoveOrCopyCmd cmd) {
+    public Response move(@Valid @RequestBody FileMoveOrCopyCmd cmd) {
         return fileService.move(cmd);
     }
 
     @PostMapping("download")
-    public Response download(@RequestBody FileDownloadCmd cmd) {
+    public Response download(@Valid @RequestBody FileDownloadCmd cmd) {
         return fileService.download(cmd);
     }
 

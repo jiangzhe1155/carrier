@@ -35,14 +35,6 @@ public class FileResource {
     private FileStatusEnum status;
     private String path;
 
-
-    public FileResource setFileName(String fileName) {
-        if (FileUtil.containsInvalid(fileName)) {
-            throw new ServiceException("文件名不合法");
-        }
-        return this;
-    }
-
     public boolean isCreated() {
         return status.equals(FileStatusEnum.CREATING);
     }

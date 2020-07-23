@@ -11,5 +11,5 @@ import java.util.List;
  */
 @Data
 public class FileMoveOrCopyCmd {
-    private List<FileMoveOrCopyCo> fileMoveOrCopyCoList;
+    private List<FileMoveOrCopyCo> fileList;
 }

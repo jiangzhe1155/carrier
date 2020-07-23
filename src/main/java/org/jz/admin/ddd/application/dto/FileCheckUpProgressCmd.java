@@ -6,6 +6,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+
 /**
  * @author jz
  * @date 2020/07/14
@@ -16,10 +17,10 @@ public class FileCheckUpProgressCmd {
     @NotBlank
     private String identifier;
 
-    @NotBlank
+    @FileName
     private String filename;
 
+    @Min(value = 1)
     @NotNull
-    @Min(1)
     private Integer totalSize;
 }

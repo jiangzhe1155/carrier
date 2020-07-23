@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 public class FileMergeCmd {
+
     @NotNull
     private Long storageId;
     @NotBlank

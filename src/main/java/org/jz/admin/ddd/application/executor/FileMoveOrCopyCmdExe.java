@@ -26,7 +26,7 @@ public class FileMoveOrCopyCmdExe {
 
     public Response execute(FileMoveOrCopyCmd cmd, boolean move) {
         Map<String, List<String>> targetPathMap =
-                cmd.getFileMoveOrCopyCoList().stream().collect(Collectors.groupingBy(FileMoveOrCopyCo::getTargetPath,
+                cmd.getFileList().stream().collect(Collectors.groupingBy(FileMoveOrCopyCo::getTargetPath,
                         Collectors.mapping(FileMoveOrCopyCo::getRelativePath, Collectors.toList())));
 
         for (Map.Entry<String, List<String>> entry : targetPathMap.entrySet()) {
@@ -53,21 +53,19 @@ public class FileMoveOrCopyCmdExe {
                     targetFile.toNewFileName();
                 }
                 for (File fileReadyToUpdate : filesWithSubFiles) {
-                    if (!move) {
-                        fileReadyToUpdate.setId(null);
-                    }
-
                     if (fileReadyToUpdate.getId().equals(moveFile.getId())) {
-                        //是原文件
                         fileReadyToUpdate.setDescription(targetFile.getDescription());
                         fileReadyToUpdate.setFolderId(targetFolder.getId());
                     } else if (moveFile.isParentDir(fileReadyToUpdate)) {
-                        // 是子文件
                         String newRelativePath =
                                 targetFile.getDescription().getRelativePath() + StrUtil.removePrefix(fileReadyToUpdate.getDescription().getRelativePath(), moveFile.getDescription().getRelativePath());
                         fileReadyToUpdate.setDescription(new Description(newRelativePath));
                     }
                 }
+            }
+
+            if (!move) {
+                filesWithSubFiles.forEach(f -> f.setId(null));
             }
             fileRepository.saveOrUpdateBatch(filesWithSubFiles);
         }

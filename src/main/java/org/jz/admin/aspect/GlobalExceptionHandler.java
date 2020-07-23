@@ -1,8 +1,19 @@
 package org.jz.admin.aspect;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.IterUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.extension.api.R;
 import lombok.extern.slf4j.Slf4j;
+import org.jz.admin.common.Response;
+import org.springframework.boot.context.properties.bind.validation.BindValidationException;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -27,7 +38,18 @@ public class GlobalExceptionHandler {
         return R.failed(e.getMessage());
     }
 
-    @ExceptionHandler({Exception.class})
+    @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
+    public Response methodArgumentNotValidExceptionHandler(Exception e) {
+        BindingResult bindingResult = null;
+        if (e instanceof MethodArgumentNotValidException) {
+            bindingResult = ((MethodArgumentNotValidException) e).getBindingResult();
+        } else {
+            bindingResult = ((BindException) e).getBindingResult();
+        }
+        return Response.failed(bindingResult.getAllErrors().get(0).getDefaultMessage());
+    }
+
+
     public R exceptionHandler(Exception e) {
         e.printStackTrace();
         return R.failed("系统内部异常");

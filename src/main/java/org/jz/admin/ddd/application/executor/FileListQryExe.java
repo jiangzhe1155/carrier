@@ -29,8 +29,8 @@ public class FileListQryExe {
                 parentFolder.setId(fileByRelativePath.getId());
             }
         }
-        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getFileType(),
-                qry.getOrder().getKey(), qry.getAsc(), qry.getPage(), qry.getPageSize());
+        Page<TFile> filePage = fileRepository.getFilePage(parentFolder.getId(), qry.getType(),
+                qry.getOrder(), qry.getAsc(), qry.getPage(), qry.getPageSize());
         return Response.ok(filePage);
     }
 }

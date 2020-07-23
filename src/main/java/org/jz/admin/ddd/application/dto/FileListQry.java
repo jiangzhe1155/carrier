@@ -17,21 +17,14 @@ public class FileListQry {
 
     private String relativePath;
 
-    private FileTypeEnum fileType;
+    private FileTypeEnum type;
 
-    @NotNull
     private FileOrderByEnum order;
 
-    @NotNull
     private Boolean asc;
 
-    @NotNull
-    @Min(value = 0)
     private Integer page;
 
-    @NotNull
-    @Min(value = 0)
-    @Max(value = 500)
     private int pageSize;
 
 }

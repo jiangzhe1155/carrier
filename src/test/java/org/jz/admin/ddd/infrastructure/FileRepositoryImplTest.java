@@ -38,9 +38,9 @@ class FileRepositoryImplTest {
 
     @Test
     void getFolderIdByRelativePath() throws JsonProcessingException {
-        Page<TFile> filePage = fileRepository.getFilePage(0L, null, TFile::getFileName, true, 1, 5);
-        String s = objectMapper.writeValueAsString(filePage);
-        System.out.println(s);
+//        Page<TFile> filePage = fileRepository.getFilePage(0L, null, TFile::getFileName, true, 1, 5);
+//        String s = objectMapper.writeValueAsString(filePage);
+//        System.out.println(s);
     }
 
 

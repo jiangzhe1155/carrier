@@ -132,8 +132,13 @@
             }
 
             let relativePath = node.data.relativePath;
-            this.http.post("list", {relativePath: relativePath, type: 0}, true).then(data => {
-                resolve(data.data);
+            this.http.post("list", {
+                relativePath: relativePath,
+                type: 0,
+                page: 1,
+                pageSize: 100
+            }, true).then(data => {
+                resolve(data.data.records);
             });
         }
 
@@ -227,6 +232,7 @@
             } else {
                 this.http.post("makeDir", {
                     relativePath: this.relativePath + "/" + this.inputValue,
+                    fileName: this.inputValue
                 }).then((data: R<CommonFile[]>) => {
                     Message.success("成功");
                     this.init();
@@ -294,7 +300,7 @@
             this.http.post("list", {
                 relativePath: this.relativePath,
                 asc: true,
-                order:'name',
+                order: 'name',
                 page: 1,
                 pageSize: 100
             }, false).then(data => {
