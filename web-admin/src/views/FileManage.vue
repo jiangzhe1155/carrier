@@ -273,7 +273,6 @@
         }
 
         rename(index, file) {
-
             for (let file of this.fileList) {
                 if (file.editable === true) {
                     this.$refs.editInput.select();

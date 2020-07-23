@@ -5,6 +5,7 @@ import org.jz.admin.common.Response;
 import org.jz.admin.ddd.application.dto.FileMergeCmd;
 import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
+import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.ddd.infrastructure.FileRepositoryImpl;
 import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.TFile;
@@ -30,7 +31,7 @@ public class FileMergeCmdExe {
         File file = new File()
                 .setDescription(new Description(cmd.getRelativePath(), false))
                 .setSize(cmd.getTotalSize())
-                .setResourceId(cmd.getStorageId())
+                .setResource(new FileResource().setId(cmd.getStorageId()))
                 .setSize(cmd.getTotalSize())
                 .setStatus(FileStatusEnum.CREATED);
         // 判断是否有重名文件

@@ -21,6 +21,7 @@ public class File {
     private FileStatusEnum status;
     private Long size;
     private Long resourceId;
+    private FileResource resource;
 
     public File setDescription(Description description) {
         this.description = description;

@@ -12,5 +12,5 @@ import java.util.List;
 @Data
 public class FileDownloadCmd {
     @NotEmpty
-    private List<String> relativePaths;
+    private List<Integer> fidList;
 }

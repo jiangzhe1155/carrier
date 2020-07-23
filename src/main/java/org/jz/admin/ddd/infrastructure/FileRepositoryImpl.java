@@ -1,6 +1,5 @@
 package org.jz.admin.ddd.infrastructure;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.AbstractLambdaWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -144,5 +142,12 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
             }
         });
 
+    }
+
+    public List<File> getFileListWithRealPath(List<File> files) {
+        LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery();
+        sqlFromDifferentType(wrapper, files);
+        List<TFile> fileDO = fileMapper.getFileListWithRealPath(wrapper);
+        return fileDO.stream().map(FileConvertor::deserialize).collect(Collectors.toList());
     }
 }

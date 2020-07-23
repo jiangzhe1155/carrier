@@ -3,10 +3,10 @@
 <mapper namespace="org.jz.admin.mapper.FileMapper">
 
     <select id="getFileListWithRealPath" resultType="org.jz.admin.entity.TFile">
-        select a.relative_path, a.type, b.path
+        select a.*, b.path
         from t_file a
                  left join t_file_store b on a.storage_id = b.id
             ${ew.customSqlSegment}
-            and a.status = ${@org.cn.jiangzhe.admin.entity.FileStatusEnum@CREATED.code}
+            and a.status = ${@org.jz.admin.entity.FileStatusEnum@CREATED.code}
     </select>
 </mapper>

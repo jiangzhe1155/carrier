@@ -2,6 +2,7 @@ package org.jz.admin.ddd;
 
 import org.jz.admin.ddd.domain.Description;
 import org.jz.admin.ddd.domain.File;
+import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.TFile;
 
 /**
@@ -20,7 +21,7 @@ public class FileConvertor {
                 .setFolderId(domainObject.getFolderId())
                 .setSize(domainObject.getSize())
                 .setType(domainObject.getDescription().getType())
-                .setStorageId(domainObject.getResourceId())
+                .setStorageId(domainObject.getResource().getId())
                 .setRelativePath(domainObject.getDescription().getRelativePath())
                 .setStatus(domainObject.getStatus()).setId(domainObject.getId());
     }
@@ -36,6 +37,6 @@ public class FileConvertor {
                 .setFolderId(dataObject.getFolderId())
                 .setSize(dataObject.getSize())
                 .setId(dataObject.getId())
-                .setResourceId(dataObject.getStorageId());
+                .setResource(new FileResource().setPath(dataObject.getPath()).setId(dataObject.getStorageId()));
     }
 }
