@@ -5,6 +5,8 @@ import org.jz.admin.ddd.domain.File;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.TFile;
 
+import java.util.Optional;
+
 /**
  * @author jz
  * @date 2020/07/20
@@ -16,14 +18,16 @@ public class FileConvertor {
         if (domainObject == null) {
             return null;
         }
-        return new TFile()
+        TFile fileDO = new TFile()
                 .setFileName(domainObject.getDescription().getFileName())
                 .setFolderId(domainObject.getFolderId())
                 .setSize(domainObject.getSize())
                 .setType(domainObject.getDescription().getType())
-                .setStorageId(domainObject.getResource().getId())
+                .setStorageId(domainObject.getResourceId())
                 .setRelativePath(domainObject.getDescription().getRelativePath())
                 .setStatus(domainObject.getStatus()).setId(domainObject.getId());
+
+        return fileDO;
     }
 
 
@@ -37,6 +41,7 @@ public class FileConvertor {
                 .setFolderId(dataObject.getFolderId())
                 .setSize(dataObject.getSize())
                 .setId(dataObject.getId())
-                .setResource(new FileResource().setPath(dataObject.getPath()).setId(dataObject.getStorageId()));
+                .setResourceId(dataObject.getStorageId())
+                .setPath(dataObject.getPath());
     }
 }

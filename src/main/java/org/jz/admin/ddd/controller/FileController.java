@@ -1,12 +1,11 @@
 package org.jz.admin.ddd.controller;
 
-import cn.hutool.core.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jz.admin.common.Response;
-import org.jz.admin.ddd.application.FileServiceI;
+import org.jz.admin.ddd.application.FileCmdService;
+import org.jz.admin.ddd.application.FileCmdServiceImpl;
 import org.jz.admin.ddd.application.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,59 +18,59 @@ import javax.validation.Valid;
 @Slf4j
 @RestController
 @RequestMapping("/file")
-public class FileController2 {
+public class FileController {
 
     @Autowired
-    FileServiceI fileService;
+    private FileCmdService fileCmdService;
 
     @PostMapping("list")
     public Response list(@Valid @RequestBody FileListQry query) {
-        return fileService.list(query);
+        return fileCmdService.list(query);
     }
 
     @PostMapping("delete")
     public Response delete(@Valid @RequestBody FileDeleteCmd cmd) {
-        return fileService.delete(cmd);
+        return fileCmdService.delete(cmd);
     }
 
     @PostMapping("makeDir")
     public Response makeDir(@Valid @RequestBody FileMakeDirCmd cmd) {
-        return fileService.makeDir(cmd);
+        return fileCmdService.makeDir(cmd);
     }
 
     @PostMapping("rename")
     public Response rename(@Valid @RequestBody FileRenameCmd cmd) {
-        return fileService.rename(cmd);
+        return fileCmdService.rename(cmd);
     }
 
     @GetMapping("chunkUpload")
     public Response checkUpProgress(@Valid FileCheckUpProgressCmd cmd) {
-        return fileService.checkUpProgress(cmd);
+        return fileCmdService.checkUpProgress(cmd);
     }
 
     @PostMapping("chunkUpload")
     public Response chunkUpload(MultipartFile file, @Valid FileChunkUploadCmd cmd) {
-        return fileService.chunkUpload(file, cmd);
+        return fileCmdService.chunkUpload(file, cmd);
     }
 
     @PostMapping("merge")
     public Response merge(@Valid @RequestBody FileMergeCmd cmd) {
-        return fileService.merge(cmd);
+        return fileCmdService.merge(cmd);
     }
 
     @PostMapping("copy")
     public Response copy(@Valid @RequestBody FileMoveOrCopyCmd cmd) {
-        return fileService.copy(cmd);
+        return fileCmdService.copy(cmd);
     }
 
     @PostMapping("move")
     public Response move(@Valid @RequestBody FileMoveOrCopyCmd cmd) {
-        return fileService.move(cmd);
+        return fileCmdService.move(cmd);
     }
 
     @PostMapping("download")
-    public Response download(@Valid @RequestBody FileDownloadCmd cmd) {
-        return fileService.download(cmd);
+    public void download(@Valid @RequestBody FileDownloadCmd cmd) {
+        fileCmdService.download(cmd);
     }
 
 }

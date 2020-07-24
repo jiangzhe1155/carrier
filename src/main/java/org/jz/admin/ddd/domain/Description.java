@@ -22,7 +22,6 @@ public class Description {
     private String fileName;
     private FileTypeEnum type;
 
-
     public Description(String relativePath) {
         this(relativePath, false);
     }
@@ -64,21 +63,19 @@ public class Description {
         return type.equals(FileTypeEnum.DIR);
     }
 
-    public boolean isSameOrParentFolder(Description path) {
+    boolean isSameOrParentFolder(Description path) {
         String sufPath = StrUtil.subBefore(relativePath, StrUtil.SLASH, true);
         return sufPath.equals(path.getRelativePath()) || isParent(path);
     }
 
-    public boolean isParent(Description path) {
+    boolean isParent(Description path) {
         return path.getRelativePath().startsWith(relativePath + StrUtil.SLASH);
     }
 
-
-    public Description subFile(String fileName, boolean isFolder) {
+    Description subFile(String fileName, boolean isFolder) {
         if (!isFolder()) {
             throw new ServiceException("只有文件夹能创建子文件");
         }
         return new Description(this.fileName + StrUtil.SLASH + fileName, isFolder);
-
     }
 }

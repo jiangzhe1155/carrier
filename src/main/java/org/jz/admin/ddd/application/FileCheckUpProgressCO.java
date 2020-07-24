@@ -1,4 +1,4 @@
-package org.jz.admin.ddd.application.executor;
+package org.jz.admin.ddd.application;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

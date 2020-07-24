@@ -20,8 +20,7 @@ import java.io.RandomAccessFile;
 @Accessors(chain = true)
 public class FileResource {
 
-    public final static String DEMO_DIR = "public/";
-    private static final String DEMO_DIR2 = "public";
+    private static final String DEMO_DIR = "public";
 
     private Long id;
     private String fileName;
@@ -30,7 +29,6 @@ public class FileResource {
     private Integer chunkNumber;
     private Integer chunkSize;
     private Integer currentChunkSize;
-    //    private String relativePath;
     private Integer totalChunks;
     private FileStatusEnum status;
     private String path;
@@ -39,9 +37,8 @@ public class FileResource {
         return status.equals(FileStatusEnum.CREATING);
     }
 
-    public FileResource generateRealPath() {
-        this.path = StrUtil.join(File.separator, DEMO_DIR2, identifier);
-        return this;
+    public void generateRealPath() {
+        this.path = StrUtil.join(File.separator, DEMO_DIR, identifier);
     }
 
     public void rangeWrite(MultipartFile file) {
@@ -53,8 +50,7 @@ public class FileResource {
         }
     }
 
-
-    public FileStatusEnum todoUpdateStatus() {
+    public FileStatusEnum readyToUpdateStatus() {
         return chunkNumber.equals(totalChunks) ? FileStatusEnum.CREATED : FileStatusEnum.CREATING;
     }
 }

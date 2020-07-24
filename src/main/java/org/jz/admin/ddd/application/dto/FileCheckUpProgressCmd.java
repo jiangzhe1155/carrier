@@ -1,6 +1,7 @@
 package org.jz.admin.ddd.application.dto;
 
 import lombok.Data;
+import org.jz.admin.aspect.FileName;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;

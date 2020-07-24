@@ -16,7 +16,6 @@ import org.jz.admin.entity.FileStatusEnum;
 import org.jz.admin.entity.FileTypeEnum;
 import org.jz.admin.entity.TFile;
 import org.jz.admin.mapper.FileMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -30,18 +29,10 @@ import java.util.stream.Collectors;
 @Repository
 public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
 
-    @Autowired
-    FileMapper fileMapper;
-
-    private static final String LIMIT_ONE = "LIMIT 1";
-
-    public Page<TFile> getFilePage(Long folderId, FileTypeEnum type, FileOrderByEnum orderBy, Boolean asc,
-                                   Integer page, Integer pageSize) {
-
+    public Page<TFile> filePage(Long folderId, FileTypeEnum type, FileOrderByEnum orderBy, Boolean asc, Integer page,
+                                Integer pageSize) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.lambdaQuery();
-        wrapper.select(TFile::getId, TFile::getFileName, TFile::getUpdateTime, TFile::getType, TFile::getSize
-                , TFile::getRelativePath)
-                .eq(TFile::getStatus, FileStatusEnum.CREATED)
+        wrapper.eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .eq(TFile::getFolderId, folderId)
                 .eq(type != null, TFile::getType, type)
                 .orderByAsc(type == null, TFile::getType);
@@ -49,45 +40,41 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
         if (orderBy != null && asc != null) {
             wrapper.orderBy(true, asc, orderBy.getKey());
         }
-
-        return fileMapper.selectPage(new Page<>(page, pageSize), wrapper);
+        return page(new Page<>(page, pageSize), wrapper);
     }
 
-    public File getFileByRelativePath(String relativePath, SFunction<TFile, ?>... columns) {
+
+    public File getFileByRelativePath(String relativepath) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
-                .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
-                .eq(TFile::getRelativePath, relativePath)
-                .last(LIMIT_ONE);
-        TFile file = fileMapper.selectOne(wrapper);
+                .eq(TFile::getRelativePath, relativepath);
+        TFile file = getOne(wrapper);
         return FileConvertor.deserialize(file);
     }
 
-    public List<File> getFilesByRelativePaths(List<String> relativePaths, SFunction<TFile, ?>... columns) {
+    public List<File> getFilesByRelativePaths(List<String> relativePaths) {
         LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery()
-                .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED)
                 .in(TFile::getRelativePath, relativePaths);
-        List<TFile> files = fileMapper.selectList(wrapper);
+        List<TFile> files = baseMapper.selectList(wrapper);
         return files.stream().map(FileConvertor::deserialize).collect(Collectors.toList());
     }
 
     public boolean saveOrUpdate(File file) {
         TFile fileDO = FileConvertor.serialize(file);
         boolean success = saveOrUpdate(fileDO);
-        if (success && file.getId() == null) {
+        if (success && file != null && file.getId() == null) {
             file.setId(fileDO.getId());
         }
         return success;
     }
 
     public File createDir(File rootDir, boolean touch) {
-
         if (rootDir.getId() != null) {
             return rootDir;
         }
 
-        File fileByRelativePath = getFileByRelativePath(rootDir.getDescription().getRelativePath(), TFile::getId);
+        File fileByRelativePath = getFileByRelativePath(rootDir.getDescription().getRelativePath());
         if (fileByRelativePath != null) {
             if (touch) {
                 return rootDir.setId(fileByRelativePath.getId());
@@ -112,42 +99,44 @@ public class FileRepositoryImpl extends ServiceImpl<FileMapper, TFile> {
                 .select(columns)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);
         sqlFromDifferentType(wrapper, files);
-        return fileMapper.selectList(wrapper).stream().map(FileConvertor::deserialize).collect(Collectors.toList());
+        return list(wrapper).stream().map(FileConvertor::deserialize).collect(Collectors.toList());
     }
 
     public boolean saveOrUpdateBatch(List<File> files) {
-        return saveOrUpdateBatch(files.stream().map(FileConvertor::serialize).collect(Collectors.toList()));
+        List<TFile> filesDO = files.stream().map(FileConvertor::serialize).collect(Collectors.toList());
+        boolean success = saveOrUpdateBatch(filesDO);
+        for (int i = 0; i < files.size(); i++) {
+            files.get(i).setId(filesDO.get(i).getId());
+        }
+        return success;
     }
 
-    public void batchDeleteByRelativePath(List<File> files) {
+    public boolean batchDeleteByRelativePath(List<File> files) {
         LambdaUpdateWrapper<TFile> wrapper = Wrappers.<TFile>lambdaUpdate()
                 .set(TFile::getStatus, FileStatusEnum.DELETED)
                 .eq(TFile::getStatus, FileStatusEnum.CREATED);
-
         sqlFromDifferentType(wrapper, files);
-        fileMapper.update(null, wrapper);
+        return update(null, wrapper);
     }
 
     private void sqlFromDifferentType(AbstractLambdaWrapper<TFile, ?> wrapper, List<File> files) {
-        wrapper.and(w -> {
+        wrapper.and(andWrapper -> {
             for (File file : files) {
                 String relativePath = file.getDescription().getRelativePath();
-                if (file.isFolder()) {
-                    w.or(w2 -> w2.eq(TFile::getRelativePath, relativePath)
-                            .or()
-                            .likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH));
-                } else {
-                    w.or(w3 -> w3.eq(TFile::getRelativePath, relativePath));
-                }
+                andWrapper.or(w -> {
+                    w.eq(TFile::getRelativePath, relativePath);
+                    if (file.isFolder()) {
+                        w.or().likeRight(TFile::getRelativePath, relativePath + StrUtil.SLASH);
+                    }
+                });
             }
         });
-
     }
 
-    public List<File> getFileListWithRealPath(List<File> files) {
-        LambdaQueryWrapper<TFile> wrapper = Wrappers.<TFile>lambdaQuery();
+    public List<File> getFileListWithSourcePath(List<File> files) {
+        LambdaQueryWrapper<TFile> wrapper = Wrappers.lambdaQuery();
         sqlFromDifferentType(wrapper, files);
-        List<TFile> fileDO = fileMapper.getFileListWithRealPath(wrapper);
+        List<TFile> fileDO = baseMapper.getFileListWithSourcePath(wrapper);
         return fileDO.stream().map(FileConvertor::deserialize).collect(Collectors.toList());
     }
 }

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jz.admin.ddd.domain.FileResource;
 import org.jz.admin.entity.FileStatusEnum;
-import org.jz.admin.entity.TFileStore;
+import org.jz.admin.entity.TFileResource;
 import org.jz.admin.mapper.FileStoreMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -16,25 +16,20 @@ import org.springframework.stereotype.Repository;
  */
 
 @Repository
-public class FileResourceRepositoryImpl extends ServiceImpl<FileStoreMapper, TFileStore> {
-
+public class FileResourceRepositoryImpl extends ServiceImpl<FileStoreMapper, TFileResource> {
 
     @Autowired
     FileStoreMapper fileStoreMapper;
 
-    public static final String LIMIT_ONE = "LIMIT 1";
-
-
-    public TFileStore getResourceByIdentifier(String identifier) {
-        TFileStore fileStoreDO = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileStore>()
-                .ne(TFileStore::getStatus, FileStatusEnum.DELETED)
-                .eq(TFileStore::getIdentifier, identifier)
-                .last(LIMIT_ONE));
+    public TFileResource getResourceByIdentifier(String identifier) {
+        TFileResource fileStoreDO = fileStoreMapper.selectOne(new LambdaQueryWrapper<TFileResource>()
+                .ne(TFileResource::getStatus, FileStatusEnum.DELETED)
+                .eq(TFileResource::getIdentifier, identifier));
         return fileStoreDO;
     }
 
     public boolean save(FileResource resource) {
-        TFileStore file = new TFileStore();
+        TFileResource file = new TFileResource();
         BeanUtil.copyProperties(resource, file);
         boolean success = saveOrUpdate(file);
         if (resource.getId() == null) {

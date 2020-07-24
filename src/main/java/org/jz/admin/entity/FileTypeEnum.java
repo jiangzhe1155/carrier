@@ -1,18 +1,17 @@
 package org.jz.admin.entity;
 
+import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static org.jz.admin.controller.FileController.FILE_TYPE_ENUM_LIST_MAP;
 
 /**
  * @author jz
  * @date 2020/06/22
  */
-
 public enum FileTypeEnum {
 
     DIR(0, "文件夹"),
@@ -32,6 +31,15 @@ public enum FileTypeEnum {
     @JsonValue
     @EnumValue//标记数据库存的值是code
     private final int code;
+
+    private static final Map<FileTypeEnum, List<String>> FILE_TYPE_ENUM_LIST_MAP = MapUtil.<FileTypeEnum,
+            List<String>>builder()
+            .put(FileTypeEnum.IMAGE, Arrays.asList("gif", "jpg", "jpeg", "png", "bmp", "webp"))
+            .put(FileTypeEnum.DOCUMENT, Arrays.asList("doc", "txt", "docx", "pages", "epub", "pdf", "numbers",
+                    "csv", "xls", "xlsx", "keynote", "ppt", "pptx"))
+            .put(FileTypeEnum.VIDEO, Arrays.asList("mp4", "m3u8", "rmvb", "avi", "swf", "3gp", "mkv", "flv",
+                    "mp3", "wav", "wma", "ogg", "aac", "flac"))
+            .build();
 
     public static FileTypeEnum parseType(String extName) {
         for (Map.Entry<FileTypeEnum, List<String>> entry : FILE_TYPE_ENUM_LIST_MAP.entrySet()) {

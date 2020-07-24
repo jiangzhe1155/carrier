@@ -2,10 +2,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jz.admin.mapper.FileMapper">
 
-    <select id="getFileListWithRealPath" resultType="org.jz.admin.entity.TFile">
+    <select id="getFileListWithSourcePath" resultType="org.jz.admin.entity.TFile">
         select a.*, b.path
         from t_file a
-                 left join t_file_store b on a.storage_id = b.id
+                 left join t_file_resource b on a.storage_id = b.id
             ${ew.customSqlSegment}
             and a.status = ${@org.jz.admin.entity.FileStatusEnum@CREATED.code}
     </select>
