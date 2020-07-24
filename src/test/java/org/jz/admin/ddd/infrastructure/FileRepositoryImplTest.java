@@ -2,15 +2,15 @@ package org.jz.admin.ddd.infrastructure;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.jz.admin.entity.FileStatusEnum;
-import org.jz.admin.entity.FileTypeEnum;
-import org.jz.admin.entity.TFile;
-import org.jz.admin.mapper.FileMapper;
-import org.jz.admin.mapper.FileStoreMapper;
+import org.jz.admin.common.enums.FileStatusEnum;
+import org.jz.admin.common.enums.FileTypeEnum;
+import org.jz.admin.infrastructure.db.dataobject.FileDO;
+import org.jz.admin.infrastructure.db.repository.FileRepositoryImpl;
+import org.jz.admin.infrastructure.db.FileMapper;
+import org.jz.admin.infrastructure.db.FileStoreMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -38,7 +38,7 @@ class FileRepositoryImplTest {
 
     @Test
     void getFolderIdByRelativePath() {
-
+        fileRepository.getFileByRelativePath("asdad");
     }
 
 
@@ -59,8 +59,8 @@ class FileRepositoryImplTest {
     void test() {
 
 
-        TFile tFile =
-                new TFile().setFileName("asdasd")
+        FileDO fileDO =
+                new FileDO().setFileName("asdasd")
                         .setRelativePath("asdasdad")
                         .setFolderId(0L)
                         .setStatus(FileStatusEnum.CREATED)
@@ -68,14 +68,15 @@ class FileRepositoryImplTest {
                         .setSize(23L)
                         .setType(FileTypeEnum.DIR);
 
-        LambdaQueryWrapper<TFile> tFileLambdaQueryWrapper = new LambdaQueryWrapper<TFile>().notExists("select id from" +
+        LambdaQueryWrapper<FileDO> tFileLambdaQueryWrapper = new LambdaQueryWrapper<FileDO>().notExists("select id " +
+                "from" +
                 " t_file where " +
-                "relative_path = '" + tFile.getRelativePath() + "'");
-//        fileMapper.insertWhereNotExist(tFile, tFileLambdaQueryWrapper);
+                "relative_path = '" + fileDO.getRelativePath() + "'");
+//        fileMapper.insertWhereNotExist(fileDO, tFileLambdaQueryWrapper);
 
-        fileMapper.update(tFile, new LambdaUpdateWrapper<TFile>().set(TFile::getFileName, "zzz"));
+        fileMapper.update(fileDO, new LambdaUpdateWrapper<FileDO>().set(FileDO::getFileName, "zzz"));
 
-//        testMapper.insert(tFile, tFileLambdaQueryWrapper);
+//        testMapper.insert(fileDO, tFileLambdaQueryWrapper);
     }
 
 
