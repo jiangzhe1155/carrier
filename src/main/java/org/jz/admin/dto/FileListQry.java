@@ -21,6 +21,6 @@ public class FileListQry {
 
     private Integer page;
 
-    private int pageSize;
+    private Integer pageSize;
 
 }

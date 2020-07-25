@@ -1,4 +1,4 @@
-import Axios, {AxiosRequestConfig} from 'axios'
+import Axios from 'axios'
 import {Message, Loading} from 'element-ui';
 
 let loading: any;        //定义loading变量

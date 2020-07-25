@@ -5,11 +5,10 @@
                 <router-link to="/">Home</router-link>
             </el-header>
             <el-container>
-                <el-aside width="200px">
-                    <el-menu class="el-menu-vertical-demo">
+                <el-aside>
+                    <el-menu>
                         <el-menu-item index="1" @click="directToFileManage">
-                            <i class="el-icon-files"></i>
-                            <span>文件管理</span>
+                            <i class="el-icon-files"></i><span>文件管理</span>
                         </el-menu-item>
                     </el-menu>
                 </el-aside>
@@ -19,13 +18,13 @@
             </el-container>
         </el-container>
     </div>
-
 </template>
 <script lang="ts">
     import {Component, Prop, Vue} from 'vue-property-decorator';
 
     @Component
     export default class App extends Vue {
+
         directToFileManage() {
             this.$router.push({
                 name: "FileManage",

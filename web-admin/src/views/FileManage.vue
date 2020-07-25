@@ -1,7 +1,6 @@
 <template>
     <div>
         <FileUpload :relativePath="relativePath" ref="fileUpload" @refresh="init()"></FileUpload>
-
         <template>
             <el-button-group>
                 <el-button size="mini" type="primary" @click="$refs.btnFile.click()">
@@ -168,7 +167,7 @@
             this.multipleSelection.forEach(
                 m => targetPath.push({relativePath: m.relativePath, targetPath: this.targetPath})
             );
-            this.http.post(this.methodType, {fileList: targetPath}, true, true, true).then(data => {
+            this.http.post(this.methodType, {getFileList: targetPath}, true, true, true).then(data => {
                 this.getFileList();
             }).catch(() => {
             });
@@ -205,9 +204,9 @@
         onClickClose(file, idx) {
             if (file.id) {
                 file.editable = false;
-                Vue.set(this.fileList, idx, file);
+                Vue.set(this.getFileList, idx, file);
             } else {
-                this.fileList.splice(idx, 1);
+                this.getFileList.splice(idx, 1);
             }
         }
 
@@ -244,7 +243,7 @@
         }
 
         onMakeDir() {
-            for (let file of this.fileList) {
+            for (let file of this.getFileList) {
                 if (file.editable) {
                     this.$refs.editInput.select();
                     return;
@@ -252,7 +251,7 @@
             }
 
             let tmp = {editable: true};
-            this.fileList.unshift(tmp);
+            this.getFileList.unshift(tmp);
             this.inputValue = '新建文件夹';
             this.$nextTick(() => {
                 this.$refs.editInput.select();
@@ -273,7 +272,7 @@
         }
 
         rename(index, file) {
-            for (let file of this.fileList) {
+            for (let file of this.getFileList) {
                 if (file.editable === true) {
                     this.$refs.editInput.select();
                     return;
@@ -281,7 +280,7 @@
             }
 
             file.editable = true;
-            Vue.set(this.fileList, index, file);
+            Vue.set(this.getFileList, index, file);
 
             this.inputValue = file.fileName;
             this.$nextTick(() => {
@@ -303,7 +302,7 @@
                 page: 1,
                 pageSize: 100
             }, false).then(data => {
-                self.fileList = data.data.records;
+                this.fileList = data.data.records;
             });
         }
 
