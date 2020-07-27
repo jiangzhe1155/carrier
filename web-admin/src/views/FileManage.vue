@@ -59,8 +59,7 @@
                                  width="500px">
                     <template slot-scope="scope">
                         <el-link
-                                :icon="getIcon(scope.row.type)"
-                                @click="onClickFileName(scope.row)"
+                                :icon="getIcon(scope.row.type)" @click="onClickFileName(scope.row)"
                                 v-if="!scope.row.editable">
                             {{scope.row.fileName}}
                         </el-link>
@@ -107,7 +106,7 @@
     import FileUpload from '@/components/FileUpload.vue'
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
-    import axios from 'axios'
+
 
     @Component({components: {FileUpload}})
     export default class FileManage extends Vue {
