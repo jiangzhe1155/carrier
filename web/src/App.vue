@@ -36,7 +36,7 @@
     mounted() {
       const s = document.createElement('script');
       s.type = 'text/javascript';
-      s.src = '//at.alicdn.com/t/font_1969873_ay6q0e2hr0t.js\n';
+      s.src = '//at.alicdn.com/t/font_1969873_pb7ey9zj34.js\n';
       document.body.appendChild(s);
     },
     methods: {

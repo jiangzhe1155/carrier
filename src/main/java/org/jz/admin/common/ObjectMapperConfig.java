@@ -52,5 +52,4 @@ public class ObjectMapperConfig {
         return redisTemplate;
     }
 
-
 }

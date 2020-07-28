@@ -57,7 +57,12 @@ class FileRepositoryImplTest {
 
     @Test
     void test() {
-
+        Set<String> keys = redisTemplate.keys("5656*");
+        System.out.println(keys);
+        for (String key : keys) {
+            redisTemplate.delete(keys);
+            System.out.println(key);
+        }
 
         FileDO fileDO =
                 new FileDO().setFileName("asdasd")
@@ -68,13 +73,13 @@ class FileRepositoryImplTest {
                         .setSize(23L)
                         .setType(FileTypeEnum.DIR);
 
-        LambdaQueryWrapper<FileDO> tFileLambdaQueryWrapper = new LambdaQueryWrapper<FileDO>().notExists("select id " +
-                "from" +
-                " t_file where " +
-                "relative_path = '" + fileDO.getRelativePath() + "'");
+//        LambdaQueryWrapper<FileDO> tFileLambdaQueryWrapper = new LambdaQueryWrapper<FileDO>().notExists("select id " +
+//                "from" +
+//                " t_file where " +
+//                "relative_path = '" + fileDO.getRelativePath() + "'");
 //        fileMapper.insertWhereNotExist(fileDO, tFileLambdaQueryWrapper);
 
-        fileMapper.update(fileDO, new LambdaUpdateWrapper<FileDO>().set(FileDO::getFileName, "zzz"));
+//        fileMapper.update(fileDO, new LambdaUpdateWrapper<FileDO>().set(FileDO::getFileName, "zzz"));
 
 //        testMapper.insert(fileDO, tFileLambdaQueryWrapper);
     }
