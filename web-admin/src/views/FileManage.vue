@@ -107,7 +107,6 @@
     import {Component, Vue, Watch} from 'vue-property-decorator';
     import {Message} from 'element-ui';
 
-
     @Component({components: {FileUpload}})
     export default class FileManage extends Vue {
         fileList = [];
@@ -248,7 +247,6 @@
                     return;
                 }
             }
-
             let tmp = {editable: true};
             this.getFileList.unshift(tmp);
             this.inputValue = '新建文件夹';
