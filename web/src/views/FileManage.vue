@@ -14,16 +14,35 @@
           <el-button @click="onClickMakeDir" size="medium">
             新建文件夹
           </el-button>
-          <el-button v-show="fileSeletedCount>0" @click="onClickDelete" size="medium">
+          <el-button v-show="fileSeletedCount > 0" @click="onClickDelete" size="medium">
             删除
           </el-button>
-          <el-button v-show="fileSeletedCount>0" @click="onClickMove" size="medium">
+          <el-button v-show="fileSeletedCount > 0" @click="onClickMove" size="medium">
             移动到
           </el-button>
-          <el-button v-show="fileSeletedCount>0" @click="onClickCopy" size="medium">
+          <el-button v-show="fileSeletedCount > 0" @click="onClickCopy" size="medium">
             复制到
           </el-button>
-          <el-button v-show="fileSeletedCount>0" @click="onClickDownLoad" size="medium">下载</el-button>
+          <el-dialog
+            title="提示"
+            :visible.sync="foldersDialogVisible"
+            width="30%"
+            center>
+            <el-tree
+              node-key="id"
+              :props="{label: 'fileName'}"
+              :load="loadNode"
+              :expand-on-click-node="false"
+              :default-expanded-keys="[0]"
+              lazy
+              @node-click="handleCheckChange">
+            </el-tree>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="foldersDialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="onClickFolderTreeConfirm">确 定</el-button>
+            </span>
+          </el-dialog>
+          <el-button v-show="fileSeletedCount > 0" @click="onClickDownLoad" size="medium">下载</el-button>
         </el-button-group>
       </el-row>
       <el-breadcrumb separator-class="el-icon-arrow-right">
@@ -66,20 +85,21 @@
       </el-table>
     </el-main>
   </el-container>
-
-
 </template>
 <script>
     import SvgIcon from "../components/SvgIcon";
     import axios from 'axios'
+
     export default {
         components: {SvgIcon},
         data() {
             return {
+                foldersDialogVisible: true,
                 params: {},
                 files: [],
                 fileMultipleSelection: [],
-                fileNameInput: "",
+                fileNameInput: '',
+                targetPath: '',
                 iconTypeMap: new Map()
                     .set('pdf', '#el-icon-alifile_pdf')
                     .set('txt', '#el-icon-alifile_txt')
@@ -100,6 +120,33 @@
             getFileList(params) {
                 this.post("list", params, false).then(data => {
                     this.files = data.data.records;
+                });
+            },
+            onClickFolderTreeConfirm() {
+                let targetPath = [];
+                this.fileMultipleSelection.forEach(
+                    m => targetPath.push({relativePath: m.relativePath, targetPath: this.targetPath})
+                );
+                this.post(this.methodType, {fileList: targetPath}).then(() => {
+                    this.getFileList(this.params);
+                });
+                this.foldersDialogVisible = !this.foldersDialogVisible;
+            },
+            handleCheckChange(data) {
+                this.targetPath = data.relativePath;
+                console.log(data);
+            },
+
+            loadNode(node, resolve) {
+                console.log(node, resolve);
+                if (node.level === 0) {
+                    return resolve([{fileName: "主目录", relativePath: "", id: 0}]);
+                }
+
+                let params = Object.assign({}, this.params);
+                params.relativePath = node.data.relativePath;
+                this.post("list", params, true).then(data => {
+                    resolve(data.data.records);
                 });
             },
             onClickUploadFile() {
