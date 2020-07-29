@@ -289,11 +289,13 @@ public class FileCmdServiceImpl implements FileCmdService {
     private void zip(ZipOutputStream outputStream, List<File> fileListWithRealPath, String commonPrefix) throws IOException {
         for (File file : fileListWithRealPath) {
             if (!file.isFolder()) {
-                outputStream.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath(),
-                        commonPrefix)));
-                BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
-                IoUtil.copy(inputStream, outputStream);
-                inputStream.close();
+                if (file.getPath() != null) {
+                    outputStream.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath(),
+                            commonPrefix)));
+                    BufferedInputStream inputStream = FileUtil.getInputStream(file.getPath());
+                    IoUtil.copy(inputStream, outputStream);
+                    inputStream.close();
+                }
             } else {
                 outputStream.putNextEntry(new ZipEntry(StrUtil.removePrefix(file.getRelativePath() + StrUtil.SLASH,
                         commonPrefix)));

@@ -36,7 +36,7 @@
       </el-breadcrumb>
     </el-header>
     <el-main>
-      <el-table :data="files" stripe @selection-change="handleSelectionChange">
+      <el-table :data="files" stripe @selection-change="handleSelectionChange" ref="fileTable">
         <el-table-column type="selection"></el-table-column>
         <el-table-column label="文件名">
           <template slot-scope="scope">
@@ -49,14 +49,13 @@
               </el-link>
               <div v-else>
                 <el-row type="flex" style="align-items: center">
-                  <el-input clearable v-model="fileNameInput" ref="input" size="mini" style=""></el-input>
+                  <el-input clearable v-model="fileNameInput" ref="input" size="small"></el-input>
                   <el-button icon="el-icon-check" type="text" style="margin-left: 5px"
                              @click="onClickInputConfirm(scope.row)"></el-button>
                   <el-button icon="el-icon-close" type="text"
                              @click="onClickInputClose(scope.row,scope.$index)"></el-button>
                 </el-row>
               </div>
-
             </el-row>
           </template>
         </el-table-column>
@@ -71,164 +70,195 @@
 
 </template>
 <script>
-  import SvgIcon from "../components/SvgIcon";
+    import SvgIcon from "../components/SvgIcon";
+    import axios from 'axios'
+    export default {
+        components: {SvgIcon},
+        data() {
+            return {
+                params: {},
+                files: [],
+                fileMultipleSelection: [],
+                fileNameInput: "",
+                iconTypeMap: new Map()
+                    .set('pdf', '#el-icon-alifile_pdf')
+                    .set('txt', '#el-icon-alifile_txt')
+                    .set('zip', '#el-icon-alifile_zip')
+                    .set('csv', '#el-icon-alifile_excel')
+                    .set('mp3', '#el-icon-alifile_music')
+                    .set('jpg', '#el-icon-alifile_img')
+                    .set('cad', '#el-icon-alifile_cad')
+                    .set('word', '#el-icon-alifile_word')
+                    .set('mp4', '#el-icon-alifile_video')
+            }
+        },
+        created() {
+            this.params = this.$route.query;
+            this.getFileList(this.params);
+        },
+        methods: {
+            getFileList(params) {
+                this.post("list", params, false).then(data => {
+                    this.files = data.data.records;
+                });
+            },
+            onClickUploadFile() {
 
-  export default {
-    components: {SvgIcon},
-    data() {
-      return {
-        params: {},
-        files: [],
-        fileMultipleSelection: [],
-        fileNameInput: "",
-        iconTypeMap: new Map()
-          .set('pdf', '#el-icon-alifile_pdf')
-          .set('txt', '#el-icon-alifile_txt')
-          .set('zip', '#el-icon-alifile_zip')
-          .set('csv', '#el-icon-alifile_excel')
-          .set('mp3', '#el-icon-alifile_music')
-          .set('jpg', '#el-icon-alifile_img')
-          .set('cad', '#el-icon-alifile_cad')
-          .set('word', '#el-icon-alifile_word')
-          .set('mp4', '#el-icon-alifile_video')
-      }
-    },
-    created() {
-      this.params = this.$route.query;
-      this.getFileList(this.params);
-    },
-    methods: {
-      getFileList(params) {
-        this.post("list", params, false).then(data => {
-          this.files = data.data.records;
-        });
-      },
-      onClickUploadFile() {
+            },
+            onClickUploadFolder() {
 
-      },
-      onClickUploadFolder() {
+            },
+            onClickDelete() {
+                let deletePaths = [];
+                this.fileMultipleSelection.forEach(
+                    m => deletePaths.push(this.params.relativePath + "/" + m.fileName)
+                );
+                console.log(deletePaths);
+                this.post("delete", {relativePaths: deletePaths,}).then(() => {
+                    this.getFileList(this.params);
+                })
+            },
+            onClickMove() {
 
-      },
-      onClickDelete() {
-        let deletePaths = [];
-        this.fileMultipleSelection.forEach(
-          m => deletePaths.push(this.params.relativePath + "/" + m.fileName)
-        );
-        console.log(deletePaths);
-        this.post("delete", {relativePaths: deletePaths,}).then(() => {
-          this.getFileList(this.params);
-        })
-      },
-      onClickMove() {
+            },
+            onClickCopy() {
 
-      },
-      onClickCopy() {
+            },
+            onClickDownLoad() {
+                let fidList = [];
+                this.fileMultipleSelection.forEach(m => fidList.push(m.id));
 
-      },
-      onClickDownLoad() {
-
-      },
-      onClickInputConfirm(file) {
-        let methodName;
-        let params;
-        if (file.id) {
-          methodName = 'rename';
-          params = {targetName: this.fileNameInput, relativePath: this.params.relativePath + "/" + file.fileName}
-        } else {
-          methodName = 'makeDir';
-          params = {fileName: this.fileNameInput, relativePath: this.params.relativePath + "/" + this.fileNameInput}
+                axios.post('download', {fidList: fidList}, {responseType: 'blob'})
+                    .then(res => {
+                        console.log(res);
+                        let data = res.data;
+                        let url = window.URL.createObjectURL(data);
+                        let link = document.createElement('a');
+                        link.style.display = 'none';
+                        link.href = url;
+                        link.download = decodeURI(res.headers['content-disposition']);
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(link)
+                    }).catch((error) => {
+                    console.log(error)
+                })
+            },
+            onClickInputConfirm(file) {
+                let methodName;
+                let params;
+                if (file.id) {
+                    methodName = 'rename';
+                    params = {
+                        targetName: this.fileNameInput,
+                        relativePath: this.params.relativePath + "/" + file.fileName
+                    }
+                } else {
+                    methodName = 'makeDir';
+                    params = {
+                        fileName: this.fileNameInput,
+                        relativePath: this.params.relativePath + "/" + this.fileNameInput
+                    }
+                }
+                this.post(methodName, params).then(() => {
+                    this.getFileList(this.params);
+                });
+            },
+            onClickInputClose(file, idx) {
+                if (file.id) {
+                    file.editable = false;
+                    Vue.set(this.files, idx, file);
+                } else {
+                    this.files.splice(idx, 1);
+                }
+            },
+            hasEditFile() {
+                for (let file of this.files) {
+                    if (file.editable) {
+                        return true
+                    }
+                }
+                return false;
+            },
+            handleSelectionChange(val) {
+                if (this.hasEditFile()) {
+                    this.$refs.fileTable.clearSelection();
+                }
+                this.fileMultipleSelection = val;
+            },
+            onClickMakeDir() {
+                if (this.hasEditFile()) {
+                    this.$refs.input.select();
+                }
+                this.$refs.fileTable.clearSelection();
+                let tmp = {editable: true, type: 0};
+                this.files.unshift(tmp);
+                this.fileNameInput = '新建文件夹';
+                this.$nextTick(() => {
+                    this.$refs.input.select();
+                })
+            },
+            extName(fileName) {
+                let lastIndexOf = fileName.lastIndexOf('.');
+                if (lastIndexOf === -1) {
+                    return "";
+                }
+                return fileName.substr(lastIndexOf + 1)
+            },
+            isFolder(file) {
+                return file.type === 0;
+            },
+            onClickNavigatorItem(relativePath) {
+                let params = Object.assign({}, this.params);
+                params.relativePath = relativePath;
+                this.redirectFileList(params);
+            },
+            getIcon(file) {
+                if (this.isFolder(file)) {
+                    return "#el-icon-alifolder";
+                }
+                let ext = this.extName(file.fileName);
+                if (!this.iconTypeMap.has(ext)) {
+                    return '#el-icon-alifile_cloud-copy';
+                }
+                return this.iconTypeMap.get(ext);
+            },
+            redirectFileList(params) {
+                this.$router.push({path: this.$route.path, query: Object.assign({}, params, {_: +new Date()})});
+            },
+            onClickFileName(file) {
+                if (this.isFolder(file)) {
+                    this.params.relativePath += "/" + file.fileName;
+                    this.redirectFileList(this.params);
+                }
+            }
+        },
+        watch: {
+            '$route': function (newRoute, oleRoute) {
+                this.params = newRoute.query;
+                this.getFileList(this.params);
+            }
+        },
+        computed: {
+            fileSeletedCount() {
+                return this.fileMultipleSelection.length;
+            },
+            navigator() {
+                let relativePath = this.params.relativePath;
+                let res = [];
+                let strings = relativePath.split('/').filter(s => s !== '');
+                strings = ['主目录', ...strings];
+                let tmp = "";
+                for (let i = 0; i < strings.length; i++) {
+                    let name = strings[i];
+                    let item = {name: name, relativePath: i === 0 ? '' : tmp + '/' + name};
+                    item.isLast = i === strings.length - 1;
+                    res.push(item);
+                }
+                return res;
+            }
         }
-        this.post(methodName, params).then(() => {
-          this.getFileList(this.params);
-        });
-      },
-      onClickInputClose(file, idx) {
-        if (file.id) {
-          file.editable = false;
-          Vue.set(this.files, idx, file);
-        } else {
-          this.files.splice(idx, 1);
-        }
-      },
-      handleSelectionChange(val) {
-        this.fileMultipleSelection = val;
-      },
-      onClickMakeDir() {
-        for (let file of this.files) {
-          if (file.editable) {
-            this.$refs.input.select();
-            return;
-          }
-        }
-        let tmp = {editable: true, type: 0};
-        this.files.unshift(tmp);
-        this.fileNameInput = '新建文件夹';
-        this.$nextTick(() => {
-          this.$refs.input.select();
-        })
-      },
-      extName(fileName) {
-        let lastIndexOf = fileName.lastIndexOf('.');
-        if (lastIndexOf === -1) {
-          return "";
-        }
-        return fileName.substr(lastIndexOf + 1)
-      },
-      isFolder(file) {
-        return file.type === 0;
-      },
-      onClickNavigatorItem(relativePath) {
-        let params = Object.assign({}, this.params);
-        params.relativePath = relativePath;
-        this.redirectFileList(params);
-      },
-      getIcon(file) {
-        if (this.isFolder(file)) {
-          return "#el-icon-alifolder";
-        }
-        let ext = this.extName(file.fileName);
-        if (!this.iconTypeMap.has(ext)) {
-          return '#el-icon-alifile_cloud-copy';
-        }
-        return this.iconTypeMap.get(ext);
-      },
-      redirectFileList(params) {
-        this.$router.push({path: this.$route.path, query: Object.assign({}, params, {_: +new Date()})});
-      },
-      onClickFileName(file) {
-        if (this.isFolder(file)) {
-          this.params.relativePath += "/" + file.fileName;
-          this.redirectFileList(this.params);
-        }
-      }
-    },
-    watch: {
-      '$route': function (newRoute, oleRoute) {
-        this.params = newRoute.query;
-        this.getFileList(this.params);
-      }
-    },
-    computed: {
-      fileSeletedCount() {
-        return this.fileMultipleSelection.length;
-      },
-      navigator() {
-        let relativePath = this.params.relativePath;
-        let res = [];
-        let strings = relativePath.split('/').filter(s => s !== '');
-        strings = ['主目录', ...strings];
-        let tmp = "";
-        for (let i = 0; i < strings.length; i++) {
-          let name = strings[i];
-          let item = {name: name, relativePath: i === 0 ? '' : tmp + '/' + name};
-          item.isLast = i === strings.length - 1;
-          res.push(item);
-        }
-        console.log(res);
-        return res;
-      }
     }
-  }
 </script>
 
 <style lang="less">
