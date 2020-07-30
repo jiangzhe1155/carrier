@@ -6,12 +6,12 @@ import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import VueRouter from "vue-router";
 import {post} from './api/http';
-import {formatSize} from './api/common'
+import util from './api/common'
 import './assets/icon/iconfont.css'
 
 Vue.config.productionTip = false;
 Vue.prototype.post = post;
-Vue.prototype.formatSize = formatSize;
+Vue.prototype.util = util;
 
 
 const originalPush = VueRouter.prototype.push;

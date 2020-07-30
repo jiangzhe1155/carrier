@@ -43,7 +43,7 @@
                     @node-click="handleCheckChange">
             </el-tree>
             <span slot="footer" class="dialog-footer">
-                <el-button @click="centerDialogVisible = false">取 消</el-button>
+                <el-button @click="centerDialogVisible = !centerDialogVisible">取 消</el-button>
                 <el-button type="primary" @click="onConfirm">确 定</el-button>
             </span>
         </el-dialog>
