@@ -32,16 +32,16 @@
         <el-button @click="onClickMakeDir" size="medium">
           新建文件夹
         </el-button>
-        <el-button @click="onClickDelete" size="medium">
+        <el-button v-show="fileSelectedCount > 0" @click="onClickDelete" size="medium">
           删除
         </el-button>
-        <el-button @click="onClickMove" size="medium">
+        <el-button v-show="fileSelectedCount > 0" @click="onClickMove" size="medium">
           移动到
         </el-button>
-        <el-button @click="onClickCopy" size="medium">
+        <el-button v-show="fileSelectedCount > 0" @click="onClickCopy" size="medium">
           复制到
         </el-button>
-        <el-button v-show="fileSeletedCount > 0" @click="onClickDownLoad" size="medium">下载</el-button>
+        <el-button v-show="fileSelectedCount > 0" @click="onClickDownLoad" size="medium">下载</el-button>
       </el-button-group>
     </el-row>
     <el-breadcrumb separator-class="el-icon-arrow-right" style="margin-top: 20px;margin-left: 10px">
@@ -57,8 +57,8 @@
         <template slot-scope="scope">
           <el-row type="flex" justify="space-between">
             <el-row type="flex" style="align-items: center">
-              <SvgIcon icon-style="icon" style="margin-right: 5px"
-                       :icon-name="util.getIcon(scope.row.type,scope.row.fileName)"></SvgIcon>
+              <svg-icon icon-style="icon" style="margin-right: 5px"
+                       :icon-name="util.getIcon(scope.row.type,scope.row.fileName)"></svg-icon>
               <el-link :underline="false" v-if="!scope.row.editable" @click="onClickFileName(scope.row)">
                 {{scope.row.fileName}}
               </el-link>
@@ -73,7 +73,14 @@
               </div>
             </el-row>
             <el-row type="flex" align-="middle">
-              <el-button icon="el-icon-download" type="text" style="font-size: 20px"></el-button>
+              <el-button icon="el-icon-download"
+                         type="text"
+                         style="font-size: 20px"
+                         @click="onClickDownLoadFile(scope.row)"></el-button>
+              <el-button icon="el-icon-edit"
+                         type="text"
+                         style="font-size: 20px"
+                         @click="onClickRenameFile(scope.row,scope.$index)"></el-button>
             </el-row>
           </el-row>
         </template>
@@ -87,193 +94,215 @@
   </div>
 </template>
 <script>
-  import SvgIcon from "../components/SvgIcon";
-  import axios from 'axios'
+    import SvgIcon from "../components/SvgIcon";
+    import axios from 'axios'
+    import Vue from 'vue'
 
-  export default {
-    components: {SvgIcon},
-    data() {
-      return {
-        methodType: '',
-        foldersDialogVisible: false,
-        params: {},
-        files: [],
-        fileMultipleSelection: [],
-        fileNameInput: '',
-        targetPath: ''
-      }
-    },
-    created() {
-      this.params = this.$route.query;
-      this.getFileList(this.params);
-    },
-    methods: {
-      getFileList(params) {
-        this.post("list", params, false).then(data => {
-          this.files = data.data.records;
-        });
-      },
-      onClickFolderTreeConfirm() {
-        let targetPath = [];
-        this.fileMultipleSelection.forEach(
-          file => targetPath.push({relativePath: file.relativePath, targetPath: this.targetPath})
-        );
-        this.post(this.methodType, {fileList: targetPath}).then(() => {
-          this.getFileList(this.params);
-        });
-        this.foldersDialogVisible = false;
-      },
-      handleCheckChange(data) {
-        this.targetPath = data.relativePath;
-      },
-      loadNode(node, resolve) {
-        if (node.level === 0) {
-          return resolve([{fileName: "主目录", relativePath: "", id: 0}]);
-        }
-        let params = Object.assign({}, this.params);
-        params.relativePath = node.data.relativePath;
-        this.post("list", params, false).then(data => {
-          resolve(data.data.records);
-        });
-      },
-      onClickUploadFile() {
+    export default {
+        components: {SvgIcon},
+        data() {
+            return {
+                methodType: '',
+                foldersDialogVisible: false,
+                params: {},
+                files: [],
+                fileMultipleSelection: [],
+                fileNameInput: '',
+                targetPath: ''
+            }
+        },
+        created() {
+            this.params = this.$route.query;
+            this.getFileList(this.params);
+        },
+        methods: {
+            getFileList(params) {
+                this.post("list", params, false).then(data => {
+                    this.files = data.data.records;
+                });
+            },
+            onClickRenameFile(file, idx) {
+                if (this.hasEditFile()) {
+                    this.$refs.input.select();
+                    return;
+                }
+                this.$refs.fileTable.clearSelection();
+                file.editable = true;
 
-      },
-      onClickUploadFolder() {
+                Vue.set(this.files, idx, file);
+                this.fileNameInput = file.fileName;
+                this.$nextTick(() => {
+                    this.$refs.input.select();
+                })
+            },
+            onClickDownLoadFile(file) {
+                this.download([file.id])
+            },
+            onClickFolderTreeConfirm() {
+                let targetPath = [];
+                this.fileMultipleSelection.forEach(
+                    file => targetPath.push({relativePath: file.relativePath, targetPath: this.targetPath})
+                );
+                this.post(this.methodType, {fileList: targetPath}).then(() => {
+                    this.getFileList(this.params);
+                });
+                this.foldersDialogVisible = false;
+            },
+            handleCheckChange(data) {
+                this.targetPath = data.relativePath;
+            },
+            loadNode(node, resolve) {
+                if (node.level === 0) {
+                    return resolve([{fileName: "主目录", relativePath: "", id: 0}]);
+                }
+                let params = Object.assign({}, this.params);
+                params.relativePath = node.data.relativePath;
+                this.post("list", params, false).then(data => {
+                    resolve(data.data.records);
+                });
+            },
+            onClickUploadFile() {
 
-      },
-      onClickDelete() {
-        let deletePaths = [];
-        this.fileMultipleSelection.forEach(
-          file => deletePaths.push(this.params.relativePath + "/" + file.fileName)
-        );
-        this.post("delete", {relativePaths: deletePaths}).then(() => {
-          this.getFileList(this.params);
-        })
-      },
-      onClickMove() {
-        this.methodType = 'move';
-        this.foldersDialogVisible = true;
-      },
-      onClickCopy() {
-        this.methodType = 'copy';
-        this.foldersDialogVisible = true;
-      },
-      onClickDownLoad() {
-        let fidList = [];
-        this.fileMultipleSelection.forEach(m => fidList.push(m.id));
-        axios.post('download', {fidList: fidList}, {responseType: 'blob'})
-          .then(res => {
-            console.log(res);
-            let data = res.data;
-            let url = window.URL.createObjectURL(data);
-            let link = document.createElement('a');
-            link.style.display = 'none';
-            link.href = url;
-            link.download = decodeURI(res.headers['content-disposition']);
-            link.click();
-            URL.revokeObjectURL(url);
-            document.body.removeChild(link)
-          }).catch((error) => {
-          console.log(error)
-        })
-      },
-      onClickInputConfirm(file) {
-        let methodName;
-        let params;
-        if (file.id) {
-          methodName = 'rename';
-          params = {
-            targetName: this.fileNameInput,
-            relativePath: this.params.relativePath + "/" + file.fileName
-          }
-        } else {
-          methodName = 'makeDir';
-          params = {
-            fileName: this.fileNameInput,
-            relativePath: this.params.relativePath + "/" + this.fileNameInput
-          }
+            },
+            onClickUploadFolder() {
+
+            },
+            onClickDelete() {
+                let deletePaths = [];
+                this.fileMultipleSelection.forEach(
+                    file => deletePaths.push(this.params.relativePath + "/" + file.fileName)
+                );
+                this.post("delete", {relativePaths: deletePaths}).then(() => {
+                    this.getFileList(this.params);
+                })
+            },
+            onClickMove() {
+                this.methodType = 'move';
+                this.foldersDialogVisible = true;
+            },
+            onClickCopy() {
+                this.methodType = 'copy';
+                this.foldersDialogVisible = true;
+            },
+            onClickDownLoad() {
+                let fidList = [];
+                this.fileMultipleSelection.forEach(m => fidList.push(m.id));
+                this.download(fidList);
+            },
+            download(fidList) {
+                axios.post('download', {fidList: fidList}, {responseType: 'blob'})
+                    .then(res => {
+                        console.log(res);
+                        let data = res.data;
+                        let url = window.URL.createObjectURL(data);
+                        let link = document.createElement('a');
+                        link.style.display = 'none';
+                        link.href = url;
+                        link.download = decodeURI(res.headers['content-disposition']);
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(link)
+                    }).catch((error) => {
+                    console.log(error)
+                })
+            },
+            onClickInputConfirm(file) {
+                let methodName;
+                let params;
+                if (file.id) {
+                    methodName = 'rename';
+                    params = {
+                        targetName: this.fileNameInput,
+                        relativePath: this.params.relativePath + "/" + file.fileName
+                    }
+                } else {
+                    methodName = 'makeDir';
+                    params = {
+                        fileName: this.fileNameInput,
+                        relativePath: this.params.relativePath + "/" + this.fileNameInput
+                    }
+                }
+                this.post(methodName, params).then(() => {
+                    this.getFileList(this.params);
+                });
+            },
+            onClickInputClose(file, idx) {
+                if (file.id) {
+                    file.editable = false;
+                    Vue.set(this.files, idx, file);
+                } else {
+                    this.files.splice(idx, 1);
+                }
+            },
+            hasEditFile() {
+                for (let file of this.files) {
+                    if (file.editable) {
+                        return true
+                    }
+                }
+                return false;
+            },
+            handleSelectionChange(val) {
+                if (this.hasEditFile()) {
+                    this.$refs.fileTable.clearSelection();
+                }
+                this.fileMultipleSelection = val;
+            },
+            onClickMakeDir() {
+                if (this.hasEditFile()) {
+                    this.$refs.input.select();
+                    return;
+                }
+                this.$refs.fileTable.clearSelection();
+                let tmp = {editable: true, type: 0};
+                this.files.unshift(tmp);
+                this.fileNameInput = '新建文件夹';
+                this.$nextTick(() => {
+                    this.$refs.input.select();
+                })
+            },
+            onClickNavigatorItem(relativePath) {
+                let params = Object.assign({}, this.params);
+                params.relativePath = relativePath;
+                this.redirectFileList(params);
+            },
+            redirectFileList(params) {
+                this.$router.push({path: this.$route.path, query: Object.assign({}, params, {_: +new Date()})});
+            },
+            onClickFileName(file) {
+                if (this.util.isFolder(file.type)) {
+                    this.params.relativePath += "/" + file.fileName;
+                    this.redirectFileList(this.params);
+                }
+            }
+        },
+        watch: {
+            '$route': function (newRoute, oleRoute) {
+                this.params = newRoute.query;
+                this.getFileList(this.params);
+            }
+        },
+        computed: {
+            fileSelectedCount() {
+                return this.fileMultipleSelection.length;
+            },
+            navigator() {
+                let relativePath = this.params.relativePath;
+                let res = [];
+                let strings = relativePath.split('/').filter(s => s !== '');
+                strings.unshift('主目录');
+                let tmp = "";
+                for (let i = 0; i < strings.length; i++) {
+                    let name = strings[i];
+                    tmp = '/' + name;
+                    let item = {name: name, relativePath: i === 0 ? '' : tmp};
+                    item.isLast = i === strings.length - 1;
+                    res.push(item);
+                }
+                return res;
+            }
         }
-        this.post(methodName, params).then(() => {
-          this.getFileList(this.params);
-        });
-      },
-      onClickInputClose(file, idx) {
-        if (file.id) {
-          file.editable = false;
-          Vue.set(this.files, idx, file);
-        } else {
-          this.files.splice(idx, 1);
-        }
-      },
-      hasEditFile() {
-        for (let file of this.files) {
-          if (file.editable) {
-            return true
-          }
-        }
-        return false;
-      },
-      handleSelectionChange(val) {
-        if (this.hasEditFile()) {
-          this.$refs.fileTable.clearSelection();
-        }
-        this.fileMultipleSelection = val;
-      },
-      onClickMakeDir() {
-        if (this.hasEditFile()) {
-          this.$refs.input.select();
-        }
-        this.$refs.fileTable.clearSelection();
-        let tmp = {editable: true, type: 0};
-        this.files.unshift(tmp);
-        this.fileNameInput = '新建文件夹';
-        this.$nextTick(() => {
-          this.$refs.input.select();
-        })
-      },
-      onClickNavigatorItem(relativePath) {
-        let params = Object.assign({}, this.params);
-        params.relativePath = relativePath;
-        this.redirectFileList(params);
-      },
-      redirectFileList(params) {
-        this.$router.push({path: this.$route.path, query: Object.assign({}, params, {_: +new Date()})});
-      },
-      onClickFileName(file) {
-        if (this.util.isFolder(file.type)) {
-          this.params.relativePath += "/" + file.fileName;
-          this.redirectFileList(this.params);
-        }
-      }
-    },
-    watch: {
-      '$route': function (newRoute, oleRoute) {
-        this.params = newRoute.query;
-        this.getFileList(this.params);
-      }
-    },
-    computed: {
-      fileSeletedCount() {
-        return this.fileMultipleSelection.length;
-      },
-      navigator() {
-        let relativePath = this.params.relativePath;
-        let res = [];
-        let strings = relativePath.split('/').filter(s => s !== '');
-        strings.unshift('主目录');
-        let tmp = "";
-        for (let i = 0; i < strings.length; i++) {
-          let name = strings[i];
-          tmp = '/' + name;
-          let item = {name: name, relativePath: i === 0 ? '' : tmp};
-          item.isLast = i === strings.length - 1;
-          res.push(item);
-        }
-        return res;
-      }
     }
-  }
 </script>
 
 <style lang="less">
